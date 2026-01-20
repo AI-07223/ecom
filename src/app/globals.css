@@ -119,54 +119,91 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    /* Prevent overscroll bounce on mobile for app-like feel */
+    overscroll-behavior: none;
+    /* Prevent text selection on non-input elements for app-like feel */
+    -webkit-user-select: none;
+    user-select: none;
   }
-  
+
+  /* Allow text selection on inputs and text areas */
+  input,
+  textarea,
+  [contenteditable="true"],
+  .selectable {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: contain;
+  }
+
+  /* Make scrollable areas feel more native */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Buttons and interactive elements should feel tappable */
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
   }
 }
 
 @layer utilities {
+
   /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
   /* Safe area padding for mobile */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
-  
+
   /* Glass effect */
   .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
+
   .dark .glass {
     background: rgba(0, 0, 0, 0.7);
   }
-  
+
   /* Smooth transitions for interactive elements */
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   /* Scale on tap for mobile */
   .tap-scale {
     transition: transform 0.1s ease-out;
   }
+
   .tap-scale:active {
     transform: scale(0.95);
   }
@@ -174,54 +211,67 @@
 
 /* Custom animations */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(20px);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
 @keyframes slide-in-right {
-  from { 
+  from {
     opacity: 0;
     transform: translateX(20px);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
 @keyframes bounce-in {
-  0% { 
+  0% {
     opacity: 0;
     transform: scale(0.3);
   }
-  50% { 
+
+  50% {
     transform: scale(1.05);
   }
-  70% { 
+
+  70% {
     transform: scale(0.9);
   }
-  100% { 
+
+  100% {
     opacity: 1;
     transform: scale(1);
   }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { 
+
+  0%,
+  100% {
     opacity: 1;
   }
-  50% { 
+
+  50% {
     opacity: 0.7;
   }
 }
@@ -230,6 +280,7 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -256,13 +307,10 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
-

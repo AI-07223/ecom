@@ -9,6 +9,7 @@ import { SiteSettingsProvider } from "@/providers/SiteSettingsProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { AdminBottomNav } from "@/components/layout/AdminBottomNav";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,6 +39,7 @@ export default function RootLayout({
                   <Footer />
                 </div>
                 <MobileBottomNav />
+                <AdminBottomNav />
                 <Toaster position="bottom-right" richColors />
               </WishlistProvider>
             </CartProvider>

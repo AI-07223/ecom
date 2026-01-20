@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { ShoppingCart, Heart, User, Search } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { ShoppingCart, Heart, User, Search, ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,10 +26,14 @@ const navLinks = [
 
 export function Navbar() {
     const pathname = usePathname()
+    const router = useRouter()
     const { user, profile, isAdmin, signOut } = useAuth()
     const { itemCount } = useCart()
     const { settings } = useSiteSettings()
     const [searchQuery, setSearchQuery] = useState('')
+
+    // Check if we're on homepage (don't show back button there)
+    const isHomePage = pathname === '/'
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
@@ -150,13 +154,31 @@ export function Navbar() {
                     </div>
                 </div>
 
-                {/* Mobile Navigation - Clean minimal design */}
+                {/* Mobile Navigation - App-like design with back button */}
                 <div className="md:hidden flex h-14 items-center gap-2">
-                    {/* Logo - Left, can shrink but has min-width */}
+                    {/* Back Button - Shows on all pages except homepage */}
+                    {!isHomePage && (
+                        <button
+                            onClick={() => router.back()}
+                            className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 active:scale-95"
+                            style={{ backgroundColor: `${settings.accent_color}10` }}
+                            aria-label="Go back"
+                        >
+                            <ChevronLeft
+                                className="h-5 w-5"
+                                style={{ color: settings.accent_color }}
+                            />
+                        </button>
+                    )}
+
+                    {/* Logo - Shows on homepage, compact elsewhere */}
                     <Link href="/" className="flex-shrink-0 min-w-0">
                         <span
-                            className="text-lg font-bold truncate block"
-                            style={{ color: settings.primary_color, maxWidth: '120px' }}
+                            className={`font-bold truncate block ${isHomePage ? 'text-lg' : 'text-base'}`}
+                            style={{
+                                color: settings.primary_color,
+                                maxWidth: isHomePage ? '140px' : '100px'
+                            }}
                         >
                             {settings.site_name}
                         </span>
@@ -172,10 +194,12 @@ export function Navbar() {
                             <Input
                                 type="search"
                                 placeholder="Search..."
-                                className="h-9 pl-3 pr-8 text-sm rounded-full w-full"
+                                className="h-9 pl-3 pr-8 text-sm rounded-full w-full transition-all duration-200 focus:ring-2"
                                 style={{
                                     borderColor: `${settings.accent_color}40`,
-                                    backgroundColor: `${settings.accent_color}08`
+                                    backgroundColor: `${settings.accent_color}08`,
+                                    // @ts-expect-error - CSS variable for focus ring
+                                    '--tw-ring-color': `${settings.accent_color}40`,
                                 }}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}

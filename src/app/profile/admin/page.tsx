@@ -13,14 +13,22 @@ import {
     Settings,
     DollarSign,
     ShoppingCart,
-    UserCheck
+    UserCheck,
+    TrendingUp,
+    AlertTriangle,
+    Clock,
+    ArrowRight,
+    Plus
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/providers/AuthProvider'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
+import { Order, Product } from '@/types/database.types'
 
 interface DashboardStats {
     totalProducts: number
@@ -31,21 +39,13 @@ interface DashboardStats {
     lowStockProducts: number
 }
 
-const adminNavItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/profile/admin', active: true },
-    { icon: Package, label: 'Products', href: '/profile/admin/products' },
-    { icon: FolderTree, label: 'Categories', href: '/profile/admin/categories' },
-    { icon: ShoppingBag, label: 'Orders', href: '/profile/admin/orders' },
-    { icon: Users, label: 'Users', href: '/profile/admin/users' },
-    { icon: Ticket, label: 'Coupons', href: '/profile/admin/coupons' },
-    { icon: Settings, label: 'Settings', href: '/profile/admin/settings' },
-]
-
 export default function AdminDashboardPage() {
     const router = useRouter()
     const { user, isAdmin, isLoading: authLoading } = useAuth()
     const { settings } = useSiteSettings()
     const [stats, setStats] = useState<DashboardStats | null>(null)
+    const [recentOrders, setRecentOrders] = useState<Order[]>([])
+    const [lowStockItems, setLowStockItems] = useState<Product[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -55,37 +55,40 @@ export default function AdminDashboardPage() {
     }, [user, isAdmin, authLoading, router])
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             if (!isAdmin) return
 
             try {
-                // Fetch products count
+                // Fetch products
                 const productsSnap = await getDocs(collection(db, 'products'))
-                const productsCount = productsSnap.size
+                const products = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[]
+                const productsCount = products.length
+                const lowStockCount = products.filter(p => p.is_active && p.quantity <= 5).length
+                const lowStock = products.filter(p => p.is_active && p.quantity <= 5).slice(0, 5)
 
-                // Fetch low stock products
-                const lowStockQuery = query(
-                    collection(db, 'products'),
-                    where('is_active', '==', true)
-                )
-                const lowStockSnap = await getDocs(lowStockQuery)
-                const lowStockCount = lowStockSnap.docs.filter(doc => doc.data().quantity <= 5).length
-
-                // Fetch orders count
+                // Fetch orders
                 const ordersSnap = await getDocs(collection(db, 'orders'))
-                const ordersCount = ordersSnap.size
+                const orders = ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[]
+                const ordersCount = orders.length
+                const pendingCount = orders.filter(o => o.status === 'pending').length
 
-                // Fetch pending orders
-                const pendingCount = ordersSnap.docs.filter(doc => doc.data().status === 'pending').length
+                // Get recent orders (sort client-side)
+                const sortedOrders = [...orders].sort((a, b) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const aTime = (a.created_at as any)?.seconds ? (a.created_at as any).seconds * 1000 : 0
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const bTime = (b.created_at as any)?.seconds ? (b.created_at as any).seconds * 1000 : 0
+                    return bTime - aTime
+                }).slice(0, 5)
 
                 // Fetch users count
                 const usersSnap = await getDocs(collection(db, 'profiles'))
                 const usersCount = usersSnap.size
 
                 // Calculate total revenue
-                const totalRevenue = ordersSnap.docs
-                    .filter(doc => doc.data().payment_status === 'paid')
-                    .reduce((sum, doc) => sum + (doc.data().total || 0), 0)
+                const totalRevenue = orders
+                    .filter(o => o.payment_status === 'paid')
+                    .reduce((sum, o) => sum + (o.total || 0), 0)
 
                 setStats({
                     totalProducts: productsCount,
@@ -95,6 +98,8 @@ export default function AdminDashboardPage() {
                     pendingOrders: pendingCount,
                     lowStockProducts: lowStockCount,
                 })
+                setRecentOrders(sortedOrders)
+                setLowStockItems(lowStock)
             } catch (error) {
                 console.error('Error fetching stats:', error)
             }
@@ -102,7 +107,7 @@ export default function AdminDashboardPage() {
         }
 
         if (isAdmin) {
-            fetchStats()
+            fetchData()
         }
     }, [isAdmin])
 
@@ -118,170 +123,314 @@ export default function AdminDashboardPage() {
         return `${settings.currency_symbol}${amount.toLocaleString('en-IN')}`
     }
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pending': return 'bg-yellow-100 text-yellow-800'
+            case 'processing': return 'bg-blue-100 text-blue-800'
+            case 'shipped': return 'bg-purple-100 text-purple-800'
+            case 'delivered': return 'bg-green-100 text-green-800'
+            case 'cancelled': return 'bg-red-100 text-red-800'
+            default: return 'bg-gray-100 text-gray-800'
+        }
+    }
+
+    const quickActions = [
+        { icon: Plus, label: 'Add Product', href: '/profile/admin/products?action=new', color: settings.accent_color },
+        { icon: FolderTree, label: 'Add Category', href: '/profile/admin/categories?action=new', color: '#10b981' },
+        { icon: ShoppingBag, label: 'View Orders', href: '/profile/admin/orders', color: '#3b82f6' },
+        { icon: Ticket, label: 'Create Coupon', href: '/profile/admin/coupons?action=new', color: '#8b5cf6' },
+        { icon: Users, label: 'Manage Users', href: '/profile/admin/users', color: '#ec4899' },
+        { icon: Settings, label: 'Settings', href: '/profile/admin/settings', color: '#6b7280' },
+    ]
+
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar Navigation */}
-                <aside className="lg:w-64 shrink-0">
-                    <Card>
-                        <CardHeader className="pb-4">
-                            <CardTitle
-                                className="text-lg flex items-center gap-2"
-                                style={{ color: settings.primary_color }}
-                            >
-                                Admin Panel
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <nav className="space-y-1">
-                                {adminNavItems.map((item) => (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted ${item.active ? 'bg-muted font-medium' : 'text-muted-foreground'
-                                            }`}
-                                    >
-                                        <item.icon className="h-4 w-4" />
-                                        {item.label}
-                                    </Link>
-                                ))}
-                            </nav>
-                        </CardContent>
-                    </Card>
-                </aside>
-
-                {/* Main Content */}
-                <div className="flex-1">
-                    <div className="mb-8">
-                        <h1 className="text-2xl font-bold">Dashboard</h1>
-                        <p className="text-muted-foreground">
-                            Overview of your store performance
-                        </p>
+        <div className="min-h-screen bg-muted/30">
+            {/* Header */}
+            <div
+                className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b"
+                style={{
+                    background: `linear-gradient(135deg, ${settings.accent_color}15 0%, ${settings.accent_color}05 50%, transparent 100%)`
+                }}
+            >
+                <div className="container mx-auto px-4 py-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+                                <div
+                                    className="p-2 rounded-xl"
+                                    style={{ backgroundColor: `${settings.accent_color}20` }}
+                                >
+                                    <LayoutDashboard className="h-6 w-6" style={{ color: settings.accent_color }} />
+                                </div>
+                                Admin Dashboard
+                            </h1>
+                            <p className="text-muted-foreground mt-1">
+                                Welcome back! Here&apos;s your store overview.
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/">View Store</Link>
+                            </Button>
+                            <Button asChild size="sm" style={{ backgroundColor: settings.accent_color }}>
+                                <Link href="/profile/admin/products?action=new">
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add Product
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
+                </div>
+            </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        {isLoading ? (
-                            Array.from({ length: 4 }).map((_, i) => (
-                                <Skeleton key={i} className="h-32" />
-                            ))
-                        ) : (
-                            <>
-                                <Card>
-                                    <CardContent className="p-6">
+            <div className="container mx-auto px-4 py-6 space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {isLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className="h-32 rounded-xl" />
+                        ))
+                    ) : (
+                        <>
+                            <Card className="overflow-hidden">
+                                <CardContent className="p-0">
+                                    <div className="p-5">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Total Revenue</p>
-                                                <p className="text-2xl font-bold" style={{ color: settings.primary_color }}>
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Revenue</p>
+                                                <p className="text-2xl font-bold mt-1" style={{ color: settings.accent_color }}>
                                                     {formatCurrency(stats?.totalRevenue || 0)}
                                                 </p>
                                             </div>
                                             <div
-                                                className="p-3 rounded-full"
-                                                style={{ backgroundColor: `${settings.primary_color}15` }}
+                                                className="p-3 rounded-xl"
+                                                style={{ backgroundColor: `${settings.accent_color}15` }}
                                             >
-                                                <DollarSign className="h-6 w-6" style={{ color: settings.primary_color }} />
+                                                <DollarSign className="h-5 w-5" style={{ color: settings.accent_color }} />
                                             </div>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                    <div
+                                        className="px-5 py-2 text-xs flex items-center gap-1"
+                                        style={{ backgroundColor: `${settings.accent_color}08` }}
+                                    >
+                                        <TrendingUp className="h-3 w-3" style={{ color: settings.accent_color }} />
+                                        <span className="text-muted-foreground">From paid orders</span>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardContent className="p-6">
+                            <Card className="overflow-hidden">
+                                <CardContent className="p-0">
+                                    <div className="p-5">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Total Orders</p>
-                                                <p className="text-2xl font-bold">{stats?.totalOrders || 0}</p>
-                                                {(stats?.pendingOrders || 0) > 0 && (
-                                                    <p className="text-xs text-orange-500">
-                                                        {stats?.pendingOrders} pending
-                                                    </p>
-                                                )}
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Orders</p>
+                                                <p className="text-2xl font-bold mt-1">{stats?.totalOrders || 0}</p>
                                             </div>
-                                            <div className="p-3 rounded-full bg-blue-100">
-                                                <ShoppingCart className="h-6 w-6 text-blue-600" />
+                                            <div className="p-3 rounded-xl bg-blue-100">
+                                                <ShoppingCart className="h-5 w-5 text-blue-600" />
                                             </div>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                    <div className={`px-5 py-2 text-xs flex items-center gap-1 ${(stats?.pendingOrders || 0) > 0 ? 'bg-orange-50' : 'bg-muted/50'}`}>
+                                        {(stats?.pendingOrders || 0) > 0 ? (
+                                            <>
+                                                <Clock className="h-3 w-3 text-orange-500" />
+                                                <span className="text-orange-600 font-medium">{stats?.pendingOrders} pending</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-muted-foreground">All orders processed</span>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardContent className="p-6">
+                            <Card className="overflow-hidden">
+                                <CardContent className="p-0">
+                                    <div className="p-5">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Products</p>
-                                                <p className="text-2xl font-bold">{stats?.totalProducts || 0}</p>
-                                                {(stats?.lowStockProducts || 0) > 0 && (
-                                                    <p className="text-xs text-red-500">
-                                                        {stats?.lowStockProducts} low stock
-                                                    </p>
-                                                )}
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Products</p>
+                                                <p className="text-2xl font-bold mt-1">{stats?.totalProducts || 0}</p>
                                             </div>
-                                            <div className="p-3 rounded-full bg-green-100">
-                                                <Package className="h-6 w-6 text-green-600" />
+                                            <div className="p-3 rounded-xl bg-green-100">
+                                                <Package className="h-5 w-5 text-green-600" />
                                             </div>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                    <div className={`px-5 py-2 text-xs flex items-center gap-1 ${(stats?.lowStockProducts || 0) > 0 ? 'bg-red-50' : 'bg-muted/50'}`}>
+                                        {(stats?.lowStockProducts || 0) > 0 ? (
+                                            <>
+                                                <AlertTriangle className="h-3 w-3 text-red-500" />
+                                                <span className="text-red-600 font-medium">{stats?.lowStockProducts} low stock</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-muted-foreground">Stock levels healthy</span>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardContent className="p-6">
+                            <Card className="overflow-hidden">
+                                <CardContent className="p-0">
+                                    <div className="p-5">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Customers</p>
-                                                <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Customers</p>
+                                                <p className="text-2xl font-bold mt-1">{stats?.totalUsers || 0}</p>
                                             </div>
-                                            <div className="p-3 rounded-full bg-purple-100">
-                                                <UserCheck className="h-6 w-6 text-purple-600" />
+                                            <div className="p-3 rounded-xl bg-purple-100">
+                                                <UserCheck className="h-5 w-5 text-purple-600" />
                                             </div>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </>
-                        )}
-                    </div>
+                                    </div>
+                                    <div className="px-5 py-2 text-xs flex items-center gap-1 bg-muted/50">
+                                        <span className="text-muted-foreground">Registered users</span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </>
+                    )}
+                </div>
 
-                    {/* Quick Actions */}
+                {/* Quick Actions */}
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-lg">Quick Actions</CardTitle>
+                        <CardDescription>Jump to common tasks</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                            {quickActions.map((action) => (
+                                <Link key={action.href} href={action.href}>
+                                    <div
+                                        className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer"
+                                        style={{ backgroundColor: `${action.color}10` }}
+                                    >
+                                        <div
+                                            className="p-2.5 rounded-lg mb-2"
+                                            style={{ backgroundColor: `${action.color}20` }}
+                                        >
+                                            <action.icon className="h-5 w-5" style={{ color: action.color }} />
+                                        </div>
+                                        <span className="text-xs font-medium text-center">{action.label}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Two Column Layout */}
+                <div className="grid lg:grid-cols-2 gap-6">
+                    {/* Recent Orders */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Quick Actions</CardTitle>
-                            <CardDescription>Common tasks you can perform</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <div>
+                                <CardTitle className="text-lg">Recent Orders</CardTitle>
+                                <CardDescription>Latest customer orders</CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/profile/admin/orders" className="text-xs">
+                                    View All <ArrowRight className="h-3 w-3 ml-1" />
+                                </Link>
+                            </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <Link href="/profile/admin/products?action=new">
-                                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                                        <CardContent className="p-4 text-center">
-                                            <Package className="h-8 w-8 mx-auto mb-2" style={{ color: settings.primary_color }} />
-                                            <p className="text-sm font-medium">Add Product</p>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                                <Link href="/profile/admin/categories?action=new">
-                                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                                        <CardContent className="p-4 text-center">
-                                            <FolderTree className="h-8 w-8 mx-auto mb-2" style={{ color: settings.primary_color }} />
-                                            <p className="text-sm font-medium">Add Category</p>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                                <Link href="/profile/admin/orders?status=pending">
-                                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                                        <CardContent className="p-4 text-center">
-                                            <ShoppingBag className="h-8 w-8 mx-auto mb-2" style={{ color: settings.primary_color }} />
-                                            <p className="text-sm font-medium">View Orders</p>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                                <Link href="/profile/admin/coupons?action=new">
-                                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                                        <CardContent className="p-4 text-center">
-                                            <Ticket className="h-8 w-8 mx-auto mb-2" style={{ color: settings.primary_color }} />
-                                            <p className="text-sm font-medium">Create Coupon</p>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
+                            {isLoading ? (
+                                <div className="space-y-3">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <Skeleton key={i} className="h-16 rounded-lg" />
+                                    ))}
+                                </div>
+                            ) : recentOrders.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <ShoppingBag className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                                    <p>No orders yet</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {recentOrders.map((order) => (
+                                        <Link
+                                            key={order.id}
+                                            href={`/profile/admin/orders?id=${order.id}`}
+                                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium truncate">
+                                                    Order #{order.id.slice(-8).toUpperCase()}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {order.items?.length || 0} items • {formatCurrency(order.total)}
+                                                </p>
+                                            </div>
+                                            <Badge className={`ml-2 ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </Badge>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Low Stock Alert */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <div>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    Low Stock Alert
+                                    {(stats?.lowStockProducts || 0) > 0 && (
+                                        <Badge variant="destructive" className="text-xs">
+                                            {stats?.lowStockProducts}
+                                        </Badge>
+                                    )}
+                                </CardTitle>
+                                <CardDescription>Products running low on inventory</CardDescription>
                             </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/profile/admin/products" className="text-xs">
+                                    View All <ArrowRight className="h-3 w-3 ml-1" />
+                                </Link>
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? (
+                                <div className="space-y-3">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <Skeleton key={i} className="h-16 rounded-lg" />
+                                    ))}
+                                </div>
+                            ) : lowStockItems.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <Package className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                                    <p>All products are well stocked!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {lowStockItems.map((product) => (
+                                        <Link
+                                            key={product.id}
+                                            href={`/profile/admin/products?action=edit&id=${product.id}`}
+                                            className="flex items-center justify-between p-3 rounded-lg bg-red-50 hover:bg-red-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                                                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium truncate">{product.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{product.sku || product.slug}</p>
+                                                </div>
+                                            </div>
+                                            <Badge variant="destructive" className="ml-2">
+                                                {product.quantity} left
+                                            </Badge>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
