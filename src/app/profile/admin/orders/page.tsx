@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, Search, Filter } from 'lucide-react'
+import { Eye, Search, Package, MapPin, CreditCard, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
 import {
     Table,
     TableBody,
@@ -31,23 +31,52 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/AuthProvider'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
-import { collection, getDocs, doc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore'
+import { collection, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { toast } from 'sonner'
+
+interface OrderItem {
+    product_id: string
+    product_name: string
+    quantity: number
+    price: number
+    thumbnail?: string
+}
 
 interface Order {
     id: string
     order_number: string
     user_id: string
+    user_email?: string
     status: string
     payment_status: string
+    payment_method?: string
     total: number
-    items: Array<{ product_name: string; quantity: number }>
-    shipping_address: { full_name: string; city: string }
+    subtotal?: number
+    shipping_cost?: number
+    items: OrderItem[]
+    shipping_address: {
+        full_name: string
+        phone?: string
+        address_line1?: string
+        address_line2?: string
+        city: string
+        state?: string
+        postal_code?: string
+        country?: string
+    }
+    notes?: string
     created_at: { toDate: () => Date } | Date
+    updated_at?: { toDate: () => Date } | Date
 }
 
 const statusColors: Record<string, string> = {
@@ -57,6 +86,13 @@ const statusColors: Record<string, string> = {
     shipped: 'bg-indigo-100 text-indigo-800',
     delivered: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
+}
+
+const paymentStatusColors: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    paid: 'bg-green-100 text-green-800',
+    failed: 'bg-red-100 text-red-800',
+    refunded: 'bg-gray-100 text-gray-800',
 }
 
 export default function AdminOrdersPage() {
@@ -69,6 +105,7 @@ export default function AdminOrdersPage() {
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [editingOrder, setEditingOrder] = useState<Order | null>(null)
+    const [viewingOrder, setViewingOrder] = useState<Order | null>(null)
     const [newStatus, setNewStatus] = useState('')
 
     useEffect(() => {
@@ -79,8 +116,16 @@ export default function AdminOrdersPage() {
 
     const fetchOrders = async () => {
         try {
-            const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('created_at', 'desc')))
-            setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[])
+            const ordersSnap = await getDocs(collection(db, 'orders'))
+            const ordersData = ordersSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() })) as Order[]
+            // Sort client-side to avoid index requirement
+            ordersData.sort((a, b) => {
+                const dateA = 'toDate' in a.created_at ? a.created_at.toDate() : a.created_at
+                const dateB = 'toDate' in b.created_at ? b.created_at.toDate() : b.created_at
+                return dateB.getTime() - dateA.getTime()
+            })
+            setOrders(ordersData)
         } catch (error) {
             console.error('Error fetching orders:', error)
         }
@@ -102,6 +147,17 @@ export default function AdminOrdersPage() {
         return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
     }
 
+    const formatDateTime = (date: { toDate: () => Date } | Date) => {
+        const d = 'toDate' in date ? date.toDate() : date
+        return d.toLocaleString('en-IN', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    }
+
     const handleUpdateStatus = async () => {
         if (!editingOrder || !newStatus) return
 
@@ -120,8 +176,9 @@ export default function AdminOrdersPage() {
     }
 
     const filteredOrders = orders.filter(order => {
-        const matchesSearch = order.order_number.toLowerCase().includes(search.toLowerCase()) ||
-            order.shipping_address?.full_name?.toLowerCase().includes(search.toLowerCase())
+        const matchesSearch = order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
+            order.shipping_address?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+            order.user_email?.toLowerCase().includes(search.toLowerCase())
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter
         return matchesSearch && matchesStatus
     })
@@ -190,7 +247,7 @@ export default function AdminOrdersPage() {
                                     <TableHead>Total</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Date</TableHead>
-                                    <TableHead className="w-[100px]"></TableHead>
+                                    <TableHead className="w-[120px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -211,6 +268,14 @@ export default function AdminOrdersPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    onClick={() => setViewingOrder(order)}
+                                                >
+                                                    <Eye className="h-4 w-4 mr-1" />
+                                                    View
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
                                                     onClick={() => { setEditingOrder(order); setNewStatus(order.status); }}
                                                 >
                                                     Update
@@ -224,6 +289,151 @@ export default function AdminOrdersPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Order Details Sheet */}
+            <Sheet open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
+                <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+                    <SheetHeader>
+                        <SheetTitle className="flex items-center gap-2">
+                            <Package className="h-5 w-5" />
+                            Order {viewingOrder?.order_number}
+                        </SheetTitle>
+                    </SheetHeader>
+
+                    {viewingOrder && (
+                        <div className="space-y-6 mt-6">
+                            {/* Status & Payment */}
+                            <div className="flex flex-wrap gap-2">
+                                <Badge className={statusColors[viewingOrder.status] || 'bg-gray-100'}>
+                                    {viewingOrder.status}
+                                </Badge>
+                                <Badge className={paymentStatusColors[viewingOrder.payment_status] || 'bg-gray-100'}>
+                                    Payment: {viewingOrder.payment_status}
+                                </Badge>
+                            </div>
+
+                            {/* Order Info */}
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Calendar className="h-4 w-4" />
+                                    <span>{formatDateTime(viewingOrder.created_at)}</span>
+                                </div>
+                                {viewingOrder.payment_method && (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <CreditCard className="h-4 w-4" />
+                                        <span>{viewingOrder.payment_method}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Separator />
+
+                            {/* Shipping Address */}
+                            <div>
+                                <h4 className="font-medium mb-2 flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    Shipping Address
+                                </h4>
+                                <div className="text-sm text-muted-foreground space-y-1 pl-6">
+                                    <p className="font-medium text-foreground">{viewingOrder.shipping_address?.full_name}</p>
+                                    {viewingOrder.shipping_address?.phone && (
+                                        <p>{viewingOrder.shipping_address.phone}</p>
+                                    )}
+                                    {viewingOrder.shipping_address?.address_line1 && (
+                                        <p>{viewingOrder.shipping_address.address_line1}</p>
+                                    )}
+                                    {viewingOrder.shipping_address?.address_line2 && (
+                                        <p>{viewingOrder.shipping_address.address_line2}</p>
+                                    )}
+                                    <p>
+                                        {viewingOrder.shipping_address?.city}
+                                        {viewingOrder.shipping_address?.state && `, ${viewingOrder.shipping_address.state}`}
+                                        {viewingOrder.shipping_address?.postal_code && ` - ${viewingOrder.shipping_address.postal_code}`}
+                                    </p>
+                                    {viewingOrder.shipping_address?.country && (
+                                        <p>{viewingOrder.shipping_address.country}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Order Items */}
+                            <div>
+                                <h4 className="font-medium mb-3">Order Items</h4>
+                                <div className="space-y-3">
+                                    {viewingOrder.items?.map((item, index) => (
+                                        <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                            <div className="flex-1">
+                                                <p className="font-medium text-sm">{item.product_name}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Qty: {item.quantity} × {formatPrice(item.price)}
+                                                </p>
+                                            </div>
+                                            <p className="font-medium">
+                                                {formatPrice(item.quantity * item.price)}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Order Summary */}
+                            <div className="space-y-2 text-sm">
+                                {viewingOrder.subtotal && (
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Subtotal</span>
+                                        <span>{formatPrice(viewingOrder.subtotal)}</span>
+                                    </div>
+                                )}
+                                {viewingOrder.shipping_cost !== undefined && (
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Shipping</span>
+                                        <span>{viewingOrder.shipping_cost === 0 ? 'Free' : formatPrice(viewingOrder.shipping_cost)}</span>
+                                    </div>
+                                )}
+                                <Separator />
+                                <div className="flex justify-between font-bold text-base">
+                                    <span>Total</span>
+                                    <span style={{ color: settings.primary_color }}>
+                                        {formatPrice(viewingOrder.total)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            {viewingOrder.notes && (
+                                <>
+                                    <Separator />
+                                    <div>
+                                        <h4 className="font-medium mb-2">Order Notes</h4>
+                                        <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                                            {viewingOrder.notes}
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-4">
+                                <Button
+                                    className="flex-1"
+                                    onClick={() => {
+                                        setViewingOrder(null)
+                                        setEditingOrder(viewingOrder)
+                                        setNewStatus(viewingOrder.status)
+                                    }}
+                                    style={{ backgroundColor: settings.primary_color }}
+                                >
+                                    Update Status
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
 
             {/* Update Status Dialog */}
             <Dialog open={!!editingOrder} onOpenChange={() => setEditingOrder(null)}>

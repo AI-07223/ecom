@@ -8,6 +8,7 @@ import { WishlistProvider } from "@/providers/WishlistProvider";
 import { SiteSettingsProvider } from "@/providers/SiteSettingsProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,9 +34,10 @@ export default function RootLayout({
               <WishlistProvider>
                 <div className="min-h-screen flex flex-col">
                   <Navbar />
-                  <main className="flex-1">{children}</main>
+                  <main className="flex-1 pb-20 md:pb-0">{children}</main>
                   <Footer />
                 </div>
+                <MobileBottomNav />
                 <Toaster position="bottom-right" richColors />
               </WishlistProvider>
             </CartProvider>
@@ -45,3 +47,4 @@ export default function RootLayout({
     </html>
   );
 }
+
