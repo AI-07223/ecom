@@ -95,7 +95,7 @@ export function MobileBottomNav() {
                     className="flex-1 flex items-center overflow-x-auto scrollbar-hide scroll-smooth px-1"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {visibleItems.slice(0, 6).map((item) => {
+                    {visibleItems.map((item) => {
                         const active = isActive(item.href)
                         const badge = getBadge(item)
 
