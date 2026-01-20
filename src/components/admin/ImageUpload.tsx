@@ -2,10 +2,9 @@
 
 import { useState, useRef } from 'react'
 import Image from 'next/image'
-import { Upload, X, Loader2, ImagePlus } from 'lucide-react'
+import { X, Loader2, ImagePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { storage } from '@/lib/firebase/config'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 
 interface ImageUploadProps {
@@ -23,6 +22,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
     const [isUploading, setIsUploading] = useState(false)
     const [uploadProgress, setUploadProgress] = useState(0)
+    const [urlInput, setUrlInput] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +40,10 @@ export function ImageUpload({
         setUploadProgress(0)
 
         try {
+            // Dynamically import storage to prevent crashes if not configured
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
+            const { storage } = await import('@/lib/firebase/config')
+
             const uploadedUrls: string[] = []
 
             for (let i = 0; i < filesToUpload.length; i++) {
@@ -78,7 +82,7 @@ export function ImageUpload({
             }
         } catch (error) {
             console.error('Upload error:', error)
-            toast.error('Failed to upload images')
+            toast.error('Image upload failed. Please add image URL manually or enable Firebase Storage.')
         }
 
         setIsUploading(false)
@@ -90,20 +94,26 @@ export function ImageUpload({
         }
     }
 
-    const removeImage = async (indexToRemove: number) => {
-        const urlToRemove = value[indexToRemove]
+    const addUrlImage = () => {
+        if (!urlInput.trim()) return
 
-        // Try to delete from storage if it's a Firebase URL
-        if (urlToRemove.includes('firebasestorage.googleapis.com')) {
-            try {
-                const storageRef = ref(storage, urlToRemove)
-                await deleteObject(storageRef)
-            } catch (error) {
-                // Ignore errors - file might already be deleted
-                console.log('Could not delete from storage:', error)
-            }
+        if (value.length >= maxImages) {
+            toast.error(`Maximum ${maxImages} images allowed`)
+            return
         }
 
+        // Basic URL validation
+        try {
+            new URL(urlInput)
+            onChange([...value, urlInput.trim()])
+            setUrlInput('')
+            toast.success('Image added')
+        } catch {
+            toast.error('Please enter a valid URL')
+        }
+    }
+
+    const removeImage = (indexToRemove: number) => {
         onChange(value.filter((_, index) => index !== indexToRemove))
     }
 
@@ -151,7 +161,7 @@ export function ImageUpload({
                     >
                         <ImagePlus className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                         <p className="text-sm font-medium">
-                            Click to upload or drag and drop
+                            Click to upload images
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                             PNG, JPG, WEBP up to 5MB ({value.length}/{maxImages} images)
@@ -160,12 +170,25 @@ export function ImageUpload({
                 )}
             </div>
 
+            {/* URL Input Fallback */}
+            <div className="flex gap-2">
+                <Input
+                    placeholder="Or paste image URL here..."
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addUrlImage())}
+                />
+                <Button type="button" variant="outline" onClick={addUrlImage}>
+                    Add URL
+                </Button>
+            </div>
+
             {/* Image Preview Grid */}
             {value.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {value.map((url, index) => (
                         <div
-                            key={url}
+                            key={`${url}-${index}`}
                             className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
                         >
                             <Image
@@ -173,6 +196,7 @@ export function ImageUpload({
                                 alt={`Product image ${index + 1}`}
                                 fill
                                 className="object-cover"
+                                unoptimized
                             />
 
                             {/* Overlay with actions */}
@@ -222,7 +246,7 @@ export function ImageUpload({
             )}
 
             <p className="text-xs text-muted-foreground">
-                First image will be used as the product thumbnail. Drag to reorder.
+                First image will be used as the product thumbnail.
             </p>
         </div>
     )
