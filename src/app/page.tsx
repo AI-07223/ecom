@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { Product, Category } from '@/types/database.types'
 
@@ -43,32 +43,27 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch featured products
-        const productsQuery = query(
-          collection(db, 'products'),
-          where('is_active', '==', true),
-          where('is_featured', '==', true),
-          limit(10)
-        )
-        const productsSnap = await getDocs(productsQuery)
-        const products = productsSnap.docs.map(doc => ({
+        // Fetch all products and filter client-side to avoid composite index
+        const productsSnap = await getDocs(collection(db, 'products'))
+        const allProducts = productsSnap.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Product[]
-        setFeaturedProducts(products)
+        const featured = allProducts
+          .filter(p => p.is_active && p.is_featured)
+          .slice(0, 10)
+        setFeaturedProducts(featured)
 
-        // Fetch categories
-        const categoriesQuery = query(
-          collection(db, 'categories'),
-          where('is_active', '==', true),
-          orderBy('sort_order'),
-          limit(6)
-        )
-        const categoriesSnap = await getDocs(categoriesQuery)
-        const cats = categoriesSnap.docs.map(doc => ({
+        // Fetch all categories and filter/sort client-side
+        const categoriesSnap = await getDocs(collection(db, 'categories'))
+        const allCats = categoriesSnap.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Category[]
+        const cats = allCats
+          .filter(c => c.is_active)
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+          .slice(0, 6)
         setCategories(cats)
       } catch (error) {
         console.error('Error fetching data:', error)
