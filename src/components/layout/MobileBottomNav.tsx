@@ -153,41 +153,43 @@ export function MobileBottomNav() {
                         <SheetHeader className="pb-4">
                             <SheetTitle>Menu</SheetTitle>
                         </SheetHeader>
-                        <div className="grid grid-cols-4 gap-3 pb-8">
-                            {visibleItems.map((item) => {
-                                const active = isActive(item.href)
-                                const badge = getBadge(item)
+                        <div className="overflow-y-auto max-h-[calc(70vh-80px)] pb-8">
+                            <div className="grid grid-cols-4 gap-3 pb-safe">
+                                {visibleItems.map((item) => {
+                                    const active = isActive(item.href)
+                                    const badge = getBadge(item)
 
-                                return (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        onClick={() => setIsOpen(false)}
-                                        className={`
-                                            flex flex-col items-center justify-center 
-                                            p-4 rounded-2xl
-                                            transition-all duration-200
-                                            ${active
-                                                ? 'bg-primary text-primary-foreground shadow-lg'
-                                                : 'bg-muted/50 hover:bg-muted text-foreground'
-                                            }
-                                        `}
-                                    >
-                                        <div className="relative mb-1">
-                                            <item.icon className="h-6 w-6" />
-                                            {badge !== undefined && badge > 0 && (
-                                                <Badge
-                                                    className="absolute -top-2 -right-2 h-4 min-w-[16px] px-1 text-[10px]"
-                                                    variant={active ? "secondary" : "default"}
-                                                >
-                                                    {badge > 99 ? '99+' : badge}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <span className="text-xs font-medium">{item.label}</span>
-                                    </Link>
-                                )
-                            })}
+                                    return (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            onClick={() => setIsOpen(false)}
+                                            className={`
+                                                flex flex-col items-center justify-center 
+                                                p-4 rounded-2xl
+                                                transition-all duration-200
+                                                ${active
+                                                    ? 'bg-primary text-primary-foreground shadow-lg'
+                                                    : 'bg-muted/50 hover:bg-muted text-foreground'
+                                                }
+                                            `}
+                                        >
+                                            <div className="relative mb-1">
+                                                <item.icon className="h-6 w-6" />
+                                                {badge !== undefined && badge > 0 && (
+                                                    <Badge
+                                                        className="absolute -top-2 -right-2 h-4 min-w-[16px] px-1 text-[10px]"
+                                                        variant={active ? "secondary" : "default"}
+                                                    >
+                                                        {badge > 99 ? '99+' : badge}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <span className="text-xs font-medium">{item.label}</span>
+                                        </Link>
+                                    )
+                                })}
+                            </div>
                         </div>
                     </SheetContent>
                 </Sheet>

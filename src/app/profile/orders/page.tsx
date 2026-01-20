@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/AuthProvider'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 
 interface Order {
@@ -55,14 +55,19 @@ export default function OrdersPage() {
             try {
                 const ordersQuery = query(
                     collection(db, 'orders'),
-                    where('user_id', '==', user.uid),
-                    orderBy('created_at', 'desc')
+                    where('user_id', '==', user.uid)
                 )
                 const ordersSnap = await getDocs(ordersQuery)
                 const ordersList = ordersSnap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 })) as Order[]
+                // Sort client-side to avoid requiring composite index
+                ordersList.sort((a, b) => {
+                    const dateA = 'toDate' in a.created_at ? a.created_at.toDate() : a.created_at
+                    const dateB = 'toDate' in b.created_at ? b.created_at.toDate() : b.created_at
+                    return dateB.getTime() - dateA.getTime()
+                })
                 setOrders(ordersList)
             } catch (error) {
                 console.error('Error fetching orders:', error)

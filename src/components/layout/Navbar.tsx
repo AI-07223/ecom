@@ -2,11 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShoppingCart, Heart, User, Menu, Search, X } from 'lucide-react'
+import { ShoppingCart, Heart, User, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,7 +29,6 @@ export function Navbar() {
     const { user, profile, isAdmin, signOut } = useAuth()
     const { itemCount } = useCart()
     const { settings } = useSiteSettings()
-    const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
     const handleSearch = (e: React.FormEvent) => {
@@ -43,26 +41,27 @@ export function Navbar() {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <nav className="container mx-auto px-4">
-                <div className="flex h-16 items-center justify-between">
+                {/* Desktop Navigation */}
+                <div className="hidden md:flex h-16 items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2">
                         <span
                             className="text-2xl font-bold"
-                            style={{ color: 'var(--primary-color, #7c3aed)' }}
+                            style={{ color: settings.primary_color }}
                         >
                             {settings.site_name}
                         </span>
                     </Link>
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-6">
+                    {/* Desktop Nav Links */}
+                    <div className="flex items-center space-x-6">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
                                 className={`text-sm font-medium transition-colors hover:text-primary ${pathname === link.href
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground'
                                     }`}
                             >
                                 {link.label}
@@ -71,7 +70,7 @@ export function Navbar() {
                     </div>
 
                     {/* Search Bar - Desktop */}
-                    <div className="hidden md:flex flex-1 max-w-sm mx-6">
+                    <div className="flex-1 max-w-sm mx-6">
                         <form onSubmit={handleSearch} className="relative w-full">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -84,33 +83,21 @@ export function Navbar() {
                         </form>
                     </div>
 
-                    {/* Right Side Actions */}
+                    {/* Right Side Actions - Desktop */}
                     <div className="flex items-center space-x-2">
-                        {/* Mobile Search Toggle */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="md:hidden"
-                            onClick={() => setIsSearchOpen(!isSearchOpen)}
-                        >
-                            {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-                        </Button>
-
-                        {/* Wishlist */}
                         <Link href="/wishlist">
                             <Button variant="ghost" size="icon">
                                 <Heart className="h-5 w-5" />
                             </Button>
                         </Link>
 
-                        {/* Cart */}
                         <Link href="/cart" className="relative">
                             <Button variant="ghost" size="icon">
                                 <ShoppingCart className="h-5 w-5" />
                                 {itemCount > 0 && (
                                     <Badge
                                         className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                                        style={{ backgroundColor: 'var(--accent-color, #f59e0b)' }}
+                                        style={{ backgroundColor: settings.accent_color }}
                                     >
                                         {itemCount > 99 ? '99+' : itemCount}
                                     </Badge>
@@ -118,7 +105,6 @@ export function Navbar() {
                             </Button>
                         </Link>
 
-                        {/* User Menu */}
                         {user ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -161,62 +147,42 @@ export function Navbar() {
                                 </Button>
                             </Link>
                         )}
-
-                        {/* Mobile Menu */}
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="md:hidden">
-                                    <Menu className="h-5 w-5" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="right" className="w-72">
-                                <div className="flex flex-col space-y-4 mt-8">
-                                    {navLinks.map((link) => (
-                                        <Link
-                                            key={link.href}
-                                            href={link.href}
-                                            className={`text-lg font-medium transition-colors ${pathname === link.href
-                                                    ? 'text-primary'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    ))}
-                                    {user && isAdmin && (
-                                        <>
-                                            <div className="border-t pt-4">
-                                                <Link
-                                                    href="/profile/admin"
-                                                    className="text-lg font-medium text-primary"
-                                                >
-                                                    Admin Panel
-                                                </Link>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </SheetContent>
-                        </Sheet>
                     </div>
                 </div>
 
-                {/* Mobile Search Bar */}
-                {isSearchOpen && (
-                    <div className="md:hidden pb-4">
-                        <form onSubmit={handleSearch} className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                {/* Mobile Navigation - Clean minimal design */}
+                <div className="md:hidden flex h-14 items-center gap-2">
+                    {/* Logo - Left, can shrink but has min-width */}
+                    <Link href="/" className="flex-shrink-0 min-w-0">
+                        <span
+                            className="text-lg font-bold truncate block"
+                            style={{ color: settings.primary_color, maxWidth: '120px' }}
+                        >
+                            {settings.site_name}
+                        </span>
+                    </Link>
+
+                    {/* Search Bar - Fills remaining space */}
+                    <div className="flex-1 min-w-0">
+                        <form onSubmit={handleSearch} className="relative w-full">
+                            <Search
+                                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4"
+                                style={{ color: settings.accent_color }}
+                            />
                             <Input
                                 type="search"
-                                placeholder="Search products..."
-                                className="pl-10 pr-4"
+                                placeholder="Search..."
+                                className="h-9 pl-8 pr-3 text-sm rounded-full w-full"
+                                style={{
+                                    borderColor: `${settings.accent_color}40`,
+                                    backgroundColor: `${settings.accent_color}08`
+                                }}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                autoFocus
                             />
                         </form>
                     </div>
-                )}
+                </div>
             </nav>
         </header>
     )

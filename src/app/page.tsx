@@ -77,20 +77,25 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-700 text-white">
+      <section
+        className="relative overflow-hidden text-white"
+        style={{
+          background: `linear-gradient(135deg, ${settings.primary_color} 0%, ${settings.primary_color}dd 50%, ${settings.primary_color}bb 100%)`
+        }}
+      >
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="container mx-auto px-4 py-20 md:py-32 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
               Welcome to{' '}
-              <span className="text-amber-300">{settings.site_name}</span>
+              <span style={{ color: settings.accent_color }}>{settings.site_name}</span>
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-8">
               {settings.site_description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/products">
-                <Button size="lg" className="bg-white text-purple-700 hover:bg-gray-100">
+                <Button size="lg" className="bg-white hover:bg-gray-100" style={{ color: settings.primary_color }}>
                   Shop Now
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
