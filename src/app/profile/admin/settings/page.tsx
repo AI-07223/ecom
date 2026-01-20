@@ -2,15 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Loader2, Palette, Store, Mail, Globe } from 'lucide-react'
+import { Save, Loader2, Palette, Store, Mail, Globe, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useAuth } from '@/providers/AuthProvider'
-import { useSiteSettings } from '@/providers/SiteSettingsProvider'
+import { useSiteSettings, defaultSettings } from '@/providers/SiteSettingsProvider'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { toast } from 'sonner'
@@ -21,6 +32,7 @@ export default function AdminSettingsPage() {
     const { settings, refreshSettings } = useSiteSettings()
 
     const [isSaving, setIsSaving] = useState(false)
+    const [isResetting, setIsResetting] = useState(false)
     const [formData, setFormData] = useState({
         site_name: '',
         site_description: '',
@@ -114,6 +126,62 @@ export default function AdminSettingsPage() {
         }
 
         setIsSaving(false)
+    }
+
+    const handleResetToDefault = async () => {
+        setIsResetting(true)
+
+        try {
+            const settingsToSave = [
+                { id: 'site_name', value: defaultSettings.site_name },
+                { id: 'site_description', value: defaultSettings.site_description },
+                { id: 'logo_url', value: defaultSettings.logo_url },
+                { id: 'favicon_url', value: defaultSettings.favicon_url },
+                { id: 'primary_color', value: defaultSettings.primary_color },
+                { id: 'secondary_color', value: defaultSettings.secondary_color },
+                { id: 'accent_color', value: defaultSettings.accent_color },
+                { id: 'footer_text', value: defaultSettings.footer_text },
+                { id: 'contact_email', value: defaultSettings.contact_email },
+                { id: 'contact_phone', value: defaultSettings.contact_phone },
+                { id: 'currency', value: defaultSettings.currency },
+                { id: 'currency_symbol', value: defaultSettings.currency_symbol },
+                { id: 'social_links', value: defaultSettings.social_links },
+            ]
+
+            for (const setting of settingsToSave) {
+                await setDoc(doc(db, 'site_settings', setting.id), {
+                    value: setting.value,
+                    updated_at: serverTimestamp(),
+                })
+            }
+
+            // Update local form state
+            setFormData({
+                site_name: defaultSettings.site_name || '',
+                site_description: defaultSettings.site_description || '',
+                logo_url: defaultSettings.logo_url || '',
+                favicon_url: defaultSettings.favicon_url || '',
+                primary_color: defaultSettings.primary_color || '#7c3aed',
+                secondary_color: defaultSettings.secondary_color || '#a78bfa',
+                accent_color: defaultSettings.accent_color || '#f59e0b',
+                footer_text: defaultSettings.footer_text || '',
+                contact_email: defaultSettings.contact_email || '',
+                contact_phone: defaultSettings.contact_phone || '',
+                currency: defaultSettings.currency || 'INR',
+                currency_symbol: defaultSettings.currency_symbol || '₹',
+                facebook: defaultSettings.social_links?.facebook || '',
+                instagram: defaultSettings.social_links?.instagram || '',
+                twitter: defaultSettings.social_links?.twitter || '',
+            })
+
+            await refreshSettings()
+            toast.success('Settings reset to default successfully')
+        } catch (error) {
+            console.error('Error resetting settings:', error)
+            toast.error('Failed to reset settings')
+        }
+
+        setIsResetting(false)
     }
 
     if (authLoading || !isAdmin) {
@@ -363,11 +431,50 @@ export default function AdminSettingsPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Save Button */}
-                    <div className="flex justify-end">
+                    {/* Action Buttons */}
+                    <div className="flex justify-between">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={isResetting || isSaving}
+                                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                >
+                                    {isResetting ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Resetting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <RotateCcw className="h-4 w-4 mr-2" />
+                                            Reset to Default
+                                        </>
+                                    )}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Reset to Default Settings?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will reset all site settings to their default values. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleResetToDefault}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Reset to Default
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <Button
                             type="submit"
-                            disabled={isSaving}
+                            disabled={isSaving || isResetting}
                             style={{ backgroundColor: settings.primary_color }}
                         >
                             {isSaving ? (

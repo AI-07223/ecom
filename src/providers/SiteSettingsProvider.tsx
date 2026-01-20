@@ -11,7 +11,7 @@ interface SiteSettingsContextType {
     refreshSettings: () => Promise<void>
 }
 
-const defaultSettings: SiteSettings = {
+export const defaultSettings: SiteSettings = {
     site_name: 'Royal Store',
     site_description: 'Your one-stop shop for premium products',
     logo_url: '/logo.svg',
@@ -29,8 +29,35 @@ const defaultSettings: SiteSettings = {
 
 const SiteSettingsContext = createContext<SiteSettingsContextType | undefined>(undefined)
 
+const SETTINGS_CACHE_KEY = 'site_settings_cache'
+
+// Get cached settings from localStorage (runs synchronously before render)
+function getCachedSettings(): SiteSettings {
+    if (typeof window === 'undefined') return defaultSettings
+    try {
+        const cached = localStorage.getItem(SETTINGS_CACHE_KEY)
+        if (cached) {
+            return { ...defaultSettings, ...JSON.parse(cached) }
+        }
+    } catch (error) {
+        console.error('Error reading cached settings:', error)
+    }
+    return defaultSettings
+}
+
+// Save settings to localStorage
+function cacheSettings(settings: SiteSettings): void {
+    if (typeof window === 'undefined') return
+    try {
+        localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings))
+    } catch (error) {
+        console.error('Error caching settings:', error)
+    }
+}
+
 export function SiteSettingsProvider({ children }: { children: React.ReactNode }) {
-    const [settings, setSettings] = useState<SiteSettings>(defaultSettings)
+    // Initialize with cached settings for instant hydration
+    const [settings, setSettings] = useState<SiteSettings>(() => getCachedSettings())
     const [isLoading, setIsLoading] = useState(true)
 
     const fetchSettings = async () => {
@@ -44,7 +71,10 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
                     const data = doc.data()
                     settingsMap[doc.id] = data.value
                 })
-                setSettings({ ...defaultSettings, ...settingsMap } as SiteSettings)
+                const newSettings = { ...defaultSettings, ...settingsMap } as SiteSettings
+                setSettings(newSettings)
+                // Cache the fresh settings for next page load
+                cacheSettings(newSettings)
             }
         } catch (error) {
             console.error('Error fetching site settings:', error)
@@ -52,11 +82,18 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         setIsLoading(false)
     }
 
+    // Apply cached CSS variables immediately on mount (before Firebase fetch)
     useEffect(() => {
+        const cachedSettings = getCachedSettings()
+        document.documentElement.style.setProperty('--primary-color', cachedSettings.primary_color)
+        document.documentElement.style.setProperty('--secondary-color', cachedSettings.secondary_color)
+        document.documentElement.style.setProperty('--accent-color', cachedSettings.accent_color)
+
+        // Then fetch fresh settings from Firebase
         fetchSettings()
     }, [])
 
-    // Apply CSS variables for theming
+    // Update CSS variables when settings change
     useEffect(() => {
         if (!isLoading) {
             document.documentElement.style.setProperty('--primary-color', settings.primary_color)
