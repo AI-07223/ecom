@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useCart } from '@/providers/CartProvider'
 import { useAuth } from '@/providers/AuthProvider'
+import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 
 interface NavItem {
     href: string
@@ -45,6 +46,7 @@ export function MobileBottomNav() {
     const pathname = usePathname()
     const { itemCount } = useCart()
     const { isAdmin } = useAuth()
+    const { settings } = useSiteSettings()
     const scrollRef = useRef<HTMLDivElement>(null)
     const [showMoreButton, setShowMoreButton] = useState(true)
     const [isOpen, setIsOpen] = useState(false)
@@ -95,9 +97,10 @@ export function MobileBottomNav() {
                     className="flex-1 flex items-center overflow-x-auto scrollbar-hide scroll-smooth px-1"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {visibleItems.map((item) => {
+                    {visibleItems.map((item, index) => {
                         const active = isActive(item.href)
                         const badge = getBadge(item)
+                        const isAlternate = index % 2 === 1
 
                         return (
                             <Link
@@ -108,10 +111,17 @@ export function MobileBottomNav() {
                                     min-w-[64px] h-14 px-2 rounded-xl mx-0.5
                                     transition-all duration-200 ease-out
                                     ${active
-                                        ? 'text-primary bg-primary/10 scale-105'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                        ? 'text-primary scale-105'
+                                        : 'text-muted-foreground hover:text-foreground'
                                     }
                                 `}
+                                style={{
+                                    backgroundColor: active
+                                        ? `${settings.accent_color}15`
+                                        : isAlternate
+                                            ? `${settings.accent_color}08`
+                                            : 'transparent'
+                                }}
                             >
                                 <div className="relative">
                                     <item.icon className={`h-5 w-5 transition-transform ${active ? 'scale-110' : ''}`} />
@@ -155,9 +165,13 @@ export function MobileBottomNav() {
                         </SheetHeader>
                         <div className="overflow-y-auto max-h-[calc(70vh-80px)] pb-8">
                             <div className="grid grid-cols-4 gap-3 pb-safe">
-                                {visibleItems.map((item) => {
+                                {visibleItems.map((item, index) => {
                                     const active = isActive(item.href)
                                     const badge = getBadge(item)
+                                    // Create checkerboard pattern for 4-column grid
+                                    const row = Math.floor(index / 4)
+                                    const col = index % 4
+                                    const isAlternate = (row + col) % 2 === 1
 
                                     return (
                                         <Link
@@ -169,10 +183,17 @@ export function MobileBottomNav() {
                                                 p-4 rounded-2xl
                                                 transition-all duration-200
                                                 ${active
-                                                    ? 'bg-primary text-primary-foreground shadow-lg'
-                                                    : 'bg-muted/50 hover:bg-muted text-foreground'
+                                                    ? 'text-primary-foreground shadow-lg'
+                                                    : 'hover:opacity-80 text-foreground'
                                                 }
                                             `}
+                                            style={{
+                                                backgroundColor: active
+                                                    ? settings.accent_color
+                                                    : isAlternate
+                                                        ? `${settings.accent_color}15`
+                                                        : `${settings.accent_color}08`
+                                            }}
                                         >
                                             <div className="relative mb-1">
                                                 <item.icon className="h-6 w-6" />

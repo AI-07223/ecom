@@ -166,13 +166,13 @@ export function Navbar() {
                     <div className="flex-1 min-w-0">
                         <form onSubmit={handleSearch} className="relative w-full">
                             <Search
-                                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4"
                                 style={{ color: settings.accent_color }}
                             />
                             <Input
                                 type="search"
                                 placeholder="Search..."
-                                className="h-9 pl-8 pr-3 text-sm rounded-full w-full"
+                                className="h-9 pl-3 pr-8 text-sm rounded-full w-full"
                                 style={{
                                     borderColor: `${settings.accent_color}40`,
                                     backgroundColor: `${settings.accent_color}08`
