@@ -1,41 +1,135 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
+# Dependencies
+node_modules/
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp
+.pnp.js
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# testing
+# Testing
 /coverage
+.nyc_output
 
-# next.js
-/.next/
-/out/
-
-# production
+# Production
 /build
+/out
+/dist
+.next/
 
-# misc
+# Misc
 .DS_Store
 *.pem
+*.key
+*.cert
+*.crt
+Thumbs.db
 
-# debug
+# Debug
+npm-debug.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# vercel
-.vercel
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
 
-# typescript
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.DS_Store
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Next.js
+.next/
+out/
+.cache
+
+# Vercel
+.vercel
+
+# Local env files (but keep example files)
+.env.local
+.env.*.local
+
+# Keep service account keys out of version control (regenerate in deployment)
+*-firebase-adminsdk-*.json
+*-firebase-adminsdk-*.key
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Node modules cache
+.npm
+.eslintcache
+
+# Optional npm cache
+.npm
+
+# Yarn
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Bundle analysis
+.bundle-analyzer/
+
+# Generated files (if any)
+dist/
+build/

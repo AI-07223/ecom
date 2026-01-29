@@ -14,6 +14,7 @@ import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { toast } from 'sonner'
+import { SavedAddress } from '@/types/database.types'
 
 export default function SettingsPage() {
     const router = useRouter()
@@ -21,6 +22,7 @@ export default function SettingsPage() {
     const { settings } = useSiteSettings()
 
     const [isSaving, setIsSaving] = useState(false)
+    const [editingAddressId, setEditingAddressId] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
@@ -51,6 +53,55 @@ export default function SettingsPage() {
         }
     }, [profile])
 
+    const savedAddresses: SavedAddress[] = profile?.saved_addresses || []
+
+    const handleDeleteAddress = async (id: string) => {
+        if (!user) return
+        try {
+            const newAddrs = (profile?.saved_addresses || []).filter(a => a.id !== id)
+            await updateDoc(doc(db, 'profiles', user.uid), {
+                saved_addresses: newAddrs,
+                updated_at: serverTimestamp(),
+            })
+            await refreshProfile()
+            toast.success('Address deleted')
+        } catch (error) {
+            console.error('Error deleting address:', error)
+            toast.error('Failed to delete address')
+        }
+    }
+
+    const handleSetDefault = async (id: string) => {
+        if (!user) return
+        try {
+            const newAddrs = (profile?.saved_addresses || []).map(a => ({ ...a, is_default: a.id === id }))
+            await updateDoc(doc(db, 'profiles', user.uid), {
+                saved_addresses: newAddrs,
+                updated_at: serverTimestamp(),
+            })
+            await refreshProfile()
+            toast.success('Default address set')
+        } catch (error) {
+            console.error('Error setting default address:', error)
+            toast.error('Failed to set default address')
+        }
+    }
+
+    const handleEditAddress = (addr: SavedAddress) => {
+        setEditingAddressId(addr.id)
+        setFormData(prev => ({
+            ...prev,
+            full_name: addr.full_name,
+            phone: addr.phone,
+            street: addr.street,
+            city: addr.city,
+            state: addr.state,
+            postal_code: addr.postal_code,
+            country: addr.country || 'India',
+        }))
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData(prev => ({
             ...prev,
@@ -67,18 +118,39 @@ export default function SettingsPage() {
 
         try {
             const profileRef = doc(db, 'profiles', user.uid)
-            await updateDoc(profileRef, {
-                full_name: formData.full_name,
-                phone: formData.phone,
-                address: {
+
+            // If editing an existing saved address, update saved_addresses array
+            if (editingAddressId) {
+                const newAddrs = (profile?.saved_addresses || []).map(a => a.id === editingAddressId ? {
+                    ...a,
+                    full_name: formData.full_name,
+                    phone: formData.phone,
                     street: formData.street,
                     city: formData.city,
                     state: formData.state,
                     postal_code: formData.postal_code,
                     country: formData.country,
-                },
-                updated_at: serverTimestamp(),
-            })
+                } : a)
+
+                await updateDoc(profileRef, {
+                    saved_addresses: newAddrs,
+                    updated_at: serverTimestamp(),
+                })
+                setEditingAddressId(null)
+            } else {
+                await updateDoc(profileRef, {
+                    full_name: formData.full_name,
+                    phone: formData.phone,
+                    address: {
+                        street: formData.street,
+                        city: formData.city,
+                        state: formData.state,
+                        postal_code: formData.postal_code,
+                        country: formData.country,
+                    },
+                    updated_at: serverTimestamp(),
+                })
+            }
 
             await refreshProfile()
             toast.success('Profile updated successfully')
@@ -108,6 +180,37 @@ export default function SettingsPage() {
             </nav>
 
             <h1 className="text-2xl font-bold mb-8">Account Settings</h1>
+
+            {savedAddresses.length > 0 && (
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle>Saved Addresses</CardTitle>
+                        <CardDescription>Manage your saved shipping addresses</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                            {savedAddresses.map((addr) => (
+                                <div key={addr.id} className="p-4 rounded border">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <p className="font-medium">{addr.label} {addr.is_default && <span className="text-xs text-primary">(Default)</span>}</p>
+                                            <p className="text-sm">{addr.full_name}</p>
+                                            <p className="text-xs text-muted-foreground">{addr.street}, {addr.city}</p>
+                                            <p className="text-xs text-muted-foreground">{addr.state} - {addr.postal_code}</p>
+                                            <p className="text-xs text-muted-foreground">{addr.phone}</p>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <Button size="sm" variant="ghost" onClick={() => handleEditAddress(addr)}>Edit</Button>
+                                            <Button size="sm" variant="ghost" onClick={() => handleSetDefault(addr.id)}>Set Default</Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleDeleteAddress(addr.id)}>Delete</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="max-w-2xl space-y-6">

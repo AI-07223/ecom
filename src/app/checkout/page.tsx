@@ -1,352 +1,707 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { ArrowLeft, CreditCard, Truck, Shield, CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { useCart } from '@/providers/CartProvider'
-import { useSiteSettings } from '@/providers/SiteSettingsProvider'
-import { useAuth } from '@/providers/AuthProvider'
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
-import { toast } from 'sonner'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  ArrowLeft,
+  CreditCard,
+  Truck,
+  Shield,
+  MapPin,
+  Plus,
+  Check,
+  Building2,
+  Banknote,
+  Smartphone,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useCart } from "@/providers/CartProvider";
+import { useSiteSettings } from "@/providers/SiteSettingsProvider";
+import { useAuth } from "@/providers/AuthProvider";
+import {
+  doc,
+  updateDoc,
+  serverTimestamp,
+  arrayUnion,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { toast } from "sonner";
+import { SavedAddress } from "@/types/database.types";
+import { createOrder } from "@/app/actions/order";
+import { CheckoutSchema } from "@/lib/validations/checkout";
 
 export default function CheckoutPage() {
-    const router = useRouter()
-    const { user, profile } = useAuth()
-    const { items, subtotal, clearCart } = useCart()
-    const { settings } = useSiteSettings()
+  const router = useRouter();
+  const { user, profile, refreshProfile } = useAuth();
+  const {
+    items,
+    subtotal,
+    clearCart,
+    appliedCoupon,
+    discountAmount,
+    removeCoupon,
+  } = useCart();
+  const { settings } = useSiteSettings();
 
-    const [isProcessing, setIsProcessing] = useState(false)
-    const [formData, setFormData] = useState({
-        fullName: profile?.full_name || '',
-        email: user?.email || '',
-        phone: profile?.phone || '',
-        address: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: 'India',
-    })
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null,
+  );
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [saveAddress, setSaveAddress] = useState(true);
+  const [addressLabel, setAddressLabel] = useState("Home");
+  const [gstNumber, setGstNumber] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod");
 
-    const formatPrice = (price: number) => {
-        return `${settings.currency_symbol}${price.toLocaleString('en-IN')}`
+  const [formData, setFormData] = useState({
+    fullName: profile?.full_name || "",
+    email: user?.email || "",
+    phone: profile?.phone || "",
+    address: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "India",
+  });
+
+  // Get saved addresses from profile
+  const savedAddresses = profile?.saved_addresses || [];
+
+  // Auto-select default address or first address on load
+  useEffect(() => {
+    if (
+      savedAddresses.length > 0 &&
+      !selectedAddressId &&
+      !showNewAddressForm
+    ) {
+      const defaultAddr = savedAddresses.find((a) => a.is_default);
+      setSelectedAddressId(defaultAddr?.id || savedAddresses[0].id);
+    } else if (savedAddresses.length === 0) {
+      setShowNewAddressForm(true);
     }
+  }, [savedAddresses, selectedAddressId, showNewAddressForm]);
 
-    const shipping = subtotal >= 999 ? 0 : 99
-    const total = subtotal + shipping
+  const formatPrice = (price: number) => {
+    return `${settings.currency_symbol}${price.toLocaleString("en-IN")}`;
+  };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }))
+  const shipping = subtotal >= 999 ? 0 : 99;
+  const discount = discountAmount;
+  const total = subtotal - discount + shipping;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const getShippingAddress = () => {
+    if (selectedAddressId && !showNewAddressForm) {
+      const addr = savedAddresses.find((a) => a.id === selectedAddressId);
+      if (addr) {
+        return {
+          full_name: addr.full_name,
+          phone: addr.phone,
+          address: addr.street,
+          city: addr.city,
+          state: addr.state,
+          postal_code: addr.postal_code,
+          country: addr.country,
+        };
+      }
     }
+    return {
+      full_name: formData.fullName,
+      phone: formData.phone,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      postal_code: formData.postalCode,
+      country: formData.country,
+    };
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-
-        if (!user) {
-            toast.error('Please sign in to place an order')
-            return
-        }
-
-        if (items.length === 0) {
-            toast.error('Your cart is empty')
-            return
-        }
-
-        setIsProcessing(true)
-
-        try {
-            // Create order
-            const orderId = `ORD-${Date.now()}`
-            const orderRef = doc(db, 'orders', orderId)
-
-            await setDoc(orderRef, {
-                user_id: user.uid,
-                order_number: orderId,
-                status: 'pending',
-                payment_status: 'pending',
-                subtotal,
-                shipping,
-                discount: 0,
-                total,
-                shipping_address: {
-                    full_name: formData.fullName,
-                    phone: formData.phone,
-                    address: formData.address,
-                    city: formData.city,
-                    state: formData.state,
-                    postal_code: formData.postalCode,
-                    country: formData.country,
-                },
-                items: items.map(item => ({
-                    product_id: item.product_id,
-                    product_name: item.product.name,
-                    product_image: item.product.thumbnail,
-                    quantity: item.quantity,
-                    price: item.product.price,
-                    total: item.product.price * item.quantity,
-                })),
-                created_at: serverTimestamp(),
-                updated_at: serverTimestamp(),
-            })
-
-            // Clear cart
-            await clearCart()
-
-            toast.success('Order placed successfully!')
-            router.push(`/profile/orders/${orderId}`)
-        } catch (error) {
-            console.error('Error placing order:', error)
-            toast.error('Failed to place order. Please try again.')
-        }
-
-        setIsProcessing(false)
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (!user) {
-        return (
-            <div className="container mx-auto px-4 py-16 text-center">
-                <h1 className="text-2xl font-bold mb-4">Please Sign In</h1>
-                <p className="text-muted-foreground mb-6">
-                    You need to be signed in to checkout.
-                </p>
-                <Link href="/login?redirect=/checkout">
-                    <Button style={{ backgroundColor: settings.primary_color }}>
-                        Sign In
-                    </Button>
-                </Link>
-            </div>
-        )
+      toast.error("Please sign in to place an order");
+      return;
     }
 
     if (items.length === 0) {
-        return (
-            <div className="container mx-auto px-4 py-16 text-center">
-                <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
-                <p className="text-muted-foreground mb-6">
-                    Add some items to your cart before checking out.
-                </p>
-                <Link href="/products">
-                    <Button style={{ backgroundColor: settings.primary_color }}>
-                        Browse Products
-                    </Button>
-                </Link>
-            </div>
-        )
+      toast.error("Your cart is empty");
+      return;
     }
 
+    const shippingAddress = getShippingAddress();
+
+    // Validate address and GST using Zod
+    const parsed = CheckoutSchema.safeParse({
+      shipping_address: shippingAddress,
+      gst_number: gstNumber.trim() || null,
+    });
+    if (!parsed.success) {
+      const firstError =
+        parsed.error.issues?.[0]?.message ||
+        "Please fill in valid address fields";
+      toast.error(firstError);
+      setIsProcessing(false);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Save new address to profile if requested
+      if (showNewAddressForm && saveAddress) {
+        const newAddress: SavedAddress = {
+          id: `addr_${Date.now()}`,
+          label: addressLabel,
+          full_name: formData.fullName,
+          phone: formData.phone,
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          postal_code: formData.postalCode,
+          country: formData.country,
+          is_default: savedAddresses.length === 0,
+        };
+
+        await updateDoc(doc(db, "profiles", user.uid), {
+          saved_addresses: arrayUnion(newAddress),
+          updated_at: serverTimestamp(),
+        });
+      }
+
+      // Create order using Server Action (validates prices server-side + decrements stock)
+      const result = await createOrder({
+        user_id: user.uid,
+        items: items.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        })),
+        shipping_address: shippingAddress,
+        coupon_code: appliedCoupon?.code || null,
+        gst_number: gstNumber.trim() || null,
+        payment_method: paymentMethod,
+      });
+
+      if (!result.success) {
+        toast.error(result.error || "Failed to place order");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Clear cart and coupon
+      await clearCart();
+      removeCoupon();
+
+      // Refresh profile to get updated addresses
+      await refreshProfile();
+
+      toast.success("Order placed successfully!");
+      router.push(`/profile/orders/${result.order_id}`);
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order. Please try again.");
+    }
+
+    setIsProcessing(false);
+  };
+
+  if (!user) {
     return (
-        <div className="container mx-auto px-4 py-8">
-            <Link href="/cart" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Cart
-            </Link>
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold mb-4">Please Sign In</h1>
+        <p className="text-muted-foreground mb-6">
+          You need to be signed in to checkout.
+        </p>
+        <Link href="/login?redirect=/checkout">
+          <Button style={{ backgroundColor: settings.primary_color }}>
+            Sign In
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
-            <h1 className="text-2xl font-bold mb-8">Checkout</h1>
+  if (items.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
+        <p className="text-muted-foreground mb-6">
+          Add some items to your cart before checking out.
+        </p>
+        <Link href="/products">
+          <Button style={{ backgroundColor: settings.primary_color }}>
+            Browse Products
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
-            <form onSubmit={handleSubmit}>
-                <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Shipping Form */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Truck className="h-5 w-5" />
-                                    Shipping Address
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2 sm:col-span-1">
-                                        <Label htmlFor="fullName">Full Name</Label>
-                                        <Input
-                                            id="fullName"
-                                            name="fullName"
-                                            value={formData.fullName}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="col-span-2 sm:col-span-1">
-                                        <Label htmlFor="phone">Phone</Label>
-                                        <Input
-                                            id="phone"
-                                            name="phone"
-                                            type="tel"
-                                            value={formData.phone}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Link
+        href="/cart"
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Cart
+      </Link>
 
-                                <div>
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
+      <h1 className="text-2xl font-bold mb-8">Checkout</h1>
 
-                                <div>
-                                    <Label htmlFor="address">Street Address</Label>
-                                    <Input
-                                        id="address"
-                                        name="address"
-                                        value={formData.address}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Shipping Form */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Saved Addresses */}
+            {savedAddresses.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Saved Addresses
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        key={addr.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedAddressId(addr.id);
+                          setShowNewAddressForm(false);
+                        }}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          selectedAddressId === addr.id && !showNewAddressForm
+                            ? "border-primary bg-primary/5"
+                            : "border-muted hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted">
+                              {addr.label}
+                            </span>
+                            {addr.is_default && (
+                              <span className="text-xs text-primary font-medium">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          {selectedAddressId === addr.id &&
+                            !showNewAddressForm && (
+                              <Check className="h-5 w-5 text-primary" />
+                            )}
+                        </div>
+                        <p className="font-medium text-sm">{addr.full_name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {addr.street}, {addr.city}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {addr.state} - {addr.postal_code}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {addr.phone}
+                        </p>
+                      </button>
+                    ))}
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="city">City</Label>
-                                        <Input
-                                            id="city"
-                                            name="city"
-                                            value={formData.city}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="state">State</Label>
-                                        <Input
-                                            id="state"
-                                            name="state"
-                                            value={formData.state}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                    {/* Add New Address Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewAddressForm(true);
+                        setSelectedAddressId(null);
+                      }}
+                      className={`p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all min-h-[140px] ${
+                        showNewAddressForm
+                          ? "border-primary bg-primary/5"
+                          : "border-muted hover:border-primary/50"
+                      }`}
+                    >
+                      <Plus className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        Add New Address
+                      </span>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="postalCode">Postal Code</Label>
-                                        <Input
-                                            id="postalCode"
-                                            name="postalCode"
-                                            value={formData.postalCode}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="country">Country</Label>
-                                        <Input
-                                            id="country"
-                                            name="country"
-                                            value={formData.country}
-                                            disabled
-                                        />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Payment - Placeholder for now */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <CreditCard className="h-5 w-5" />
-                                    Payment Method
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="p-4 bg-muted rounded-lg text-center">
-                                    <p className="text-sm text-muted-foreground">
-                                        Cash on Delivery (COD) is available for this order.
-                                    </p>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        Online payment options coming soon!
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
+            {/* New Address Form */}
+            {(showNewAddressForm || savedAddresses.length === 0) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    {savedAddresses.length > 0
+                      ? "New Shipping Address"
+                      : "Shipping Address"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {savedAddresses.length > 0 && (
+                    <div className="flex items-center gap-4 pb-4 border-b">
+                      <div className="flex-1">
+                        <Label htmlFor="addressLabel">Address Label</Label>
+                        <Input
+                          id="addressLabel"
+                          value={addressLabel}
+                          onChange={(e) => setAddressLabel(e.target.value)}
+                          placeholder="e.g., Home, Office, Warehouse"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 pt-6">
+                        <Checkbox
+                          id="saveAddress"
+                          checked={saveAddress}
+                          onCheckedChange={(checked) =>
+                            setSaveAddress(checked === true)
+                          }
+                        />
+                        <Label htmlFor="saveAddress" className="text-sm">
+                          Save this address
+                        </Label>
+                      </div>
                     </div>
+                  )}
 
-                    {/* Order Summary */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 sm:col-span-1">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <Card className="sticky top-24">
-                            <CardHeader>
-                                <CardTitle>Order Summary</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* Items */}
-                                <div className="space-y-3 max-h-64 overflow-y-auto">
-                                    {items.map((item) => (
-                                        <div key={item.id} className="flex gap-3">
-                                            <div className="relative w-16 h-16 rounded bg-muted shrink-0">
-                                                <Image
-                                                    src={item.product.thumbnail || '/placeholder.png'}
-                                                    alt={item.product.name}
-                                                    fill
-                                                    className="object-cover rounded"
-                                                />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium line-clamp-1">{item.product.name}</p>
-                                                <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                                                <p className="text-sm font-medium">{formatPrice(item.product.price * item.quantity)}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Subtotal</span>
-                                        <span>{formatPrice(subtotal)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Shipping</span>
-                                        <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
-                                    </div>
-                                </div>
-
-                                <Separator />
-
-                                <div className="flex justify-between font-semibold text-lg">
-                                    <span>Total</span>
-                                    <span style={{ color: settings.primary_color }}>{formatPrice(total)}</span>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full"
-                                    size="lg"
-                                    style={{ backgroundColor: settings.primary_color }}
-                                    disabled={isProcessing}
-                                >
-                                    {isProcessing ? 'Processing...' : 'Place Order'}
-                                </Button>
-
-                                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                                    <Shield className="h-3 w-3" />
-                                    Secure checkout
-                                </div>
-                            </CardContent>
-                        </Card>
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
+                    <div>
+                      <Label htmlFor="state">State</Label>
+                      <Input
+                        id="state"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="postalCode">Postal Code</Label>
+                      <Input
+                        id="postalCode"
+                        name="postalCode"
+                        value={formData.postalCode}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        name="country"
+                        value={formData.country}
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  {savedAddresses.length === 0 && (
+                    <div className="flex items-center gap-2 pt-2">
+                      <Checkbox
+                        id="saveAddressFirst"
+                        checked={saveAddress}
+                        onCheckedChange={(checked) =>
+                          setSaveAddress(checked === true)
+                        }
+                      />
+                      <Label htmlFor="saveAddressFirst" className="text-sm">
+                        Save this address for future orders
+                      </Label>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* GST Number (Optional) */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Business Details
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (Optional)
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <Label htmlFor="gstNumber">GST Number</Label>
+                  <Input
+                    id="gstNumber"
+                    value={gstNumber}
+                    onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                    placeholder="e.g., 22AAAAA0000A1Z5"
+                    className="mt-1 uppercase"
+                    maxLength={15}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter your GST number if you need a GST invoice
+                  </p>
                 </div>
-            </form>
+              </CardContent>
+            </Card>
+
+            {/* Payment Method Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment Method
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* COD Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`w-full p-4 rounded-lg border-2 text-left transition-all flex items-center gap-4 ${
+                    paymentMethod === "cod"
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      paymentMethod === "cod"
+                        ? "bg-primary text-white"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <Banknote className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Cash on Delivery</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pay when you receive your order
+                    </p>
+                  </div>
+                  {paymentMethod === "cod" && (
+                    <Check className="h-5 w-5 text-primary" />
+                  )}
+                </button>
+
+                {/* Online Payment Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("online")}
+                  className={`w-full p-4 rounded-lg border-2 text-left transition-all flex items-center gap-4 ${
+                    paymentMethod === "online"
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-primary/50"
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      paymentMethod === "online"
+                        ? "bg-primary text-white"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">UPI / Card / Net Banking</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pay securely online
+                    </p>
+                  </div>
+                  {paymentMethod === "online" && (
+                    <Check className="h-5 w-5 text-primary" />
+                  )}
+                </button>
+
+                {paymentMethod === "online" && (
+                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800 font-medium">
+                      Online Payment Coming Soon!
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      We&apos;re integrating Razorpay for secure online
+                      payments. For now, please use Cash on Delivery.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Order Summary */}
+          <div>
+            <Card className="sticky top-24">
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Items */}
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex gap-3">
+                      <div className="relative w-16 h-16 rounded bg-muted shrink-0">
+                        <Image
+                          src={item.product.thumbnail || "/placeholder.png"}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">
+                          {item.product.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Qty: {item.quantity}
+                        </p>
+                        <p className="text-sm font-medium">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="flex items-center gap-1">
+                        Discount
+                        {appliedCoupon && (
+                          <span className="text-xs bg-green-100 px-1.5 py-0.5 rounded">
+                            {appliedCoupon.code}
+                          </span>
+                        )}
+                      </span>
+                      <span>-{formatPrice(discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Shipping</span>
+                    <span>
+                      {shipping === 0 ? "Free" : formatPrice(shipping)}
+                    </span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-between font-semibold text-lg">
+                  <span>Total</span>
+                  <span style={{ color: settings.primary_color }}>
+                    {formatPrice(total)}
+                  </span>
+                </div>
+
+                {gstNumber && (
+                  <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                    GST Invoice will be generated for:{" "}
+                    <span className="font-mono">{gstNumber}</span>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  style={{ backgroundColor: settings.primary_color }}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "Processing..." : "Place Order"}
+                </Button>
+
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Shield className="h-3 w-3" />
+                  Secure checkout
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-    )
+      </form>
+    </div>
+  );
 }

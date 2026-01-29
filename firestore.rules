@@ -1,85 +1,136 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     // Helper function to check if user owns the document
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
-    
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+    }
+
+    // Helper function to check if user is wholeseller
+    function isWholeseller() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_wholeseller == true;
+    }
+
+    // Helper function to validate profile data
+    function isValidProfile(profile) {
+      return profile.keys().hasAll(['id', 'email', 'is_admin', 'is_wholeseller']) &&
+             profile.id is string &&
+             profile.email is string &&
+             profile.is_admin is bool &&
+             profile.is_wholeseller is bool;
+    }
+
     // Profiles collection
     match /profiles/{userId} {
-      // Anyone authenticated can read profiles (needed for admin check)
-      allow read: if isAuthenticated();
-      // Users can create their own profile
-      allow create: if isOwner(userId);
-      // Users can update their own profile
-      allow update: if isOwner(userId);
-      // Admins can update any profile (for toggling admin status)
-      allow update: if isAuthenticated() && 
-                       get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+      // Users can read their own profile, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Users can create their own profile with valid data
+      allow create: if isOwner(userId) &&
+                       isValidProfile(request.resource.data) &&
+                       request.resource.data.is_admin == false &&
+                       request.resource.data.is_wholeseller == false; // New users can't be admins or wholesellers
+
+      // Users can update their own profile (except is_admin and is_wholeseller fields)
+      allow update: if isOwner(userId) &&
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['is_admin', 'is_wholeseller']));
+
+      // Admins can update any profile (for toggling admin/wholeseller status)
+      allow update: if isAdmin();
     }
-    
+
     // Categories collection
     match /categories/{categoryId} {
       // Anyone can read categories
       allow read: if true;
-      // Authenticated users with is_admin can write
-      allow create, update, delete: if isAuthenticated() && 
-                                       get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+
+      // Admins can write
+      allow create, update, delete: if isAdmin();
     }
-    
+
     // Products collection
     match /products/{productId} {
       // Anyone can read products
       allow read: if true;
-      // Authenticated users with is_admin can write
-      allow create, update, delete: if isAuthenticated() && 
-                                       get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+
+      // Admins can write
+      allow create, update, delete: if isAdmin();
     }
-    
+
     // User-specific cart items
     match /users/{userId}/cart/{itemId} {
       allow read, write: if isOwner(userId);
     }
-    
+
     // User-specific wishlist items
     match /users/{userId}/wishlist/{itemId} {
       allow read, write: if isOwner(userId);
     }
-    
+
     // Orders collection
     match /orders/{orderId} {
-      // Users can read their own orders, admins can read all
-      allow read: if isAuthenticated();
-      // Users can create orders
-      allow create: if isAuthenticated();
+      // Users can read only their OWN orders, admins can read all
+      allow read: if isAuthenticated() &&
+                     (resource.data.user_id == request.auth.uid || isAdmin());
+
+      // Users can create orders (only their own)
+      allow create: if isAuthenticated() &&
+                       request.resource.data.user_id == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['user_id', 'items', 'total', 'shipping_address']);
+
       // Admins can update/delete orders
-      allow update, delete: if isAuthenticated() && 
-                               get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+      allow update, delete: if isAdmin();
     }
-    
+
     // Coupons collection
     match /coupons/{couponId} {
       // Anyone can read coupons
       allow read: if true;
+
       // Admins can manage coupons
-      allow create, update, delete: if isAuthenticated() && 
-                                       get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+      allow create, update, delete: if isAdmin();
     }
-    
+
     // Site settings collection
     match /site_settings/{settingId} {
       // Anyone can read site settings
       allow read: if true;
-      // Admins can update site settings
-      allow create, update, delete: if isAuthenticated() && 
-                                       get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+
+      // Admins can manage site settings
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Item requests collection
+    match /item_requests/{requestId} {
+      // Users can read their own requests
+      allow read: if isAuthenticated() &&
+                     (resource.data.user_id == request.auth.uid || isAdmin());
+
+      // Wholesellers can create requests (only their own)
+      allow create: if isWholeseller() &&
+                       request.resource.data.user_id == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['user_id', 'item_name']);
+
+      // Users can delete their own pending requests
+      allow delete: if isAuthenticated() &&
+                       resource.data.user_id == request.auth.uid &&
+                       resource.data.status == 'pending';
+
+      // Admins can update/delete any request
+      allow update, delete: if isAdmin();
     }
   }
 }

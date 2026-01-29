@@ -25,13 +25,24 @@ interface Coupon {
 }
 
 export default function CartPage() {
-    const { items, itemCount, subtotal, isLoading, updateQuantity, removeFromCart, clearCart } = useCart()
+    const {
+        items,
+        itemCount,
+        subtotal,
+        isLoading,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        appliedCoupon,
+        discountAmount,
+        applyCoupon: setAppliedCouponInContext,
+        removeCoupon: removeCouponFromContext
+    } = useCart()
     const { settings } = useSiteSettings()
     const { user } = useAuth()
 
-    // Coupon state
+    // Coupon UI state (only for input handling)
     const [couponCode, setCouponCode] = useState('')
-    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
     const [couponLoading, setCouponLoading] = useState(false)
     const [couponError, setCouponError] = useState('')
 
@@ -39,7 +50,7 @@ export default function CartPage() {
         return `${settings.currency_symbol}${price.toLocaleString('en-IN')}`
     }
 
-    const applyCoupon = async () => {
+    const handleApplyCoupon = async () => {
         if (!couponCode.trim()) {
             setCouponError('Please enter a coupon code')
             return
@@ -75,7 +86,8 @@ export default function CartPage() {
                 return
             }
 
-            setAppliedCoupon(couponData)
+            // Store in cart context so it persists to checkout
+            setAppliedCouponInContext(couponData)
             setCouponCode('')
             toast.success('Coupon applied successfully!')
         } catch (error) {
@@ -85,18 +97,10 @@ export default function CartPage() {
         setCouponLoading(false)
     }
 
-    const removeCoupon = () => {
-        setAppliedCoupon(null)
+    const handleRemoveCoupon = () => {
+        removeCouponFromContext()
         setCouponError('')
         toast.success('Coupon removed')
-    }
-
-    const calculateDiscount = () => {
-        if (!appliedCoupon) return 0
-        if (appliedCoupon.discount_type === 'percentage') {
-            return Math.round(subtotal * (appliedCoupon.discount_value / 100))
-        }
-        return appliedCoupon.discount_value
     }
 
     if (!user) {
@@ -150,7 +154,7 @@ export default function CartPage() {
         )
     }
 
-    const discount = calculateDiscount()
+    const discount = discountAmount
     const shipping = subtotal >= 999 ? 0 : 99
     const total = subtotal - discount + shipping
 
@@ -274,7 +278,7 @@ export default function CartPage() {
                                             variant="ghost"
                                             size="sm"
                                             className="h-6 w-6 p-0 text-green-700 hover:text-red-500"
-                                            onClick={removeCoupon}
+                                            onClick={handleRemoveCoupon}
                                         >
                                             <X className="h-4 w-4" />
                                         </Button>
@@ -294,7 +298,7 @@ export default function CartPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={applyCoupon}
+                                                onClick={handleApplyCoupon}
                                                 disabled={couponLoading}
                                                 className="h-9"
                                             >

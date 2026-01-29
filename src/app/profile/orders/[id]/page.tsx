@@ -32,6 +32,8 @@ interface Order {
     subtotal: number
     shipping: number
     discount: number
+    coupon_code?: string | null
+    gst_number?: string | null
     total: number
     shipping_address: {
         full_name: string
@@ -182,8 +184,8 @@ export default function OrderDetailPage() {
                                         <div key={step} className="flex flex-col items-center flex-1">
                                             <div
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${index <= currentStepIndex
-                                                        ? 'bg-green-500 text-white'
-                                                        : 'bg-muted text-muted-foreground'
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-muted text-muted-foreground'
                                                     }`}
                                             >
                                                 {index + 1}
@@ -290,10 +292,20 @@ export default function OrderDetailPage() {
                                 <span style={{ color: settings.primary_color }}>{formatPrice(order.total)}</span>
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-4 space-y-2">
                                 <p className="text-sm text-muted-foreground">
                                     Payment: <span className="capitalize">{order.payment_status}</span>
                                 </p>
+                                {order.coupon_code && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Coupon: <span className="font-mono bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs">{order.coupon_code}</span>
+                                    </p>
+                                )}
+                                {order.gst_number && (
+                                    <p className="text-sm text-muted-foreground">
+                                        GST: <span className="font-mono">{order.gst_number}</span>
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

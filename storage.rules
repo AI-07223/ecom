@@ -1,30 +1,49 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow authenticated users to read all files
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() &&
+        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+    }
+
+    // Helper function to validate image
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 && // 5MB max
+             request.resource.contentType.matches('image/.*');
+    }
+
+    // Allow public read access to all files
     match /{allPaths=**} {
       allow read: if true;
     }
-    
-    // Allow authenticated users to upload to products folder
+
+    // Products images - admins only
     match /products/{fileName} {
-      allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024 // 5MB max
-                   && request.resource.contentType.matches('image/.*');
+      allow write: if isAdmin() && isValidImage();
     }
-    
-    // Allow authenticated users to upload to categories folder
+
+    // Categories images - admins only
     match /categories/{fileName} {
-      allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow write: if isAdmin() && isValidImage();
     }
-    
-    // Allow admins to upload to site folder
+
+    // Site assets (logos, favicons) - admins only
     match /site/{fileName} {
-      allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    // User avatars - users can upload their own
+    match /avatars/{userId}/{fileName} {
+      allow write: if isAuthenticated() &&
+                      request.auth.uid == userId &&
+                      isValidImage();
     }
   }
 }
