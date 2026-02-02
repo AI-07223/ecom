@@ -44,6 +44,7 @@ interface DashboardStats {
   totalRevenue: number;
   pendingOrders: number;
   lowStockProducts: number;
+  paidOrders: number;
 }
 
 export default function AdminDashboardPage() {
@@ -110,10 +111,13 @@ export default function AdminDashboardPage() {
         const usersSnap = await getDocs(collection(db, "profiles"));
         const usersCount = usersSnap.size;
 
-        // Calculate total revenue
-        const totalRevenue = orders
-          .filter((o) => o.payment_status === "paid")
-          .reduce((sum, o) => sum + (o.total || 0), 0);
+        // Calculate total revenue from paid orders
+        const paidOrders = orders.filter((o) => o.payment_status === "paid");
+        const totalRevenue = paidOrders.reduce(
+          (sum, o) => sum + (o.total || 0),
+          0,
+        );
+        const paidOrdersCount = paidOrders.length;
 
         setStats({
           totalProducts: productsCount,
@@ -122,6 +126,7 @@ export default function AdminDashboardPage() {
           totalRevenue,
           pendingOrders: pendingCount,
           lowStockProducts: lowStockCount,
+          paidOrders: paidOrdersCount,
         });
         setRecentOrders(sortedOrders);
         setLowStockItems(lowStock);
@@ -303,7 +308,8 @@ export default function AdminDashboardPage() {
                       style={{ color: settings.accent_color }}
                     />
                     <span className="text-muted-foreground">
-                      From paid orders
+                      {stats?.paidOrders || 0} paid{" "}
+                      {stats?.paidOrders === 1 ? "order" : "orders"}
                     </span>
                   </div>
                 </CardContent>
@@ -474,8 +480,8 @@ export default function AdminDashboardPage() {
                   {recentOrders.map((order) => (
                     <Link
                       key={order.id}
-                      href={`/profile/admin/orders?id=${order.id}`}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                      href={`/profile/admin/orders/${order.id}`}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors tap-scale"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">

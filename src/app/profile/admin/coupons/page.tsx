@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Ticket as TicketIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Ticket, Tag, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,14 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -83,9 +75,7 @@ export default function AdminCouponsPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
-      router.push("/profile");
-    }
+    if (!authLoading && (!user || !isAdmin)) router.push("/profile");
   }, [user, isAdmin, authLoading, router]);
 
   const fetchCoupons = async () => {
@@ -106,9 +96,7 @@ export default function AdminCouponsPage() {
   };
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchCoupons();
-    }
+    if (isAdmin) fetchCoupons();
   }, [isAdmin]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,9 +106,7 @@ export default function AdminCouponsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const couponId = editingCoupon?.id || formData.code.toUpperCase();
-
     try {
       await setDoc(doc(db, "coupons", couponId), {
         code: formData.code.toUpperCase(),
@@ -136,7 +122,6 @@ export default function AdminCouponsPage() {
         created_at: editingCoupon?.created_at || serverTimestamp(),
         updated_at: serverTimestamp(),
       });
-
       toast.success(editingCoupon ? "Coupon updated" : "Coupon created");
       setIsDialogOpen(false);
       resetForm();
@@ -194,9 +179,8 @@ export default function AdminCouponsPage() {
   };
 
   const formatDiscount = (coupon: Coupon) => {
-    if (coupon.discount_type === "percentage") {
+    if (coupon.discount_type === "percentage")
       return `${coupon.discount_value}%`;
-    }
     return `${settings.currency_symbol}${coupon.discount_value}`;
   };
 
@@ -209,113 +193,125 @@ export default function AdminCouponsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Coupons</h1>
-          <p className="text-muted-foreground">{coupons.length} coupons</p>
+    <div className="min-h-screen bg-muted/30">
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-bold">Coupons</h1>
+              <p className="text-sm text-muted-foreground">
+                {coupons.length} coupons
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                resetForm();
+                setIsDialogOpen(true);
+              }}
+              style={{ backgroundColor: settings.primary_color }}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Coupon
+            </Button>
+          </div>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setIsDialogOpen(true);
-          }}
-          style={{ backgroundColor: settings.primary_color }}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Coupon
-        </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-16" />
-              ))}
-            </div>
-          ) : coupons.length === 0 ? (
-            <div className="py-16 text-center">
-              <TicketIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">No coupons yet</p>
+      <div className="container mx-auto px-4 py-6">
+        {isLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
+        ) : coupons.length === 0 ? (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <Ticket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-1">No coupons yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first coupon to get started
+              </p>
               <Button
                 onClick={() => {
                   resetForm();
                   setIsDialogOpen(true);
                 }}
               >
-                Create First Coupon
+                <Plus className="h-4 w-4 mr-2" /> Create Coupon
               </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Discount</TableHead>
-                  <TableHead>Min Purchase</TableHead>
-                  <TableHead>Uses</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {coupons.map((coupon) => (
-                  <TableRow key={coupon.id}>
-                    <TableCell className="font-mono font-bold">
-                      {coupon.code}
-                    </TableCell>
-                    <TableCell>{formatDiscount(coupon)}</TableCell>
-                    <TableCell>
-                      {coupon.min_purchase
-                        ? `${settings.currency_symbol}${coupon.min_purchase}`
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {coupon.current_uses}/{coupon.max_uses || "∞"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={coupon.is_active ? "default" : "secondary"}
-                      >
-                        {coupon.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(coupon)}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {coupons.map((coupon) => (
+              <Card key={coupon.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono font-bold text-lg">
+                            {coupon.code}
+                          </span>
+                        </div>
+                        <Badge
+                          variant={coupon.is_active ? "default" : "secondary"}
                         >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500"
-                          onClick={() => setDeleteConfirm(coupon.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          {coupon.is_active ? "Active" : "Inactive"}
+                        </Badge>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Percent className="h-3.5 w-3.5" />
+                        <span>{formatDiscount(coupon)} off</span>
+                        {coupon.min_purchase ? (
+                          <span>
+                            • Min {settings.currency_symbol}
+                            {coupon.min_purchase}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Used {coupon.current_uses}
+                        {coupon.max_uses ? ` / ${coupon.max_uses}` : " times"}
+                      </p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openEditDialog(coupon)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500"
+                        onClick={() => setDeleteConfirm(coupon.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingCoupon ? "Edit Coupon" : "Create Coupon"}
             </DialogTitle>
+            <DialogDescription>
+              Configure your discount coupon
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -325,7 +321,7 @@ export default function AdminCouponsPage() {
                 name="code"
                 value={formData.code}
                 onChange={handleInputChange}
-                placeholder="e.g., SAVE20"
+                placeholder="SAVE20"
                 className="uppercase"
                 required
               />
@@ -335,8 +331,8 @@ export default function AdminCouponsPage() {
                 <Label>Discount Type</Label>
                 <Select
                   value={formData.discount_type}
-                  onValueChange={(value: "percentage" | "fixed") =>
-                    setFormData((prev) => ({ ...prev, discount_type: value }))
+                  onValueChange={(v: "percentage" | "fixed") =>
+                    setFormData((prev) => ({ ...prev, discount_type: v }))
                   }
                 >
                   <SelectTrigger>
@@ -403,7 +399,7 @@ export default function AdminCouponsPage() {
               />
               <Label>Active</Label>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-3">
               <Button
                 type="button"
                 variant="outline"

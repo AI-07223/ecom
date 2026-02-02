@@ -173,7 +173,7 @@ export default function ProductDetailPage() {
   const images =
     product.images.length > 0
       ? product.images
-      : [product.thumbnail || "/placeholder.png"];
+      : [product.thumbnail || "/placeholder.svg"];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -207,6 +207,7 @@ export default function ProductDetailPage() {
               fill
               className="object-cover"
               priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
             {discount > 0 && (
               <Badge
@@ -235,6 +236,7 @@ export default function ProductDetailPage() {
                     alt={`${product.name} ${index + 1}`}
                     fill
                     className="object-cover"
+                    sizes="80px"
                   />
                 </button>
               ))}

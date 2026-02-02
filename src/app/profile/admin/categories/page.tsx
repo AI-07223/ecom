@@ -171,11 +171,11 @@ export default function AdminCategoriesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-2xl font-bold">Categories</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             {categories.length} categories
           </p>
         </div>
@@ -185,6 +185,8 @@ export default function AdminCategoriesPage() {
             setIsDialogOpen(true);
           }}
           style={{ backgroundColor: settings.primary_color }}
+          className="w-full sm:w-auto"
+          size="lg"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Category
@@ -217,11 +219,11 @@ export default function AdminCategoriesPage() {
           {categories.map((category) => (
             <Card key={category.id}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <GripVertical className="h-5 w-5 text-muted-foreground shrink-0 hidden sm:block" />
                     <div
-                      className="w-12 h-12 rounded-lg flex items-center justify-center"
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                       style={{ backgroundColor: `${settings.primary_color}15` }}
                     >
                       <span
@@ -231,32 +233,36 @@ export default function AdminCategoriesPage() {
                         {category.name.charAt(0)}
                       </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{category.name}</h3>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-medium truncate">
+                          {category.name}
+                        </h3>
                         <Badge
                           variant={category.is_active ? "default" : "outline"}
+                          className="shrink-0"
                         >
                           {category.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground truncate">
                         {category.slug}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => openEditDialog(category)}
+                      className="h-10 w-10"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-red-500"
+                      className="text-red-500 h-10 w-10"
                       onClick={() => setDeleteConfirm(category.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -269,43 +275,58 @@ export default function AdminCategoriesPage() {
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
+      {/* Add/Edit Dialog - Mobile Optimized */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl">
               {editingCategory ? "Edit Category" : "Add Category"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name" className="text-base md:text-sm mb-2 block">
+                Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 required
+                enterKeyHint="next"
               />
             </div>
             <div>
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug" className="text-base md:text-sm mb-2 block">
+                Slug <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="slug"
                 name="slug"
                 value={formData.slug}
                 onChange={handleInputChange}
                 required
+                enterKeyHint="next"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Used in URL: /categories/{formData.slug || "slug"}
+              </p>
             </div>
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label
+                htmlFor="description"
+                className="text-base md:text-sm mb-2 block"
+              >
+                Description
+              </Label>
               <Textarea
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
+                enterKeyHint="next"
               />
             </div>
             <div>
@@ -318,36 +339,49 @@ export default function AdminCategoriesPage() {
                 label="Category Image"
               />
             </div>
-            <div>
-              <Label htmlFor="sort_order">Sort Order</Label>
-              <Input
-                id="sort_order"
-                name="sort_order"
-                type="number"
-                value={formData.sort_order}
-                onChange={handleInputChange}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label
+                  htmlFor="sort_order"
+                  className="text-base md:text-sm mb-2 block"
+                >
+                  Sort Order
+                </Label>
+                <Input
+                  id="sort_order"
+                  name="sort_order"
+                  type="number"
+                  inputMode="numeric"
+                  value={formData.sort_order}
+                  onChange={handleInputChange}
+                  enterKeyHint="next"
+                />
+              </div>
+              <div className="flex items-center gap-3 pt-6">
+                <Switch
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, is_active: checked }))
+                  }
+                />
+                <Label className="text-base md:text-sm mb-0">Active</Label>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({ ...prev, is_active: checked }))
-                }
-              />
-              <Label>Active</Label>
-            </div>
-            <DialogFooter>
+            <DialogFooter className="gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
+                className="flex-1"
+                size="lg"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 style={{ backgroundColor: settings.primary_color }}
+                className="flex-1"
+                size="lg"
               >
                 {editingCategory ? "Update" : "Create"}
               </Button>
@@ -368,7 +402,7 @@ export default function AdminCategoriesPage() {
               Are you sure? Products in this category will be unassigned.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="gap-3">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>

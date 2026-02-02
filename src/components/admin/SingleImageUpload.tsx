@@ -132,6 +132,7 @@ export function SingleImageUpload({
             alt={label}
             fill
             className="object-cover"
+            sizes="300px"
             unoptimized
           />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

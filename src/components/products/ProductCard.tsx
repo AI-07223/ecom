@@ -51,10 +51,11 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="relative aspect-square overflow-hidden bg-muted">
         <Link href={`/products/${product.slug}`}>
           <Image
-            src={product.thumbnail || product.images[0] || "/placeholder.png"}
+            src={product.thumbnail || product.images[0] || "/placeholder.svg"}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
         </Link>
 

@@ -235,6 +235,7 @@ export function ImageUpload({
                 alt={`Product image ${index + 1}`}
                 fill
                 className="object-cover"
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                 unoptimized
               />
 

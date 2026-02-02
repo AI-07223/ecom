@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,11 +48,12 @@ function ProductsContent() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const isInitialMount = useRef(true);
 
   // Filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState<string>(
-    searchParams.get("category") || "",
+    searchParams.get("category") || "all",
   );
   const [sortBy, setSortBy] = useState("newest");
   const [minPrice, setMinPrice] = useState("");
@@ -75,6 +76,7 @@ function ProductsContent() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        // Try query with orderBy first (requires composite index)
         const categoriesQuery = query(
           collection(db, "categories"),
           where("is_active", "==", true),
@@ -86,8 +88,42 @@ function ProductsContent() {
           ...doc.data(),
         })) as Category[];
         setCategories(cats);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error fetching categories:", error);
+
+        // Fallback: fetch without orderBy and sort client-side
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const errorCode = (error as { code?: string })?.code;
+        if (
+          errorMessage.includes("index") ||
+          errorCode === "failed-precondition"
+        ) {
+          console.warn(
+            "Missing Firestore composite index. Falling back to client-side sorting for categories.",
+          );
+          try {
+            const fallbackQuery = query(
+              collection(db, "categories"),
+              where("is_active", "==", true),
+              limit(100),
+            );
+            const fallbackSnap = await getDocs(fallbackQuery);
+            const fallbackCats = fallbackSnap.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as Category[];
+
+            // Sort by name client-side
+            fallbackCats.sort((a, b) => a.name.localeCompare(b.name));
+            setCategories(fallbackCats);
+          } catch (fallbackError) {
+            console.error("Category fallback fetch failed:", fallbackError);
+            setCategories([]);
+          }
+        } else {
+          setCategories([]);
+        }
       }
     };
     fetchCategories();
@@ -99,7 +135,7 @@ function ProductsContent() {
     ];
 
     // Category filter (server-side)
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== "all") {
       constraints.push(where("category_id", "==", selectedCategory));
     }
 
@@ -159,35 +195,22 @@ function ProductsContent() {
     [debouncedSearch, minPrice, maxPrice, showOnSale],
   );
 
-  const fetchProducts = useCallback(
-    async (loadMore = false) => {
-      if (loadMore) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-        setProducts([]);
-        setLastDoc(null);
-      }
+  // Initial fetch on mount
+  useEffect(() => {
+    const performFetch = async () => {
+      setIsLoading(true);
+      setProducts([]);
+      setLastDoc(null);
 
       let fallbackToClientSort = false;
 
       try {
         const constraints = buildQuery();
-        let productsQuery = query(
+        const productsQuery = query(
           collection(db, "products"),
           ...constraints,
           limit(PRODUCTS_PER_PAGE),
         );
-
-        // For pagination, start after last document
-        if (loadMore && lastDoc) {
-          productsQuery = query(
-            collection(db, "products"),
-            ...constraints,
-            startAfter(lastDoc),
-            limit(PRODUCTS_PER_PAGE),
-          );
-        }
 
         const productsSnap = await getDocs(productsQuery);
         const newProducts = productsSnap.docs.map((doc) => ({
@@ -205,12 +228,7 @@ function ProductsContent() {
 
         // Check if there are more products
         setHasMore(productsSnap.docs.length === PRODUCTS_PER_PAGE);
-
-        if (loadMore) {
-          setProducts((prev) => [...prev, ...filteredProducts]);
-        } else {
-          setProducts(filteredProducts);
-        }
+        setProducts(filteredProducts);
       } catch (error: unknown) {
         console.error("Error fetching products:", error);
 
@@ -229,7 +247,7 @@ function ProductsContent() {
         }
 
         // Fallback: fetch without orderBy and sort client-side
-        if (fallbackToClientSort && !loadMore) {
+        if (fallbackToClientSort) {
           try {
             // Simple query with just is_active filter
             const simpleConstraints: Parameters<typeof query>[1][] = [
@@ -237,7 +255,7 @@ function ProductsContent() {
             ];
 
             // Add category filter if present
-            if (selectedCategory) {
+            if (selectedCategory && selectedCategory !== "all") {
               simpleConstraints.push(
                 where("category_id", "==", selectedCategory),
               );
@@ -285,40 +303,321 @@ function ProductsContent() {
             setHasMore(filteredProducts.length > PRODUCTS_PER_PAGE);
           } catch (fallbackError) {
             console.error("Fallback fetch also failed:", fallbackError);
-            setProducts([]);
+
+            // Last resort: fetch all products and filter client-side
+            try {
+              console.warn(
+                "Attempting last-resort fetch without any filters...",
+              );
+              const lastResortQuery = query(
+                collection(db, "products"),
+                limit(PRODUCTS_PER_PAGE * 5),
+              );
+
+              const lastResortSnap = await getDocs(lastResortQuery);
+              let lastResortProducts = lastResortSnap.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              })) as Product[];
+
+              // Filter active products client-side
+              lastResortProducts = lastResortProducts.filter(
+                (p) => p.is_active !== false,
+              );
+
+              // Apply category filter client-side
+              if (selectedCategory && selectedCategory !== "all") {
+                lastResortProducts = lastResortProducts.filter(
+                  (p) => p.category_id === selectedCategory,
+                );
+              }
+
+              // Apply featured filter client-side
+              if (showFeatured) {
+                lastResortProducts = lastResortProducts.filter(
+                  (p) => p.is_featured,
+                );
+              }
+
+              // Apply client-side sorting
+              lastResortProducts.sort((a, b) => {
+                switch (sortBy) {
+                  case "price_asc":
+                    return a.price - b.price;
+                  case "price_desc":
+                    return b.price - a.price;
+                  case "name":
+                    return a.name.localeCompare(b.name);
+                  case "newest":
+                  default:
+                    return (
+                      new Date(b.created_at).getTime() -
+                      new Date(a.created_at).getTime()
+                    );
+                }
+              });
+
+              // Apply remaining client-side filters (search, price range, on sale)
+              const filteredProducts = applyClientFilters(lastResortProducts);
+
+              setProducts(filteredProducts.slice(0, PRODUCTS_PER_PAGE));
+              setHasMore(filteredProducts.length > PRODUCTS_PER_PAGE);
+            } catch (lastResortError) {
+              console.error("Last resort fetch also failed:", lastResortError);
+              setProducts([]);
+            }
           }
-        } else if (!loadMore) {
+        } else {
           setProducts([]);
         }
       }
 
       setIsLoading(false);
-      setIsLoadingMore(false);
-    },
-    [
-      buildQuery,
-      applyClientFilters,
-      lastDoc,
-      selectedCategory,
-      showFeatured,
-      sortBy,
-    ],
-  );
+    };
 
-  // Fetch products when filters change (not for loadMore)
+    performFetch();
+    isInitialMount.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch products when filters change (skip initial mount)
   useEffect(() => {
-    fetchProducts(false);
-  }, [fetchProducts]);
+    if (!isInitialMount.current) {
+      const performFetch = async () => {
+        setIsLoading(true);
+        setProducts([]);
+        setLastDoc(null);
 
-  const handleLoadMore = () => {
-    if (!isLoadingMore && hasMore) {
-      fetchProducts(true);
+        let fallbackToClientSort = false;
+
+        try {
+          const constraints = buildQuery();
+          const productsQuery = query(
+            collection(db, "products"),
+            ...constraints,
+            limit(PRODUCTS_PER_PAGE),
+          );
+
+          const productsSnap = await getDocs(productsQuery);
+          const newProducts = productsSnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Product[];
+
+          // Apply client-side filters
+          const filteredProducts = applyClientFilters(newProducts);
+
+          // Update last document for pagination
+          if (productsSnap.docs.length > 0) {
+            setLastDoc(productsSnap.docs[productsSnap.docs.length - 1]);
+          }
+
+          // Check if there are more products
+          setHasMore(productsSnap.docs.length === PRODUCTS_PER_PAGE);
+          setProducts(filteredProducts);
+        } catch (error: unknown) {
+          console.error("Error fetching products:", error);
+
+          // Check if error is due to missing composite index
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          const errorCode = (error as { code?: string })?.code;
+          if (
+            errorMessage.includes("index") ||
+            errorCode === "failed-precondition"
+          ) {
+            console.warn(
+              "Missing Firestore composite index. Falling back to client-side sorting.",
+            );
+            fallbackToClientSort = true;
+          }
+
+          // Fallback: fetch without orderBy and sort client-side
+          if (fallbackToClientSort) {
+            try {
+              // Simple query with just is_active filter
+              const simpleConstraints: Parameters<typeof query>[1][] = [
+                where("is_active", "==", true),
+              ];
+
+              // Add category filter if present
+              if (selectedCategory && selectedCategory !== "all") {
+                simpleConstraints.push(
+                  where("category_id", "==", selectedCategory),
+                );
+              }
+
+              // Add featured filter if present
+              if (showFeatured) {
+                simpleConstraints.push(where("is_featured", "==", true));
+              }
+
+              const fallbackQuery = query(
+                collection(db, "products"),
+                ...simpleConstraints,
+                limit(PRODUCTS_PER_PAGE * 3), // Fetch more to account for client-side filtering
+              );
+
+              const fallbackSnap = await getDocs(fallbackQuery);
+              const fallbackProducts = fallbackSnap.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              })) as Product[];
+
+              // Apply client-side sorting
+              fallbackProducts.sort((a, b) => {
+                switch (sortBy) {
+                  case "price_asc":
+                    return a.price - b.price;
+                  case "price_desc":
+                    return b.price - a.price;
+                  case "name":
+                    return a.name.localeCompare(b.name);
+                  case "newest":
+                  default:
+                    return (
+                      new Date(b.created_at).getTime() -
+                      new Date(a.created_at).getTime()
+                    );
+                }
+              });
+
+              // Apply client-side filters (search, price range, on sale)
+              const filteredProducts = applyClientFilters(fallbackProducts);
+
+              setProducts(filteredProducts.slice(0, PRODUCTS_PER_PAGE));
+              setHasMore(filteredProducts.length > PRODUCTS_PER_PAGE);
+            } catch (fallbackError) {
+              console.error("Fallback fetch also failed:", fallbackError);
+
+              // Last resort: fetch all products and filter client-side
+              try {
+                console.warn(
+                  "Attempting last-resort fetch without any filters...",
+                );
+                const lastResortQuery = query(
+                  collection(db, "products"),
+                  limit(PRODUCTS_PER_PAGE * 5),
+                );
+
+                const lastResortSnap = await getDocs(lastResortQuery);
+                let lastResortProducts = lastResortSnap.docs.map((doc) => ({
+                  id: doc.id,
+                  ...doc.data(),
+                })) as Product[];
+
+                // Filter active products client-side
+                lastResortProducts = lastResortProducts.filter(
+                  (p) => p.is_active !== false,
+                );
+
+                // Apply category filter client-side
+                if (selectedCategory && selectedCategory !== "all") {
+                  lastResortProducts = lastResortProducts.filter(
+                    (p) => p.category_id === selectedCategory,
+                  );
+                }
+
+                // Apply featured filter client-side
+                if (showFeatured) {
+                  lastResortProducts = lastResortProducts.filter(
+                    (p) => p.is_featured,
+                  );
+                }
+
+                // Apply client-side sorting
+                lastResortProducts.sort((a, b) => {
+                  switch (sortBy) {
+                    case "price_asc":
+                      return a.price - b.price;
+                    case "price_desc":
+                      return b.price - a.price;
+                    case "name":
+                      return a.name.localeCompare(b.name);
+                    case "newest":
+                    default:
+                      return (
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                      );
+                  }
+                });
+
+                // Apply remaining client-side filters (search, price range, on sale)
+                const filteredProducts = applyClientFilters(lastResortProducts);
+
+                setProducts(filteredProducts.slice(0, PRODUCTS_PER_PAGE));
+                setHasMore(filteredProducts.length > PRODUCTS_PER_PAGE);
+              } catch (lastResortError) {
+                console.error(
+                  "Last resort fetch also failed:",
+                  lastResortError,
+                );
+                setProducts([]);
+              }
+            }
+          } else {
+            setProducts([]);
+          }
+        }
+
+        setIsLoading(false);
+      };
+
+      performFetch();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedCategory,
+    showFeatured,
+    sortBy,
+    debouncedSearch,
+    minPrice,
+    maxPrice,
+    showOnSale,
+  ]);
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+
+    try {
+      const constraints = buildQuery();
+      const productsQuery = query(
+        collection(db, "products"),
+        ...constraints,
+        startAfter(lastDoc),
+        limit(PRODUCTS_PER_PAGE),
+      );
+
+      const productsSnap = await getDocs(productsQuery);
+      const newProducts = productsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Product[];
+
+      // Apply client-side filters
+      const filteredProducts = applyClientFilters(newProducts);
+
+      // Update last document for pagination
+      if (productsSnap.docs.length > 0) {
+        setLastDoc(productsSnap.docs[productsSnap.docs.length - 1]);
+      }
+
+      // Check if there are more products
+      setHasMore(productsSnap.docs.length === PRODUCTS_PER_PAGE);
+      setProducts((prev) => [...prev, ...filteredProducts]);
+    } catch (error: unknown) {
+      console.error("Error loading more products:", error);
+    }
+
+    setIsLoadingMore(false);
   };
 
   const clearFilters = () => {
     setSearch("");
-    setSelectedCategory("");
+    setSelectedCategory("all");
     setSortBy("newest");
     setMinPrice("");
     setMaxPrice("");
@@ -328,7 +627,7 @@ function ProductsContent() {
 
   const hasActiveFilters =
     search ||
-    selectedCategory ||
+    (selectedCategory && selectedCategory !== "all") ||
     minPrice ||
     maxPrice ||
     showFeatured ||
@@ -356,12 +655,14 @@ function ProductsContent() {
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories
+              .filter((category) => category.id && category.name)
+              .map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
