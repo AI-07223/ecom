@@ -210,9 +210,15 @@ export default function CheckoutPage() {
 
       toast.success("Order placed successfully!");
       router.push(`/profile/orders/${result.order_id}`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error placing order:", error);
-      toast.error("Failed to place order. Please try again.");
+      let errorMessage = "Failed to place order. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+      toast.error(`Error: ${errorMessage}`);
     }
 
     setIsProcessing(false);

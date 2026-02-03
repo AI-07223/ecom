@@ -47,6 +47,10 @@ interface ProductData {
 export async function createOrder(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult> {
+  console.log(
+    "[createOrder] Starting with input:",
+    JSON.stringify(input, null, 2),
+  );
   try {
     const {
       user_id,
@@ -59,6 +63,7 @@ export async function createOrder(
 
     // Validate input
     if (!user_id || !items || items.length === 0) {
+      console.log("[createOrder] Validation failed: invalid order data");
       return { success: false, error: "Invalid order data" };
     }
 
@@ -70,11 +75,14 @@ export async function createOrder(
       !shipping_address.state ||
       !shipping_address.postal_code
     ) {
+      console.log("[createOrder] Validation failed: missing address fields");
       return { success: false, error: "Please fill in all address fields" };
     }
 
+    console.log("[createOrder] Fetching product details...");
     // Fetch all product details from database (source of truth for prices)
     const productPromises = items.map(async (item): Promise<ProductData> => {
+      console.log(`[createOrder] Fetching product ${item.product_id}`);
       const productDoc = await adminDb
         .collection("products")
         .doc(item.product_id)
@@ -217,6 +225,7 @@ export async function createOrder(
     // Generate order ID
     const orderId = `ORD-${Date.now()}`;
 
+    console.log("[createOrder] Starting transaction...");
     // Use transaction to create order and update stock atomically
     await adminDb.runTransaction(async (transaction) => {
       // Decrement stock for each product
@@ -276,14 +285,16 @@ export async function createOrder(
     }
 
     return { success: true, order_id: orderId };
-  } catch (error) {
-    console.error("Error creating order:", error);
+  } catch (error: unknown) {
+    console.error("[createOrder] Error creating order:", error);
+    let errorMessage = "Failed to create order. Please try again.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error("[createOrder] Error message:", errorMessage);
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to create order. Please try again.",
+      error: errorMessage,
     };
   }
 }
