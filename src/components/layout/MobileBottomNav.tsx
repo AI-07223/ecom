@@ -2,449 +2,283 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useRef, useState, useEffect } from "react";
+import Image from "next/image";
+import { useState } from "react";
 import {
   Home,
   ShoppingBag,
   Grid3X3,
   ShoppingCart,
-  Heart,
   User,
-  Search,
-  Menu,
-  Settings,
+  Heart,
   Package,
+  LogOut,
+  Settings,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/providers/CartProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
-import { useCart } from "@/providers/CartProvider";
-import { useAuth } from "@/providers/AuthProvider";
-import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: number;
-  adminOnly?: boolean;
-  description?: string;
-}
-
-const navItems: NavItem[] = [
-  { href: "/", label: "Home", icon: Home, description: "Browse homepage" },
-  {
-    href: "/products",
-    label: "Products",
-    icon: ShoppingBag,
-    description: "View all products",
-  },
-  {
-    href: "/categories",
-    label: "Categories",
-    icon: Grid3X3,
-    description: "Browse categories",
-  },
-  {
-    href: "/cart",
-    label: "Cart",
-    icon: ShoppingCart,
-    description: "View your cart",
-  },
-  {
-    href: "/wishlist",
-    label: "Wishlist",
-    icon: Heart,
-    description: "Saved items",
-  },
-  {
-    href: "/profile",
-    label: "Profile",
-    icon: User,
-    description: "Your account",
-  },
-  {
-    href: "/products?search=",
-    label: "Search",
-    icon: Search,
-    description: "Find products",
-  },
-  {
-    href: "/profile/orders",
-    label: "Orders",
-    icon: Package,
-    description: "Order history",
-  },
-  {
-    href: "/profile/admin",
-    label: "Admin",
-    icon: Settings,
-    adminOnly: true,
-    description: "Admin dashboard",
-  },
-];
-
-// Quick action items for the expanded menu
-const quickActions = [
+const navItems = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/categories", label: "Categories", icon: Grid3X3 },
+  { href: "/products", label: "Shop", icon: ShoppingBag },
   { href: "/cart", label: "Cart", icon: ShoppingCart },
-  { href: "/wishlist", label: "Wishlist", icon: Heart },
-  { href: "/profile/orders", label: "Orders", icon: Package },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { itemCount } = useCart();
-  const { isAdmin, user, profile } = useAuth();
-  const { settings } = useSiteSettings();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [showMoreButton, setShowMoreButton] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Filter nav items based on auth
-  const visibleItems = navItems.filter((item) => {
-    if (item.adminOnly) return isAdmin;
-    return true;
-  });
-
-  // Filter quick actions based on auth (no admin-only)
-  const visibleQuickActions = quickActions;
-
-  // Check scroll position
-  useEffect(() => {
-    const checkScroll = () => {
-      if (scrollRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-        setShowMoreButton(scrollLeft < scrollWidth - clientWidth - 10);
-      }
-    };
-
-    const el = scrollRef.current;
-    if (el) {
-      el.addEventListener("scroll", checkScroll);
-      checkScroll();
-    }
-
-    return () => el?.removeEventListener("scroll", checkScroll);
-  }, [visibleItems.length]);
+  const { user, profile, isAdmin, signOut } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
-    return pathname.startsWith(href.split("?")[0]);
-  };
-
-  const getBadge = (item: NavItem) => {
-    if (item.href === "/cart" && itemCount > 0) return itemCount;
-    return item.badge;
+    return pathname.startsWith(href);
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t safe-area-bottom">
-      <div className="flex items-center h-16">
-        {/* Scrollable nav items */}
-        <div
-          ref={scrollRef}
-          className="flex-1 flex items-center overflow-x-auto scrollbar-hide scroll-smooth px-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {visibleItems.map((item, index) => {
+    <>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-[#E2E0DA] safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-around h-16">
+          {navItems.map((item) => {
             const active = isActive(item.href);
-            const badge = getBadge(item);
-            const isAlternate = index % 2 === 1;
+            const isCart = item.href === "/cart";
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`
-                  flex-shrink-0 flex flex-col items-center justify-center
-                  min-w-[64px] h-14 px-2 rounded-xl mx-0.5
-                  transition-all duration-200 ease-out
-                  ${
-                    active
-                      ? "text-primary scale-105"
-                      : "text-muted-foreground hover:text-foreground"
-                  }
-                `}
-                style={{
-                  backgroundColor: active
-                    ? `${settings.accent_color}15`
-                    : isAlternate
-                      ? `${settings.accent_color}08`
-                      : "transparent",
-                }}
+                className="flex flex-col items-center justify-center flex-1 h-full tap-scale relative py-1"
               >
-                <div className="relative">
+                <div className={`relative p-1.5 rounded-xl transition-all duration-200 ${active ? "bg-[#2D5A27]/10" : ""
+                  }`}>
                   <item.icon
-                    className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`}
+                    className={`h-5 w-5 transition-colors duration-200 ${active ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                      }`}
                   />
-                  {badge !== undefined && badge > 0 && (
-                    <Badge
-                      className="absolute -top-2 -right-2 h-4 min-w-[16px] px-1 flex items-center justify-center text-[10px] bg-primary animate-in zoom-in-50"
-                      style={{ backgroundColor: settings.accent_color }}
-                    >
-                      {badge > 99 ? "99+" : badge}
+                  {isCart && itemCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-[#2D5A27] text-white border-2 border-white">
+                      {itemCount > 99 ? "99+" : itemCount}
                     </Badge>
                   )}
                 </div>
                 <span
-                  className={`text-[10px] mt-0.5 font-medium ${active ? "font-semibold" : ""}`}
+                  className={`text-[10px] mt-0.5 font-medium transition-colors duration-200 ${active ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                    }`}
                 >
                   {item.label}
                 </span>
               </Link>
             );
           })}
-        </div>
 
-        {/* More button - shows when not scrolled to end */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`
-                flex-shrink-0 h-14 w-14 mr-1 rounded-xl
-                transition-all duration-300
-                ${showMoreButton ? "opacity-100" : "opacity-50"}
-              `}
-            >
-              <div className="flex flex-col items-center">
-                <Menu className="h-5 w-5" />
-                <span className="text-[10px] mt-0.5 font-medium">More</span>
-              </div>
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="h-auto max-h-[85vh] rounded-t-3xl p-0"
-          >
-            {/* Pull indicator */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
-            </div>
-
-            {/* User Header */}
-            <SheetHeader className="px-6 pb-4 text-left">
-              <div className="flex items-center gap-3">
-                {user ? (
-                  <>
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${settings.primary_color}20, ${settings.accent_color}20)`,
-                      }}
-                    >
-                      <span
-                        className="text-lg font-semibold"
-                        style={{ color: settings.primary_color }}
-                      >
-                        {(profile?.full_name || user.email || "?")
+          {/* Profile Button */}
+          <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
+            <SheetTrigger asChild>
+              <button className="flex flex-col items-center justify-center flex-1 h-full tap-scale py-1">
+                <div className="relative p-1.5 rounded-xl">
+                  {user ? (
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center ring-2 ring-white">
+                      <span className="text-white text-[9px] font-bold">
+                        {(profile?.full_name || user.email || "U")
                           .charAt(0)
                           .toUpperCase()}
                       </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <SheetTitle className="text-base truncate">
-                        {profile?.full_name || "Welcome back"}
-                      </SheetTitle>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${settings.primary_color}20, ${settings.accent_color}20)`,
-                      }}
-                    >
-                      <User
-                        className="h-6 w-6"
-                        style={{ color: settings.primary_color }}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <SheetTitle className="text-base">Guest</SheetTitle>
-                      <p className="text-xs text-muted-foreground">
-                        Sign in for a better experience
-                      </p>
-                    </div>
-                  </>
-                )}
+                  ) : (
+                    <User className="h-5 w-5 text-[#9CA3AF]" />
+                  )}
+                </div>
+                <span className="text-[10px] mt-0.5 font-medium text-[#9CA3AF]">
+                  Profile
+                </span>
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="h-auto max-h-[85vh] rounded-t-3xl p-0 bg-white border-t border-[#E2E0DA]"
+            >
+              {/* Pull indicator */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-[#E2E0DA]" />
               </div>
-            </SheetHeader>
 
-            {/* Quick Actions */}
-            <div className="px-6 pb-4">
-              <div
-                className="grid grid-cols-3 gap-3 p-3 rounded-2xl"
-                style={{ backgroundColor: `${settings.accent_color}08` }}
-              >
-                {visibleQuickActions.map((action) => {
-                  const active = isActive(action.href);
-                  const badge =
-                    action.href === "/cart" && itemCount > 0 ? itemCount : 0;
-
-                  return (
-                    <SheetClose key={action.href} asChild>
-                      <Link
-                        href={action.href}
-                        className={`
-                          flex flex-col items-center justify-center
-                          p-3 rounded-xl transition-all duration-200
-                          ${
-                            active
-                              ? "text-primary-foreground shadow-md"
-                              : "hover:opacity-80"
-                          }
-                        `}
-                        style={{
-                          backgroundColor: active
-                            ? settings.accent_color
-                            : "transparent",
-                        }}
-                      >
-                        <div className="relative">
-                          <action.icon className="h-5 w-5" />
-                          {badge > 0 && (
-                            <Badge
-                              className="absolute -top-2 -right-2 h-4 min-w-[16px] px-1 text-[10px]"
-                              variant={active ? "secondary" : "default"}
-                            >
-                              {badge > 99 ? "99+" : badge}
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-xs font-medium mt-1">
-                          {action.label}
+              {/* User Header */}
+              <SheetHeader className="px-5 pb-4">
+                <div className="flex items-center gap-4">
+                  {user ? (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center shadow-lg">
+                        <span className="text-white text-xl font-bold">
+                          {(profile?.full_name || user.email || "?")
+                            .charAt(0)
+                            .toUpperCase()}
                         </span>
-                      </Link>
-                    </SheetClose>
-                  );
-                })}
-              </div>
-            </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <SheetTitle className="text-base text-[#1A1A1A] truncate text-left">
+                          {profile?.full_name || "Welcome back"}
+                        </SheetTitle>
+                        <p className="text-sm text-[#6B7280] truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-[#F0EFE8] border border-[#E2E0DA] flex items-center justify-center">
+                        <User className="h-6 w-6 text-[#6B7280]" />
+                      </div>
+                      <div>
+                        <SheetTitle className="text-base text-[#1A1A1A] text-left">
+                          Guest
+                        </SheetTitle>
+                        <p className="text-sm text-[#6B7280]">
+                          Sign in for a better experience
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </SheetHeader>
 
-            {/* All Menu Items */}
-            <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-6 pb-8">
-              <div className="grid grid-cols-1 gap-1">
-                {visibleItems.map((item, index) => {
-                  const active = isActive(item.href);
-                  const badge = getBadge(item);
-
-                  return (
-                    <SheetClose key={item.href} asChild>
-                      <Link
-                        href={item.href}
-                        className={`
-                          flex items-center gap-4 p-4 rounded-xl
-                          transition-all duration-200 tap-scale
-                          ${
-                            active
-                              ? "font-medium"
-                              : "text-muted-foreground hover:bg-accent/30"
-                          }
-                        `}
-                        style={{
-                          backgroundColor: active
-                            ? `${settings.accent_color}15`
-                            : index % 2 === 0
-                              ? `${settings.accent_color}05`
-                              : "transparent",
-                          color: active ? settings.primary_color : undefined,
-                        }}
-                      >
-                        <div
-                          className={`
-                            w-10 h-10 rounded-xl flex items-center justify-center
-                            ${active ? "shadow-sm" : ""}
-                          `}
-                          style={{
-                            backgroundColor: active
-                              ? `${settings.accent_color}30`
-                              : `${settings.accent_color}15`,
-                          }}
-                        >
-                          <item.icon className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-sm font-medium">
-                            {item.label}
-                          </span>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                        {badge !== undefined && badge > 0 && (
-                          <Badge
-                            className="h-5 min-w-[20px] px-2 text-[10px] font-bold"
-                            style={{
-                              backgroundColor: settings.accent_color,
-                              color: "#ffffff",
-                            }}
-                          >
-                            {badge > 99 ? "99+" : badge}
-                          </Badge>
-                        )}
-                        {active && (
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: settings.accent_color }}
-                          />
-                        )}
-                      </Link>
-                    </SheetClose>
-                  );
-                })}
+              {/* Quick Actions Grid */}
+              <div className="px-5 pb-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] hover:bg-[#E8E7E0] transition-colors tap-scale"
+                  >
+                    <Heart className="h-6 w-6 text-[#2D5A27] mb-2" />
+                    <span className="text-xs font-medium text-[#1A1A1A]">Wishlist</span>
+                  </Link>
+                  <Link
+                    href="/profile/orders"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] hover:bg-[#E8E7E0] transition-colors tap-scale"
+                  >
+                    <Package className="h-6 w-6 text-[#2D5A27] mb-2" />
+                    <span className="text-xs font-medium text-[#1A1A1A]">Orders</span>
+                  </Link>
+                  <Link
+                    href="/cart"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] hover:bg-[#E8E7E0] transition-colors tap-scale relative"
+                  >
+                    <ShoppingCart className="h-6 w-6 text-[#2D5A27] mb-2" />
+                    <span className="text-xs font-medium text-[#1A1A1A]">Cart</span>
+                    {itemCount > 0 && (
+                      <Badge className="absolute top-2 right-2 h-5 min-w-[20px] px-1.5 text-[10px] bg-[#2D5A27] text-white">
+                        {itemCount}
+                      </Badge>
+                    )}
+                  </Link>
+                </div>
               </div>
 
-              {/* Sign In / Profile Button */}
-              <div className="mt-4">
-                {user ? (
-                  <SheetClose asChild>
+              {/* Menu Links */}
+              <div className="px-5 pb-5 max-h-[35vh] overflow-y-auto">
+                <div className="space-y-1">
+                  {user && (
                     <Link
                       href="/profile"
-                      className="flex items-center justify-center gap-2 w-full p-4 rounded-xl font-medium transition-all duration-200 tap-scale"
-                      style={{
-                        background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.accent_color})`,
-                        color: "#ffffff",
-                      }}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F0EFE8] transition-colors tap-scale"
                     >
-                      <User className="h-5 w-5" />
-                      <span>Go to Profile</span>
+                      <div className="w-10 h-10 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
+                        <User className="h-5 w-5 text-[#6B7280]" />
+                      </div>
+                      <span className="text-sm font-medium text-[#1A1A1A]">My Profile</span>
                     </Link>
-                  </SheetClose>
-                ) : (
-                  <SheetClose asChild>
+                  )}
+
+                  {user && (
                     <Link
-                      href="/login"
-                      className="flex items-center justify-center gap-2 w-full p-4 rounded-xl font-medium transition-all duration-200 tap-scale"
-                      style={{
-                        background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.accent_color})`,
-                        color: "#ffffff",
-                      }}
+                      href="/profile/settings"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F0EFE8] transition-colors tap-scale"
                     >
-                      <User className="h-5 w-5" />
-                      <span>Sign In</span>
+                      <div className="w-10 h-10 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
+                        <Settings className="h-5 w-5 text-[#6B7280]" />
+                      </div>
+                      <span className="text-sm font-medium text-[#1A1A1A]">Settings</span>
                     </Link>
-                  </SheetClose>
-                )}
+                  )}
+
+                  {isAdmin && (
+                    <Link
+                      href="/profile/admin"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-[#2D5A27]/10 hover:bg-[#2D5A27]/20 transition-colors tap-scale"
+                    >
+                      <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-[#2D5A27]/20">
+                        <Image
+                          src="/logo.jpeg"
+                          alt=""
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-[#2D5A27]">
+                        Admin Dashboard
+                      </span>
+                    </Link>
+                  )}
+
+                  {user ? (
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        signOut();
+                      }}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-red-500 transition-colors mt-2 tap-scale"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                        <LogOut className="h-5 w-5" />
+                      </div>
+                      <span className="text-sm font-medium">Sign Out</span>
+                    </button>
+                  ) : (
+                    <div className="flex gap-3 mt-4">
+                      <Link
+                        href="/login"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex-1"
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full rounded-2xl h-12 text-sm border-[#E2E0DA] text-[#6B7280] hover:text-[#1A1A1A] hover:bg-[#F0EFE8] font-medium tap-scale"
+                        >
+                          Sign In
+                        </Button>
+                      </Link>
+                      <Link
+                        href="/signup"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex-1"
+                      >
+                        <Button className="w-full rounded-2xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white h-12 text-sm font-semibold tap-scale">
+                          Sign Up
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </nav>
+    </>
   );
 }

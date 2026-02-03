@@ -17,8 +17,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Royal Store - Premium E-Commerce",
-  description: "Your one-stop shop for premium products",
+  title: "Royal Trading Company - Premium Crockery, Cutlery & Homecare",
+  description: "Your trusted destination for premium crockery, cutlery, homecare, and cleaning essentials since 2020",
 };
 
 export default function RootLayout({

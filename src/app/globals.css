@@ -3,11 +3,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Royal Trading Company - Fresh Green & Cream Theme */
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
+
+    /* Royal Green Palette */
+    --color-royal-green: #2D5A27;
+    --color-royal-green-light: #3B7D34;
+    --color-royal-green-dark: #1E3D1C;
+    --color-royal-green-dim: #4A7C44;
+    --color-royal-cream: #FAFAF5;
+    --color-royal-cream-dark: #F0EFE8;
+    --color-royal-accent: #4CAF50;
+
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,72 +58,47 @@
 }
 
 :root {
-    --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-}
+    --radius: 0.75rem;
+    --background: #FAFAF5;
+    --foreground: #1A1A1A;
+    --card: #FFFFFF;
+    --card-foreground: #1A1A1A;
+    --popover: #FFFFFF;
+    --popover-foreground: #1A1A1A;
+    --primary: #2D5A27;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F0EFE8;
+    --secondary-foreground: #1A1A1A;
+    --muted: #E8E7E0;
+    --muted-foreground: #6B7280;
+    --accent: #4CAF50;
+    --accent-foreground: #FFFFFF;
+    --destructive: #ef4444;
+    --border: #E2E0DA;
+    --input: #E2E0DA;
+    --ring: #2D5A27;
+    --chart-1: #2D5A27;
+    --chart-2: #3B7D34;
+    --chart-3: #4CAF50;
+    --chart-4: #81C784;
+    --chart-5: #A5D6A7;
+    --sidebar: #2D5A27;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-primary: #4CAF50;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #1E3D1C;
+    --sidebar-accent-foreground: #FFFFFF;
+    --sidebar-border: #3B7D34;
+    --sidebar-ring: #4CAF50;
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    /* Premium Brand CSS Variables */
+    --royal-green: #2D5A27;
+    --royal-green-light: #3B7D34;
+    --royal-green-dark: #1E3D1C;
+    --royal-green-dim: #4A7C44;
+    --royal-cream: #FAFAF5;
+    --royal-cream-dark: #F0EFE8;
+    --royal-accent: #4CAF50;
 }
 
 @layer base {
@@ -122,14 +108,16 @@
 
     body {
         @apply bg-background text-foreground;
-        /* Prevent overscroll bounce on mobile for app-like feel */
+        font-feature-settings:
+            "rlig" 1,
+            "calt" 1;
         overscroll-behavior: none;
-        /* Prevent text selection on non-input elements for app-like feel */
         -webkit-user-select: none;
         user-select: none;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Allow text selection on inputs and text areas */
     input,
     textarea,
     [contenteditable="true"],
@@ -138,15 +126,12 @@
         user-select: text;
     }
 
-    /* Smooth scrolling */
     html {
         scroll-behavior: smooth;
         -webkit-tap-highlight-color: transparent;
-        /* Prevent pull-to-refresh on mobile */
         overscroll-behavior-y: contain;
     }
 
-    /* Make scrollable areas feel more native */
     .overflow-x-auto,
     .overflow-y-auto,
     .overflow-auto {
@@ -154,7 +139,6 @@
         scroll-behavior: smooth;
     }
 
-    /* Buttons and interactive elements should feel tappable */
     button,
     a,
     [role="button"] {
@@ -163,12 +147,6 @@
 }
 
 @layer utilities {
-    /* Hide scrollbar */
-    .scrollbar-hide {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-    /* Hide scrollbar */
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -178,7 +156,6 @@
         display: none;
     }
 
-    /* Safe area padding for mobile */
     .safe-area-bottom {
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -187,39 +164,167 @@
         padding-top: env(safe-area-inset-top, 0px);
     }
 
-    /* Glass effect */
-    .glass {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+    /* Premium glass effect - light */
+    .glass-light {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(45, 90, 39, 0.1);
     }
 
-    .dark .glass {
-        background: rgba(0, 0, 0, 0.7);
+    /* Premium glass effect - dark green */
+    .glass-dark {
+        background: rgba(45, 90, 39, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* Smooth transitions for interactive elements */
+    /* Green gradient text */
+    .text-gradient-green {
+        background: linear-gradient(135deg,
+                #2D5A27 0%,
+                #3B7D34 50%,
+                #4CAF50 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Shimmer green text animation */
+    .text-gradient-green-shimmer {
+        background: linear-gradient(90deg,
+                #2D5A27 0%,
+                #3B7D34 25%,
+                #4CAF50 50%,
+                #3B7D34 75%,
+                #2D5A27 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer-text 3s linear infinite;
+    }
+
+    /* Cream gradient backgrounds */
+    .bg-gradient-cream {
+        background: linear-gradient(180deg, #FFFFFF 0%, #FAFAF5 100%);
+    }
+
+    .bg-gradient-cream-radial {
+        background: radial-gradient(ellipse at top, #FFFFFF 0%, #FAFAF5 70%);
+    }
+
+    /* Green gradient */
+    .bg-gradient-green {
+        background: linear-gradient(135deg,
+                #2D5A27 0%,
+                #3B7D34 50%,
+                #2D5A27 100%);
+    }
+
+    .bg-gradient-green-shine {
+        background: linear-gradient(90deg,
+                #2D5A27 0%,
+                #3B7D34 25%,
+                #4CAF50 50%,
+                #3B7D34 75%,
+                #2D5A27 100%);
+        background-size: 200% auto;
+        animation: shimmer 3s linear infinite;
+    }
+
+    /* Premium shadows */
+    .shadow-green {
+        box-shadow:
+            0 4px 20px rgba(45, 90, 39, 0.15),
+            0 2px 8px rgba(45, 90, 39, 0.1);
+    }
+
+    .shadow-green-lg {
+        box-shadow:
+            0 8px 40px rgba(45, 90, 39, 0.2),
+            0 4px 12px rgba(45, 90, 39, 0.1);
+    }
+
+    .shadow-soft {
+        box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.04),
+            0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .shadow-soft-lg {
+        box-shadow:
+            0 4px 12px rgba(0, 0, 0, 0.05),
+            0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Border glow green */
+    .border-glow-green {
+        border: 1px solid rgba(45, 90, 39, 0.3);
+        box-shadow:
+            0 0 20px rgba(45, 90, 39, 0.1),
+            inset 0 0 20px rgba(45, 90, 39, 0.05);
+    }
+
+    /* Smooth transitions */
     .transition-smooth {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Scale on tap for mobile */
+    /* App-like tap scale effect */
     .tap-scale {
-        transition: transform 0.1s ease-out;
+        transition: transform 0.1s ease-out, opacity 0.1s ease-out;
     }
 
     .tap-scale:active {
+        transform: scale(0.97);
+        opacity: 0.9;
+    }
+
+    /* iOS-like button press */
+    .press-scale {
+        transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .press-scale:active {
         transform: scale(0.95);
     }
 
-    /* Touch target utilities - minimum 44px for accessibility */
     .touch-target {
         min-height: 44px;
         min-width: 44px;
     }
+
+    /* App-like card hover */
+    .card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Native app-like navigation item */
+    .nav-item-active {
+        position: relative;
+    }
+
+    .nav-item-active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 3px;
+        background: var(--royal-green);
+        border-radius: 3px 3px 0 0;
+    }
 }
 
-/* Custom animations */
+/* Animations */
 @keyframes fade-in {
     from {
         opacity: 0;
@@ -254,221 +359,186 @@
     }
 }
 
-@keyframes bounce-in {
-    0% {
+@keyframes slide-in-bottom {
+    from {
         opacity: 0;
-        transform: scale(0.3);
+        transform: translateY(100%);
     }
 
-    50% {
-        transform: scale(1.05);
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
     }
 
-    70% {
-        transform: scale(0.9);
-    }
-
-    100% {
+    to {
         opacity: 1;
         transform: scale(1);
     }
 }
 
-@keyframes pulse-soft {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    0%,
-    100% {
-        opacity: 1;
+@keyframes shimmer {
+    0% {
+        background-position: 200% center;
     }
 
-    50% {
-        opacity: 0.7;
+    100% {
+        background-position: -200% center;
     }
 }
 
-@keyframes shimmer {
+@keyframes shimmer-text {
     0% {
-        background-position: -200% 0;
+        background-position: 200% center;
     }
 
     100% {
-        background-position: 200% 0;
+        background-position: -200% center;
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulse-green {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(45, 90, 39, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(45, 90, 39, 0);
+    }
+}
+
+@keyframes glow-pulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 5px rgba(45, 90, 39, 0.2),
+            0 0 10px rgba(45, 90, 39, 0.1);
+    }
+
+    50% {
+        box-shadow:
+            0 0 20px rgba(45, 90, 39, 0.4),
+            0 0 30px rgba(45, 90, 39, 0.2);
+    }
+}
+
+@keyframes bounce-subtle {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
     }
 }
 
 .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
+    animation: fade-in 0.4s ease-out;
 }
 
 .animate-slide-up {
-    animation: slide-up 0.4s ease-out;
+    animation: slide-up 0.5s ease-out;
 }
 
 .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
+    animation: slide-in-right 0.4s ease-out;
 }
 
-.animate-bounce-in {
-    animation: bounce-in 0.5s ease-out;
+.animate-slide-in-bottom {
+    animation: slide-in-bottom 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
+.animate-scale-in {
+    animation: scale-in 0.3s ease-out;
 }
 
-.animate-shimmer {
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.4) 50%,
-        transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+.animate-float {
+    animation: float 3s ease-in-out infinite;
 }
 
-/* Sheet/Sliding Menu Enhancements */
-@keyframes slide-in-from-right-enhanced {
-    0% {
-        transform: translateX(100%);
-        opacity: 0.8;
-    }
-    70% {
-        transform: translateX(-2%);
-    }
-    100% {
-        transform: translateX(0);
-        opacity: 1;
-    }
+.animate-pulse-green {
+    animation: pulse-green 2s ease-in-out infinite;
 }
 
-@keyframes slide-in-from-bottom-enhanced {
-    0% {
-        transform: translateY(100%);
-        opacity: 0.8;
-    }
-    70% {
-        transform: translateY(-3%);
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
+.animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
 }
 
-@keyframes menu-item-enter {
-    0% {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
+.animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
 }
 
-@keyframes pulse-ring {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.5;
-    }
-    100% {
-        transform: scale(1.3);
-        opacity: 0;
-    }
-}
-
-/* Staggered menu item animations */
-[data-slot="sheet-content"] [data-slot="sheet-close"] + div a,
-[data-slot="sheet-content"] a {
-    animation: menu-item-enter 0.3s ease-out backwards;
-}
-
-[data-slot="sheet-content"] a:nth-child(1) {
+/* Staggered animations */
+.stagger-1 {
     animation-delay: 0.05s;
 }
-[data-slot="sheet-content"] a:nth-child(2) {
+
+.stagger-2 {
     animation-delay: 0.1s;
 }
-[data-slot="sheet-content"] a:nth-child(3) {
+
+.stagger-3 {
     animation-delay: 0.15s;
 }
-[data-slot="sheet-content"] a:nth-child(4) {
+
+.stagger-4 {
     animation-delay: 0.2s;
 }
-[data-slot="sheet-content"] a:nth-child(5) {
+
+.stagger-5 {
     animation-delay: 0.25s;
 }
-[data-slot="sheet-content"] a:nth-child(6) {
+
+.stagger-6 {
     animation-delay: 0.3s;
 }
-[data-slot="sheet-content"] a:nth-child(7) {
-    animation-delay: 0.35s;
-}
-[data-slot="sheet-content"] a:nth-child(8) {
-    animation-delay: 0.4s;
-}
-[data-slot="sheet-content"] a:nth-child(9) {
-    animation-delay: 0.45s;
-}
 
-/* Enhanced tap feedback */
-.tap-scale-enhanced {
+/* Sheet/Modal enhancements - App-like bottom sheets */
+[data-slot="sheet-overlay"] {
     transition:
-        transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
-        background-color 0.15s ease-out;
+        opacity 0.3s ease-out,
+        backdrop-filter 0.3s ease-out;
 }
 
-.tap-scale-enhanced:active {
-    transform: scale(0.96);
-}
-
-/* Pull indicator animation */
-@keyframes pull-indicator {
-    0%,
-    100% {
-        transform: scaleX(1);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scaleX(1.2);
-        opacity: 1;
-    }
-}
-
-.pull-indicator {
-    animation: pull-indicator 2s ease-in-out infinite;
-}
-
-/* Active state glow effect */
-.active-glow {
-    position: relative;
-}
-
-.active-glow::after {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    background: inherit;
-    filter: blur(8px);
-    opacity: 0.4;
-    z-index: -1;
-}
-
-/* Sheet content momentum scrolling */
 [data-slot="sheet-content"] {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 }
 
-/* Bottom sheet specific enhancements */
 [data-slot="sheet-content"][data-side="bottom"] {
     border-top-left-radius: 1.5rem;
     border-top-right-radius: 1.5rem;
+    background: #FFFFFF;
+    border-top: 1px solid rgba(45, 90, 39, 0.1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-slot="sheet-content"][data-side="right"] {
+    background: #FFFFFF;
+    border-left: 1px solid rgba(45, 90, 39, 0.1);
 }
 
 /* Prevent body scroll when sheet is open */
@@ -476,55 +546,122 @@ body:has([data-state="open"][data-slot="sheet-content"]) {
     overflow: hidden;
 }
 
-/* Sonner Toast - Mobile positioning to avoid bottom nav */
+/* Sonner Toast - Mobile positioning for app-like feel */
 @media (max-width: 768px) {
+
     [data-sonner-toaster][data-position="bottom-right"],
     [data-sonner-toaster][data-position="bottom-left"],
     [data-sonner-toaster][data-position="bottom-center"] {
         bottom: 80px !important;
     }
 
-    /* Ensure toasts have proper z-index */
     [data-sonner-toaster] {
         z-index: 100 !important;
     }
 
-    /* Adjust toast width on mobile for better fit */
     [data-sonner-toast] {
         max-width: calc(100vw - 32px) !important;
+        background: #FFFFFF !important;
+        border: 1px solid rgba(45, 90, 39, 0.2) !important;
+        color: #1A1A1A !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 12px !important;
     }
 }
 
-/* Enhanced backdrop blur transition */
-[data-slot="sheet-overlay"] {
-    transition:
-        opacity 0.3s ease-out,
-        backdrop-filter 0.3s ease-out;
+/* Premium focus states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid #2D5A27;
+    outline-offset: 2px;
 }
 
-/* Menu item hover lift effect */
-.menu-item-lift {
-    transition:
-        transform 0.2s ease-out,
-        box-shadow 0.2s ease-out;
+/* Custom selection color - green on cream */
+::selection {
+    background: rgba(45, 90, 39, 0.2);
+    color: #1A1A1A;
 }
 
-.menu-item-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* Scrollbar styling for light theme */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-/* Badge pulse animation for cart */
-@keyframes badge-pulse {
-    0%,
-    100% {
-        transform: scale(1);
+::-webkit-scrollbar-track {
+    background: #F0EFE8;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #C0C0B8;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #2D5A27;
+}
+
+/* Mobile-specific app-like styles */
+@media (max-width: 768px) {
+
+    /* Smoother page transitions */
+    main {
+        animation: fade-in 0.2s ease-out;
     }
-    50% {
-        transform: scale(1.1);
+
+    /* App-like cards */
+    .card,
+    [data-slot="card"] {
+        border-radius: 16px;
+    }
+
+    /* Larger touch targets */
+    button,
+    a,
+    [role="button"] {
+        min-height: 44px;
+    }
+
+    /* App-like input fields */
+    input,
+    textarea,
+    select {
+        font-size: 16px !important;
+        /* Prevent zoom on iOS */
+        border-radius: 12px;
     }
 }
 
-.badge-pulse {
-    animation: badge-pulse 0.3s ease-out;
+/* iOS-like blur header */
+@supports (backdrop-filter: blur(20px)) {
+    .header-blur {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+}
+
+/* Android-like ripple effect */
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(45, 90, 39, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.ripple:active::after {
+    width: 200%;
+    height: 200%;
 }

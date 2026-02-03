@@ -95,11 +95,11 @@ export default function AdminDashboardPage() {
         // Get recent orders (sort client-side)
         const sortedOrders = [...orders]
           .sort((a, b) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const aTime = (a.created_at as any)?.seconds
               ? (a.created_at as any).seconds * 1000
               : 0;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const bTime = (b.created_at as any)?.seconds
               ? (b.created_at as any).seconds * 1000
               : 0;

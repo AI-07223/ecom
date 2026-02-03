@@ -12,21 +12,22 @@ interface SiteSettingsContextType {
 }
 
 export const defaultSettings: SiteSettings = {
-  site_name: "Royal Store",
-  site_description: "Your one-stop shop for premium products",
-  logo_url: "/logo.svg",
+  site_name: "Royal Trading",
+  site_description:
+    "Your trusted destination for premium crockery, cutlery, homecare, and cleaning essentials",
+  logo_url: "/logo.jpeg",
   favicon_url: "/favicon.ico",
-  primary_color: "#7c3aed",
-  secondary_color: "#a78bfa",
-  accent_color: "#f59e0b",
-  footer_text: "© 2024 Royal Store. All rights reserved.",
+  primary_color: "#2D5A27",
+  secondary_color: "#3B7D34",
+  accent_color: "#4CAF50",
+  footer_text: "© 2024 Royal Trading Company. All rights reserved.",
   social_links: {},
-  contact_email: "support@royalstore.com",
+  contact_email: "support@royaltrading.com",
   contact_phone: "+91 1234567890",
   currency: "INR",
   currency_symbol: "₹",
   // Business details for invoices
-  business_name: "Royal Store Pvt. Ltd.",
+  business_name: "Royal Trading Company",
   business_address: "123 Business Street, Commercial Area",
   business_city: "Mumbai",
   business_state: "Maharashtra",
@@ -35,7 +36,7 @@ export const defaultSettings: SiteSettings = {
   business_gst_number: "27AABCU9603R1ZX",
   business_pan_number: "AABCU9603R",
   business_phone: "+91 1234567890",
-  business_email: "billing@royalstore.com",
+  business_email: "billing@royaltrading.com",
 };
 
 const SiteSettingsContext = createContext<SiteSettingsContextType | undefined>(
