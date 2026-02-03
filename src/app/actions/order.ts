@@ -131,6 +131,7 @@ export async function createOrder(
     // Apply coupon discount if provided
     let discount = 0;
     let validCouponCode = null;
+    let couponRef: FirebaseFirestore.DocumentReference | null = null;
 
     if (coupon_code) {
       const couponsSnapshot = await adminDb
@@ -139,31 +140,71 @@ export async function createOrder(
         .get();
 
       if (!couponsSnapshot.empty) {
-        const couponData = couponsSnapshot.docs[0].data();
+        const couponDoc = couponsSnapshot.docs[0];
+        const couponData = couponDoc.data();
+        couponRef = couponDoc.ref;
 
-        if (couponData.is_active) {
-          // Check minimum order value
-          const minOrderValue =
-            couponData.min_order_amount || couponData.min_order_value || 0;
+        // Validate coupon is active
+        if (!couponData.is_active) {
+          return { success: false, error: "Coupon is no longer active" };
+        }
 
-          if (subtotal >= minOrderValue) {
-            if (couponData.discount_type === "percentage") {
-              discount = Math.round(
-                subtotal * (couponData.discount_value / 100),
-              );
-              // Apply max discount if set
-              if (
-                couponData.max_discount_amount &&
-                discount > couponData.max_discount_amount
-              ) {
-                discount = couponData.max_discount_amount;
-              }
-            } else {
-              discount = couponData.discount_value;
-            }
-            validCouponCode = coupon_code.toUpperCase();
+        // Validate expiration
+        if (couponData.expires_at) {
+          const expiryDate = couponData.expires_at.toDate
+            ? couponData.expires_at.toDate()
+            : new Date(couponData.expires_at);
+          if (expiryDate < new Date()) {
+            return { success: false, error: "Coupon has expired" };
           }
         }
+
+        // Validate max uses
+        const currentUses =
+          couponData.current_uses || couponData.used_count || 0;
+        const maxUses = couponData.max_uses || couponData.usage_limit;
+        if (maxUses && currentUses >= maxUses) {
+          return {
+            success: false,
+            error: "Coupon has reached its maximum usage limit",
+          };
+        }
+
+        // Check minimum order value
+        const minOrderValue =
+          couponData.min_order_amount ||
+          couponData.min_order_value ||
+          couponData.min_purchase ||
+          0;
+
+        if (subtotal < minOrderValue) {
+          return {
+            success: false,
+            error: `Minimum order value of ₹${minOrderValue} required for this coupon`,
+          };
+        }
+
+        // Calculate discount
+        if (couponData.discount_type === "percentage") {
+          discount = Math.round(subtotal * (couponData.discount_value / 100));
+          // Apply max discount if set
+          const maxDiscount =
+            couponData.max_discount_amount || couponData.max_discount;
+          if (maxDiscount && discount > maxDiscount) {
+            discount = maxDiscount;
+          }
+        } else {
+          discount = couponData.discount_value;
+        }
+
+        // Ensure discount doesn't exceed subtotal
+        if (discount > subtotal) {
+          discount = subtotal;
+        }
+
+        validCouponCode = coupon_code.toUpperCase();
+      } else {
+        return { success: false, error: "Invalid coupon code" };
       }
     }
 
@@ -207,24 +248,32 @@ export async function createOrder(
         created_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
       });
+    });
 
-      // Increment coupon usage if used
-      if (validCouponCode) {
-        const couponSnapshot = await adminDb
+    // Increment coupon usage outside transaction (after successful order creation)
+    if (validCouponCode) {
+      try {
+        const couponsSnapshot = await adminDb
           .collection("coupons")
           .where("code", "==", validCouponCode)
           .get();
 
-        if (!couponSnapshot.empty) {
-          const couponRef = couponSnapshot.docs[0].ref;
-          const currentUsed = couponSnapshot.docs[0].data().used_count || 0;
-          transaction.update(couponRef, {
+        if (!couponsSnapshot.empty) {
+          const couponRef = couponsSnapshot.docs[0].ref;
+          const couponData = couponsSnapshot.docs[0].data();
+          const currentUsed =
+            couponData.used_count || couponData.current_uses || 0;
+          await couponRef.update({
             used_count: currentUsed + 1,
+            current_uses: currentUsed + 1,
             updated_at: FieldValue.serverTimestamp(),
           });
         }
+      } catch (couponError) {
+        // Log but don't fail the order if coupon update fails
+        console.error("Failed to update coupon usage:", couponError);
       }
-    });
+    }
 
     return { success: true, order_id: orderId };
   } catch (error) {

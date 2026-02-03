@@ -36,6 +36,9 @@ interface Coupon {
   discount_value: number;
   min_order_value?: number;
   is_active: boolean;
+  expires_at: { toDate: () => Date } | Date | null;
+  max_uses: number | null;
+  current_uses: number;
 }
 
 export default function CartPage() {
@@ -86,14 +89,40 @@ export default function CartPage() {
         return;
       }
 
-      const couponData = couponSnap.docs[0].data() as Coupon;
+      const couponDoc = couponSnap.docs[0];
+      const couponData = couponDoc.data() as Coupon;
+      couponData.code = couponDoc.id; // Ensure code is set
 
+      // Check if coupon is active
       if (!couponData.is_active) {
         setCouponError("This coupon is no longer active");
         setCouponLoading(false);
         return;
       }
 
+      // Check expiration
+      if (couponData.expires_at) {
+        const expiryDate =
+          "toDate" in couponData.expires_at
+            ? couponData.expires_at.toDate()
+            : new Date(couponData.expires_at);
+        if (expiryDate < new Date()) {
+          setCouponError("This coupon has expired");
+          setCouponLoading(false);
+          return;
+        }
+      }
+
+      // Check max uses
+      if (couponData.max_uses !== null && couponData.max_uses > 0) {
+        if (couponData.current_uses >= couponData.max_uses) {
+          setCouponError("This coupon has reached its maximum usage limit");
+          setCouponLoading(false);
+          return;
+        }
+      }
+
+      // Check minimum order value
       if (couponData.min_order_value && subtotal < couponData.min_order_value) {
         setCouponError(
           `Minimum order value is ${formatPrice(couponData.min_order_value)}`,
@@ -103,12 +132,16 @@ export default function CartPage() {
       }
 
       // Store in cart context so it persists to checkout
-      setAppliedCouponInContext(couponData);
+      setAppliedCouponInContext({
+        code: couponDoc.id,
+        discount_type: couponData.discount_type,
+        discount_value: couponData.discount_value,
+      });
       setCouponCode("");
-      toast.success("Coupon applied successfully!");
+      toast.success(`Coupon ${couponDoc.id} applied successfully!`);
     } catch (error) {
       console.error("Error applying coupon:", error);
-      setCouponError("Failed to apply coupon");
+      setCouponError("Failed to apply coupon. Please try again.");
     }
     setCouponLoading(false);
   };
