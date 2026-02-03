@@ -177,6 +177,19 @@ export interface SiteSetting {
   updated_at: string;
 }
 
+export interface BusinessDetails {
+  business_name: string;
+  business_address: string;
+  business_city: string;
+  business_state: string;
+  business_postal_code: string;
+  business_country: string;
+  business_gst_number: string;
+  business_pan_number: string;
+  business_phone: string;
+  business_email: string;
+}
+
 export interface SiteSettings {
   site_name: string;
   site_description: string;
@@ -195,6 +208,17 @@ export interface SiteSettings {
   contact_phone: string;
   currency: string;
   currency_symbol: string;
+  // Business details for invoices
+  business_name: string;
+  business_address: string;
+  business_city: string;
+  business_state: string;
+  business_postal_code: string;
+  business_country: string;
+  business_gst_number: string;
+  business_pan_number: string;
+  business_phone: string;
+  business_email: string;
 }
 
 // Item Request from Wholesellers

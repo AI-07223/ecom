@@ -87,9 +87,27 @@ export function SingleImageUpload({
 
       onChange(downloadUrl);
       toast.success("Image uploaded successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Upload error:", error);
-      toast.error("Upload failed. Try using an image URL instead.");
+      let errorMsg = "Upload failed";
+      if (error instanceof Error) {
+        if (
+          error.message.includes("unauthorized") ||
+          error.message.includes("Unauthorized")
+        ) {
+          errorMsg =
+            "Upload failed: Permission denied. Please check you're logged in as admin.";
+        } else if (
+          error.message.includes("cors") ||
+          error.message.includes("CORS")
+        ) {
+          errorMsg =
+            "Upload failed: CORS error. Please try again or use image URL.";
+        } else {
+          errorMsg = `Upload failed: ${error.message}`;
+        }
+      }
+      toast.error(errorMsg);
       setShowUrlInput(true);
     }
 

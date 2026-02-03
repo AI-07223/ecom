@@ -10,6 +10,9 @@ import {
   Mail,
   Globe,
   RotateCcw,
+  Building2,
+  Receipt,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,21 +53,36 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [formData, setFormData] = useState({
+    // Store info
     site_name: "",
     site_description: "",
     logo_url: "",
     favicon_url: "",
+    footer_text: "",
+    // Colors
     primary_color: "",
     secondary_color: "",
     accent_color: "",
-    footer_text: "",
+    // Contact
     contact_email: "",
     contact_phone: "",
     currency: "",
     currency_symbol: "",
+    // Social
     facebook: "",
     instagram: "",
     twitter: "",
+    // Business details for invoice
+    business_name: "",
+    business_address: "",
+    business_city: "",
+    business_state: "",
+    business_postal_code: "",
+    business_country: "",
+    business_gst_number: "",
+    business_pan_number: "",
+    business_phone: "",
+    business_email: "",
   });
 
   useEffect(() => {
@@ -78,10 +96,10 @@ export default function AdminSettingsPage() {
         site_description: settings.site_description || "",
         logo_url: settings.logo_url || "",
         favicon_url: settings.favicon_url || "",
+        footer_text: settings.footer_text || "",
         primary_color: settings.primary_color || "#7c3aed",
         secondary_color: settings.secondary_color || "#a78bfa",
         accent_color: settings.accent_color || "#f59e0b",
-        footer_text: settings.footer_text || "",
         contact_email: settings.contact_email || "",
         contact_phone: settings.contact_phone || "",
         currency: settings.currency || "INR",
@@ -89,6 +107,17 @@ export default function AdminSettingsPage() {
         facebook: settings.social_links?.facebook || "",
         instagram: settings.social_links?.instagram || "",
         twitter: settings.social_links?.twitter || "",
+        // Business details
+        business_name: settings.business_name || "",
+        business_address: settings.business_address || "",
+        business_city: settings.business_city || "",
+        business_state: settings.business_state || "",
+        business_postal_code: settings.business_postal_code || "",
+        business_country: settings.business_country || "",
+        business_gst_number: settings.business_gst_number || "",
+        business_pan_number: settings.business_pan_number || "",
+        business_phone: settings.business_phone || "",
+        business_email: settings.business_email || "",
       });
     }
   }, [settings]);
@@ -105,18 +134,22 @@ export default function AdminSettingsPage() {
     setIsSaving(true);
     try {
       const settingsToSave = [
+        // Store info
         { id: "site_name", value: formData.site_name },
         { id: "site_description", value: formData.site_description },
         { id: "logo_url", value: formData.logo_url },
         { id: "favicon_url", value: formData.favicon_url },
+        { id: "footer_text", value: formData.footer_text },
+        // Colors
         { id: "primary_color", value: formData.primary_color },
         { id: "secondary_color", value: formData.secondary_color },
         { id: "accent_color", value: formData.accent_color },
-        { id: "footer_text", value: formData.footer_text },
+        // Contact
         { id: "contact_email", value: formData.contact_email },
         { id: "contact_phone", value: formData.contact_phone },
         { id: "currency", value: formData.currency },
         { id: "currency_symbol", value: formData.currency_symbol },
+        // Social
         {
           id: "social_links",
           value: {
@@ -125,6 +158,23 @@ export default function AdminSettingsPage() {
             twitter: formData.twitter,
           },
         },
+        // Business details
+        { id: "business_name", value: formData.business_name },
+        { id: "business_address", value: formData.business_address },
+        { id: "business_city", value: formData.business_city },
+        { id: "business_state", value: formData.business_state },
+        { id: "business_postal_code", value: formData.business_postal_code },
+        { id: "business_country", value: formData.business_country },
+        {
+          id: "business_gst_number",
+          value: formData.business_gst_number.toUpperCase(),
+        },
+        {
+          id: "business_pan_number",
+          value: formData.business_pan_number.toUpperCase(),
+        },
+        { id: "business_phone", value: formData.business_phone },
+        { id: "business_email", value: formData.business_email },
       ];
       for (const setting of settingsToSave) {
         await setDoc(doc(db, "site_settings", setting.id), {
@@ -158,6 +208,26 @@ export default function AdminSettingsPage() {
         { id: "currency", value: defaultSettings.currency },
         { id: "currency_symbol", value: defaultSettings.currency_symbol },
         { id: "social_links", value: defaultSettings.social_links },
+        // Reset business details
+        { id: "business_name", value: defaultSettings.business_name },
+        { id: "business_address", value: defaultSettings.business_address },
+        { id: "business_city", value: defaultSettings.business_city },
+        { id: "business_state", value: defaultSettings.business_state },
+        {
+          id: "business_postal_code",
+          value: defaultSettings.business_postal_code,
+        },
+        { id: "business_country", value: defaultSettings.business_country },
+        {
+          id: "business_gst_number",
+          value: defaultSettings.business_gst_number,
+        },
+        {
+          id: "business_pan_number",
+          value: defaultSettings.business_pan_number,
+        },
+        { id: "business_phone", value: defaultSettings.business_phone },
+        { id: "business_email", value: defaultSettings.business_email },
       ];
       for (const setting of settingsToSave) {
         await setDoc(doc(db, "site_settings", setting.id), {
@@ -170,10 +240,10 @@ export default function AdminSettingsPage() {
         site_description: defaultSettings.site_description || "",
         logo_url: defaultSettings.logo_url || "",
         favicon_url: defaultSettings.favicon_url || "",
+        footer_text: defaultSettings.footer_text || "",
         primary_color: defaultSettings.primary_color || "#7c3aed",
         secondary_color: defaultSettings.secondary_color || "#a78bfa",
         accent_color: defaultSettings.accent_color || "#f59e0b",
-        footer_text: defaultSettings.footer_text || "",
         contact_email: defaultSettings.contact_email || "",
         contact_phone: defaultSettings.contact_phone || "",
         currency: defaultSettings.currency || "INR",
@@ -181,6 +251,16 @@ export default function AdminSettingsPage() {
         facebook: defaultSettings.social_links?.facebook || "",
         instagram: defaultSettings.social_links?.instagram || "",
         twitter: defaultSettings.social_links?.twitter || "",
+        business_name: defaultSettings.business_name || "",
+        business_address: defaultSettings.business_address || "",
+        business_city: defaultSettings.business_city || "",
+        business_state: defaultSettings.business_state || "",
+        business_postal_code: defaultSettings.business_postal_code || "",
+        business_country: defaultSettings.business_country || "",
+        business_gst_number: defaultSettings.business_gst_number || "",
+        business_pan_number: defaultSettings.business_pan_number || "",
+        business_phone: defaultSettings.business_phone || "",
+        business_email: defaultSettings.business_email || "",
       });
       await refreshSettings();
       toast.success("Settings reset to default successfully");
@@ -207,7 +287,7 @@ export default function AdminSettingsPage() {
             <div>
               <h1 className="text-xl font-bold">Site Settings</h1>
               <p className="text-sm text-muted-foreground">
-                Customize your store
+                Customize your store and business details
               </p>
             </div>
           </div>
@@ -278,6 +358,142 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Business Details for Invoice */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Building2 className="h-5 w-5" /> Business Details
+              </CardTitle>
+              <CardDescription>
+                These details will appear on your tax invoices and bills
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="business_name">Legal Business Name</Label>
+                <Input
+                  id="business_name"
+                  name="business_name"
+                  value={formData.business_name}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Royal Store Pvt. Ltd."
+                />
+              </div>
+              <div>
+                <Label htmlFor="business_address">Business Address</Label>
+                <Textarea
+                  id="business_address"
+                  name="business_address"
+                  value={formData.business_address}
+                  onChange={handleInputChange}
+                  placeholder="Street address"
+                  rows={2}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="business_city">City</Label>
+                  <Input
+                    id="business_city"
+                    name="business_city"
+                    value={formData.business_city}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="business_state">State</Label>
+                  <Input
+                    id="business_state"
+                    name="business_state"
+                    value={formData.business_state}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="business_postal_code">Postal Code</Label>
+                  <Input
+                    id="business_postal_code"
+                    name="business_postal_code"
+                    value={formData.business_postal_code}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="business_country">Country</Label>
+                  <Input
+                    id="business_country"
+                    name="business_country"
+                    value={formData.business_country}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label
+                    htmlFor="business_gst_number"
+                    className="flex items-center gap-2"
+                  >
+                    <Receipt className="h-4 w-4" />
+                    GST Number
+                  </Label>
+                  <Input
+                    id="business_gst_number"
+                    name="business_gst_number"
+                    value={formData.business_gst_number}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 27AABCU9603R1ZX"
+                    className="uppercase"
+                    maxLength={15}
+                  />
+                </div>
+                <div>
+                  <Label
+                    htmlFor="business_pan_number"
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    PAN Number
+                  </Label>
+                  <Input
+                    id="business_pan_number"
+                    name="business_pan_number"
+                    value={formData.business_pan_number}
+                    onChange={handleInputChange}
+                    placeholder="e.g., AABCU9603R"
+                    className="uppercase"
+                    maxLength={10}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="business_phone">Business Phone</Label>
+                  <Input
+                    id="business_phone"
+                    name="business_phone"
+                    value={formData.business_phone}
+                    onChange={handleInputChange}
+                    placeholder="+91 1234567890"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="business_email">Business Email</Label>
+                  <Input
+                    id="business_email"
+                    name="business_email"
+                    type="email"
+                    value={formData.business_email}
+                    onChange={handleInputChange}
+                    placeholder="billing@yourstore.com"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Branding */}
           <Card>
             <CardHeader>
@@ -339,7 +555,7 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="contact_email">Email</Label>
+                  <Label htmlFor="contact_email">Contact Email</Label>
                   <Input
                     id="contact_email"
                     name="contact_email"
@@ -349,7 +565,7 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="contact_phone">Phone</Label>
+                  <Label htmlFor="contact_phone">Contact Phone</Label>
                   <Input
                     id="contact_phone"
                     name="contact_phone"

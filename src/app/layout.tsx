@@ -40,7 +40,17 @@ export default function RootLayout({
                 </div>
                 <MobileBottomNav />
                 <AdminBottomNav />
-                <Toaster position="bottom-right" richColors />
+                <Toaster
+                  position="bottom-right"
+                  richColors
+                  className="!bottom-[72px] md:!bottom-4"
+                  toastOptions={{
+                    classNames: {
+                      toast:
+                        "md:!w-[356px] !w-[calc(100vw-32px)] !max-w-[356px]",
+                    },
+                  }}
+                />
               </WishlistProvider>
             </CartProvider>
           </AuthProvider>
@@ -49,4 +59,3 @@ export default function RootLayout({
     </html>
   );
 }
-

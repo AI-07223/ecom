@@ -11,15 +11,26 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  FileText,
+  Receipt,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import Invoice from "@/components/orders/Invoice";
 
 interface OrderItem {
   product_id: string;
@@ -34,8 +45,10 @@ interface Order {
   id: string;
   order_number: string;
   user_id: string;
+  user_email?: string;
   status: string;
   payment_status: string;
+  payment_method?: string;
   subtotal: number;
   shipping: number;
   discount: number;
@@ -62,6 +75,7 @@ const statusSteps = [
   "shipped",
   "delivered",
 ];
+
 const statusIcons: Record<string, typeof Package> = {
   pending: Clock,
   confirmed: CheckCircle,
@@ -69,6 +83,15 @@ const statusIcons: Record<string, typeof Package> = {
   shipped: Truck,
   delivered: CheckCircle,
   cancelled: XCircle,
+};
+
+const statusColors: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  confirmed: "bg-blue-100 text-blue-800",
+  processing: "bg-purple-100 text-purple-800",
+  shipped: "bg-indigo-100 text-indigo-800",
+  delivered: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-800",
 };
 
 export default function OrderDetailPage() {
@@ -79,6 +102,7 @@ export default function OrderDetailPage() {
   const { settings } = useSiteSettings();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -170,22 +194,36 @@ export default function OrderDetailPage() {
         <span className="text-foreground">{order.order_number}</span>
       </nav>
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold">{order.order_number}</h1>
           <p className="text-muted-foreground">
             Placed on {formatDate(order.created_at)}
           </p>
         </div>
-        <Badge
-          className={
-            order.status === "cancelled"
-              ? "bg-red-100 text-red-800"
-              : "bg-green-100 text-green-800"
-          }
-        >
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge className={statusColors[order.status] || "bg-gray-100"}>
+            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          </Badge>
+          {/* Invoice Button */}
+          <Dialog open={showInvoice} onOpenChange={setShowInvoice}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Receipt className="h-4 w-4 mr-2" />
+                View Invoice
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Tax Invoice
+                </DialogTitle>
+              </DialogHeader>
+              <Invoice order={order} showActions={true} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -200,35 +238,39 @@ export default function OrderDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between">
-                  {statusSteps.map((step, index) => (
-                    <div
-                      key={step}
-                      className="flex flex-col items-center flex-1"
-                    >
+                <div className="relative">
+                  <div className="flex justify-between">
+                    {statusSteps.map((step, index) => (
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                          index <= currentStepIndex
-                            ? "bg-green-500 text-white"
-                            : "bg-muted text-muted-foreground"
-                        }`}
+                        key={step}
+                        className="flex flex-col items-center flex-1 relative z-10"
                       >
-                        {index + 1}
-                      </div>
-                      <span className="text-xs mt-2 text-center capitalize">
-                        {step}
-                      </span>
-                      {index < statusSteps.length - 1 && (
                         <div
-                          className={`hidden sm:block absolute h-0.5 w-full mt-4 ${
-                            index < currentStepIndex
-                              ? "bg-green-500"
-                              : "bg-muted"
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                            index <= currentStepIndex
+                              ? "bg-green-500 text-white"
+                              : "bg-muted text-muted-foreground"
                           }`}
-                        />
-                      )}
-                    </div>
-                  ))}
+                        >
+                          {index + 1}
+                        </div>
+                        <span className="text-xs mt-2 text-center capitalize hidden sm:block">
+                          {step}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Progress bar */}
+                  <div className="absolute top-4 left-0 right-0 h-0.5 bg-muted -z-0">
+                    <div
+                      className="h-full bg-green-500 transition-all"
+                      style={{
+                        width: `${
+                          (currentStepIndex / (statusSteps.length - 1)) * 100
+                        }%`,
+                      }}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -237,19 +279,19 @@ export default function OrderDetailPage() {
           {/* Order Items */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Items</CardTitle>
+              <CardTitle>Order Items ({order.items?.length || 0})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {order.items.map((item, index) => (
                   <div key={index} className="flex gap-4">
-                    <div className="relative w-20 h-20 bg-muted rounded-md shrink-0">
+                    <div className="relative w-20 h-20 bg-muted rounded-md shrink-0 overflow-hidden">
                       {item.product_image ? (
                         <Image
                           src={item.product_image}
                           alt={item.product_name}
                           fill
-                          className="object-cover rounded-md"
+                          className="object-cover"
                           sizes="80px"
                         />
                       ) : (
@@ -335,7 +377,17 @@ export default function OrderDetailPage() {
               <div className="pt-4 space-y-2">
                 <p className="text-sm text-muted-foreground">
                   Payment:{" "}
-                  <span className="capitalize">{order.payment_status}</span>
+                  <span className="capitalize font-medium">
+                    {order.payment_status}
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Method:{" "}
+                  <span className="capitalize">
+                    {order.payment_method === "cod"
+                      ? "Cash on Delivery"
+                      : order.payment_method || "N/A"}
+                  </span>
                 </p>
                 {order.coupon_code && (
                   <p className="text-sm text-muted-foreground">
@@ -347,10 +399,32 @@ export default function OrderDetailPage() {
                 )}
                 {order.gst_number && (
                   <p className="text-sm text-muted-foreground">
-                    GST: <span className="font-mono">{order.gst_number}</span>
+                    Your GST:{" "}
+                    <span className="font-mono bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs">
+                      {order.gst_number}
+                    </span>
                   </p>
                 )}
               </div>
+
+              {/* View Invoice Button for Mobile */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full mt-4">
+                    <Receipt className="h-4 w-4 mr-2" />
+                    View Invoice
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Tax Invoice
+                    </DialogTitle>
+                  </DialogHeader>
+                  <Invoice order={order} showActions={true} />
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>

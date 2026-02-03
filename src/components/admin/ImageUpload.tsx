@@ -100,11 +100,30 @@ export function ImageUpload({
         onChange([...value, ...uploadedUrls]);
         toast.success(`${uploadedUrls.length} image(s) uploaded`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Upload error:", error);
-      toast.error(
-        "Image upload failed. Please add image URL manually or enable Firebase Storage.",
-      );
+      let errorMsg = "Image upload failed";
+      if (error instanceof Error) {
+        if (
+          error.message.includes("unauthorized") ||
+          error.message.includes("Unauthorized")
+        ) {
+          errorMsg =
+            "Upload failed: You don't have permission. Please check if you're logged in as admin.";
+        } else if (
+          error.message.includes("cors") ||
+          error.message.includes("CORS")
+        ) {
+          errorMsg =
+            "Upload failed: CORS error. Please try again or use image URL.";
+        } else if (error.message.includes("network")) {
+          errorMsg =
+            "Upload failed: Network error. Please check your connection.";
+        } else {
+          errorMsg = `Upload failed: ${error.message}`;
+        }
+      }
+      toast.error(errorMsg);
     }
 
     setIsUploading(false);

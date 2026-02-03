@@ -34,6 +34,13 @@ service firebase.storage {
       allow write: if isAdmin() && isValidImage();
     }
 
+    // Item requests - wholesalers can upload their own
+    match /item_requests/{userId}/{fileName} {
+      allow write: if isAuthenticated() &&
+                      request.auth.uid == userId &&
+                      isValidImage();
+    }
+
     // Site assets (logos, favicons) - admins only
     match /site/{fileName} {
       allow write: if isAdmin() && isValidImage();
