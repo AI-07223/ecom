@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -18,12 +19,19 @@ import {
   Receipt,
   FileText,
   Building2,
+  ExternalLink,
+  Save,
+  X,
+  Plus,
+  Minus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
@@ -91,19 +99,19 @@ const statusSteps = [
 ];
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-purple-100 text-purple-800",
-  shipped: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
+  pending: "bg-amber-100 text-amber-800 border-amber-200",
+  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
+  processing: "bg-purple-100 text-purple-800 border-purple-200",
+  shipped: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  cancelled: "bg-red-100 text-red-800 border-red-200",
 };
 
 const paymentStatusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  paid: "bg-green-100 text-green-800",
-  failed: "bg-red-100 text-red-800",
-  refunded: "bg-gray-100 text-gray-800",
+  pending: "bg-amber-100 text-amber-800 border-amber-200",
+  paid: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  failed: "bg-red-100 text-red-800 border-red-200",
+  refunded: "bg-gray-100 text-gray-800 border-gray-200",
 };
 
 export default function AdminOrderDetailPage() {
@@ -119,6 +127,11 @@ export default function AdminOrderDetailPage() {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
+  
+  // Editing state
+  const [editingItems, setEditingItems] = useState(false);
+  const [editedItems, setEditedItems] = useState<OrderItem[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -132,7 +145,9 @@ export default function AdminOrderDetailPage() {
       try {
         const orderDoc = await getDoc(doc(db, "orders", orderId));
         if (orderDoc.exists()) {
-          setOrder({ id: orderDoc.id, ...orderDoc.data() } as Order);
+          const orderData = { id: orderDoc.id, ...orderDoc.data() } as Order;
+          setOrder(orderData);
+          setEditedItems(orderData.items || []);
         } else {
           toast.error("Order not found");
           router.push("/profile/admin/orders");
@@ -180,19 +195,88 @@ export default function AdminOrderDetailPage() {
     setIsUpdating(false);
   };
 
+  const handleUpdatePaymentStatus = async (newPaymentStatus: string) => {
+    if (!order) return;
+    try {
+      await updateDoc(doc(db, "orders", order.id), {
+        payment_status: newPaymentStatus,
+        updated_at: serverTimestamp(),
+      });
+      toast.success("Payment status updated");
+      setOrder({ ...order, payment_status: newPaymentStatus });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast.error("Failed to update payment status");
+    }
+  };
+
+  const handleSaveItems = async () => {
+    if (!order) return;
+    
+    // Recalculate totals
+    const newSubtotal = editedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const newShipping = newSubtotal >= 999 ? 0 : 99;
+    const newTotal = newSubtotal - order.discount + newShipping;
+
+    setIsUpdating(true);
+    try {
+      await updateDoc(doc(db, "orders", order.id), {
+        items: editedItems,
+        subtotal: newSubtotal,
+        shipping: newShipping,
+        total: newTotal,
+        updated_at: serverTimestamp(),
+      });
+      toast.success("Order items updated");
+      setOrder({ 
+        ...order, 
+        items: editedItems,
+        subtotal: newSubtotal,
+        shipping: newShipping,
+        total: newTotal,
+      });
+      setEditingItems(false);
+    } catch (error) {
+      console.error("Error updating items:", error);
+      toast.error("Failed to update items");
+    }
+    setIsUpdating(false);
+  };
+
+  const updateItemQuantity = (index: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    setEditedItems(prev => prev.map((item, i) => 
+      i === index 
+        ? { ...item, quantity: newQuantity, total: item.price * newQuantity }
+        : item
+    ));
+  };
+
+  const removeItem = (index: number) => {
+    setEditedItems(prev => prev.filter((_, i) => i !== index));
+    setShowDeleteConfirm(null);
+  };
+
+  const cancelEditing = () => {
+    setEditedItems(order?.items || []);
+    setEditingItems(false);
+  };
+
   const getCurrentStepIndex = () =>
     statusSteps.findIndex((s) => s.key === order?.status);
 
   if (authLoading || !isAdmin || isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-64" />
+      <div className="min-h-screen bg-[#FAFAF5]">
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-8 w-48 mb-6 bg-[#E2E0DA]" />
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <Skeleton className="h-32 bg-[#E2E0DA]" />
+              <Skeleton className="h-64 bg-[#E2E0DA]" />
+            </div>
+            <Skeleton className="h-96 bg-[#E2E0DA]" />
           </div>
-          <Skeleton className="h-96" />
         </div>
       </div>
     );
@@ -202,9 +286,9 @@ export default function AdminOrderDetailPage() {
   const currentStepIndex = getCurrentStepIndex();
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-[#FAFAF5] pb-24">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white border-b border-[#E2E0DA] sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -212,38 +296,30 @@ export default function AdminOrderDetailPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => router.push("/profile/admin/orders")}
+                className="shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-bold">{order.order_number}</h1>
-                  <Badge className={statusColors[order.status]}>
-                    {order.status.charAt(0).toUpperCase() +
-                      order.status.slice(1)}
+                  <h1 className="text-lg sm:text-xl font-bold text-[#1A1A1A]">
+                    {order.order_number}
+                  </h1>
+                  <Badge className={`${statusColors[order.status]} text-xs`}>
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#6B7280]">
                   Placed on {formatDate(order.created_at)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Dialog open={showInvoice} onOpenChange={setShowInvoice}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Tax Invoice
-                    </DialogTitle>
-                  </DialogHeader>
-                  {order && <Invoice order={order} showActions={true} />}
-                </DialogContent>
-              </Dialog>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowInvoice(true)}
+                className="h-9"
               >
                 <Receipt className="h-4 w-4 mr-2" /> Invoice
               </Button>
@@ -253,6 +329,7 @@ export default function AdminOrderDetailPage() {
                   setNewStatus(order.status);
                   setShowStatusDialog(true);
                 }}
+                className="h-9"
                 style={{ backgroundColor: settings.primary_color }}
               >
                 <Edit className="h-4 w-4 mr-2" /> Update Status
@@ -268,9 +345,9 @@ export default function AdminOrderDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Order Progress */}
             {order.status !== "cancelled" && (
-              <Card>
+              <Card className="border-[#E2E0DA] shadow-soft">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Order Progress</CardTitle>
+                  <CardTitle className="text-base text-[#1A1A1A]">Order Progress</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {/* Mobile Progress */}
@@ -278,9 +355,7 @@ export default function AdminOrderDetailPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-                        style={{
-                          backgroundColor: `${settings.accent_color}20`,
-                        }}
+                        style={{ backgroundColor: `${settings.accent_color}20` }}
                       >
                         {(() => {
                           const StepIcon =
@@ -294,13 +369,13 @@ export default function AdminOrderDetailPage() {
                         })()}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium capitalize">{order.status}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium capitalize text-[#1A1A1A]">{order.status}</p>
+                        <p className="text-sm text-[#6B7280]">
                           Step {currentStepIndex + 1} of {statusSteps.length}
                         </p>
                       </div>
                     </div>
-                    <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="mt-4 h-2 bg-[#E2E0DA] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
@@ -323,7 +398,9 @@ export default function AdminOrderDetailPage() {
                           className="flex flex-col items-center relative z-10"
                         >
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isActive ? "text-white" : "bg-muted text-muted-foreground"}`}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                              isActive ? "text-white" : "bg-[#E2E0DA] text-[#9CA3AF]"
+                            }`}
                             style={{
                               backgroundColor: isActive
                                 ? isCurrent
@@ -335,14 +412,16 @@ export default function AdminOrderDetailPage() {
                             <StepIcon className="h-5 w-5" />
                           </div>
                           <span
-                            className={`text-xs mt-2 font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}
+                            className={`text-xs mt-2 font-medium ${
+                              isActive ? "text-[#1A1A1A]" : "text-[#9CA3AF]"
+                            }`}
                           >
                             {step.label}
                           </span>
                         </div>
                       );
                     })}
-                    <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted -z-0">
+                    <div className="absolute top-5 left-0 right-0 h-0.5 bg-[#E2E0DA] -z-0">
                       <div
                         className="h-full transition-all"
                         style={{
@@ -357,21 +436,54 @@ export default function AdminOrderDetailPage() {
             )}
 
             {/* Order Items */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Package className="h-4 w-4" /> Order Items (
-                  {order.items?.length || 0})
+            <Card className="border-[#E2E0DA] shadow-soft">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-base text-[#1A1A1A] flex items-center gap-2">
+                  <Package className="h-4 w-4" /> Order Items ({editedItems.length})
                 </CardTitle>
+                {!editingItems ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingItems(true)}
+                    className="h-8"
+                  >
+                    <Edit className="h-3.5 w-3.5 mr-1" /> Edit Items
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={cancelEditing}
+                      className="h-8"
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveItems}
+                      disabled={isUpdating}
+                      className="h-8"
+                      style={{ backgroundColor: settings.primary_color }}
+                    >
+                      <Save className="h-3.5 w-3.5 mr-1" /> Save
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {order.items?.map((item, index) => (
+                <div className="space-y-3">
+                  {(editingItems ? editedItems : order.items)?.map((item, index) => (
                     <div
                       key={index}
-                      className="flex gap-4 p-3 bg-muted/30 rounded-lg"
+                      className="flex gap-3 p-3 bg-[#F0EFE8] rounded-xl"
                     >
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-muted rounded-md shrink-0 overflow-hidden">
+                      {/* Product Image - Clickable to view product */}
+                      <Link 
+                        href={`/products/${item.product_id}`}
+                        className="relative w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-lg shrink-0 overflow-hidden hover:opacity-80 transition-opacity"
+                      >
                         {item.product_image ? (
                           <Image
                             src={item.product_image}
@@ -382,53 +494,107 @@ export default function AdminOrderDetailPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
+                            <Package className="h-6 w-6 sm:h-8 sm:w-8 text-[#9CA3AF]" />
                           </div>
                         )}
-                      </div>
+                      </Link>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm sm:text-base truncate">
-                          {item.product_name}
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          {formatPrice(item.price)} × {item.quantity}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-sm sm:text-base">
-                          {formatPrice(item.total)}
-                        </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <Link href={`/products/${item.product_id}`}>
+                              <p className="font-medium text-sm sm:text-base text-[#1A1A1A] truncate hover:text-[#2D5A27] transition-colors">
+                                {item.product_name}
+                              </p>
+                            </Link>
+                            <p className="text-xs sm:text-sm text-[#6B7280]">
+                              {formatPrice(item.price)} each
+                            </p>
+                          </div>
+                          {editingItems && (
+                            <button
+                              onClick={() => setShowDeleteConfirm(index)}
+                              className="text-red-500 p-1 hover:bg-red-50 rounded tap-active"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        
+                        {/* Quantity Controls */}
+                        {editingItems ? (
+                          <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center bg-white rounded-lg border border-[#E2E0DA]">
+                              <button
+                                onClick={() => updateItemQuantity(index, item.quantity - 1)}
+                                className="w-8 h-8 flex items-center justify-center tap-active"
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-3.5 w-3.5 text-[#6B7280]" />
+                              </button>
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
+                                className="w-14 h-8 text-center text-sm border-0 p-0 focus-visible:ring-0"
+                                min={1}
+                              />
+                              <button
+                                onClick={() => updateItemQuantity(index, item.quantity + 1)}
+                                className="w-8 h-8 flex items-center justify-center tap-active"
+                              >
+                                <Plus className="h-3.5 w-3.5 text-[#6B7280]" />
+                              </button>
+                            </div>
+                            <p className="font-semibold text-sm text-[#2D5A27]">
+                              = {formatPrice(item.price * item.quantity)}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-sm text-[#6B7280]">Qty: {item.quantity}</p>
+                            <p className="font-semibold text-sm sm:text-base text-[#2D5A27]">
+                              {formatPrice(item.total)}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
+                
+                {/* View Product Link */}
+                {!editingItems && order.items && order.items.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-[#E2E0DA]">
+                    <p className="text-xs text-[#6B7280] mb-2">Tap on any item to view product details</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Shipping Address */}
-            <Card>
+            <Card className="border-[#E2E0DA] shadow-soft">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base text-[#1A1A1A] flex items-center gap-2">
                   <MapPin className="h-4 w-4" /> Shipping Address
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-muted/30 p-4 rounded-lg">
-                  <p className="font-medium">
+                <div className="bg-[#F0EFE8] p-4 rounded-xl">
+                  <p className="font-medium text-[#1A1A1A]">
                     {order.shipping_address.full_name}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-[#6B7280] mt-1">
                     {order.shipping_address.phone}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-sm text-[#6B7280] mt-2">
                     {order.shipping_address.address}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-[#6B7280]">
                     {order.shipping_address.city},{" "}
                     {order.shipping_address.state}{" "}
                     {order.shipping_address.postal_code}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-[#6B7280]">
                     {order.shipping_address.country}
                   </p>
                 </div>
@@ -436,48 +602,46 @@ export default function AdminOrderDetailPage() {
             </Card>
 
             {/* Customer Info */}
-            <Card>
+            <Card className="border-[#E2E0DA] shadow-soft">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base text-[#1A1A1A] flex items-center gap-2">
                   <User className="h-4 w-4" /> Customer Information
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-muted-foreground" />
+                    <div className="w-10 h-10 rounded-full bg-[#F0EFE8] flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-[#6B7280]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">Email</p>
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-xs text-[#6B7280]">Email</p>
+                      <p className="text-sm font-medium text-[#1A1A1A] truncate">
                         {order.user_email || "N/A"}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <Phone className="h-5 w-5 text-muted-foreground" />
+                    <div className="w-10 h-10 rounded-full bg-[#F0EFE8] flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-[#6B7280]" />
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Phone</p>
-                      <p className="text-sm font-medium">
+                      <p className="text-xs text-[#6B7280]">Phone</p>
+                      <p className="text-sm font-medium text-[#1A1A1A]">
                         {order.shipping_address.phone}
                       </p>
                     </div>
                   </div>
                 </div>
                 {order.gst_number && (
-                  <div className="mt-4 pt-4 border-t">
+                  <div className="mt-4 pt-4 border-t border-[#E2E0DA]">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-green-600" />
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">
-                          Customer GST Number
-                        </p>
-                        <p className="text-sm font-medium font-mono">
+                        <p className="text-xs text-[#6B7280]">Customer GST Number</p>
+                        <p className="text-sm font-medium font-mono text-[#1A1A1A]">
                           {order.gst_number}
                         </p>
                       </div>
@@ -489,12 +653,12 @@ export default function AdminOrderDetailPage() {
 
             {/* Notes */}
             {order.notes && (
-              <Card>
+              <Card className="border-[#E2E0DA] shadow-soft">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Order Notes</CardTitle>
+                  <CardTitle className="text-base text-[#1A1A1A]">Order Notes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-lg">
+                  <p className="text-sm text-[#6B7280] bg-[#F0EFE8] p-4 rounded-xl">
                     {order.notes}
                   </p>
                 </CardContent>
@@ -504,73 +668,69 @@ export default function AdminOrderDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <Card className="lg:sticky lg:top-24">
+            <Card className="lg:sticky lg:top-24 border-[#E2E0DA] shadow-soft">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Order Summary</CardTitle>
+                <CardTitle className="text-base text-[#1A1A1A]">Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Payment</span>
-                  <Badge className={paymentStatusColors[order.payment_status]}>
-                    {order.payment_status.charAt(0).toUpperCase() +
-                      order.payment_status.slice(1)}
-                  </Badge>
+                  <span className="text-sm text-[#6B7280]">Payment Status</span>
+                  <Select
+                    value={order.payment_status}
+                    onValueChange={handleUpdatePaymentStatus}
+                  >
+                    <SelectTrigger className="w-[120px] h-8 text-xs">
+                      <Badge className={`${paymentStatusColors[order.payment_status]} text-[10px] px-1.5 py-0`}>
+                        {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                      </Badge>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 {order.payment_method && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Method
-                    </span>
-                    <span className="text-sm font-medium capitalize">
+                    <span className="text-sm text-[#6B7280]">Method</span>
+                    <span className="text-sm font-medium text-[#1A1A1A] capitalize">
                       {order.payment_method}
                     </span>
                   </div>
                 )}
-                <Separator />
+                <Separator className="bg-[#E2E0DA]" />
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatPrice(order.subtotal)}</span>
+                    <span className="text-[#6B7280]">Subtotal</span>
+                    <span className="text-[#1A1A1A] font-medium">{formatPrice(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span>
-                      {order.shipping === 0
-                        ? "Free"
-                        : formatPrice(order.shipping)}
+                    <span className="text-[#6B7280]">Shipping</span>
+                    <span className="text-[#1A1A1A] font-medium">
+                      {order.shipping === 0 ? "Free" : formatPrice(order.shipping)}
                     </span>
                   </div>
                   {order.discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
+                    <div className="flex justify-between text-sm text-emerald-600">
                       <span>Discount</span>
-                      <span>-{formatPrice(order.discount)}</span>
+                      <span className="font-medium">-{formatPrice(order.discount)}</span>
                     </div>
                   )}
                 </div>
-                <Separator />
+                <Separator className="bg-[#E2E0DA]" />
                 <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
+                  <span className="text-[#1A1A1A]">Total</span>
                   <span style={{ color: settings.primary_color }}>
                     {formatPrice(order.total)}
                   </span>
                 </div>
                 {order.coupon_code && (
                   <div className="pt-2">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Coupon Applied
-                    </p>
-                    <span className="inline-block font-mono text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                    <p className="text-xs text-[#6B7280] mb-1">Coupon Applied</p>
+                    <span className="inline-block font-mono text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">
                       {order.coupon_code}
-                    </span>
-                  </div>
-                )}
-                {order.gst_number && (
-                  <div className="pt-2">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Customer GST
-                    </p>
-                    <span className="font-mono text-xs">
-                      {order.gst_number}
                     </span>
                   </div>
                 )}
@@ -578,9 +738,9 @@ export default function AdminOrderDetailPage() {
             </Card>
 
             {/* Invoice Card */}
-            <Card>
+            <Card className="border-[#E2E0DA] shadow-soft">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base text-[#1A1A1A] flex items-center gap-2">
                   <Receipt className="h-4 w-4" />
                   Invoice
                 </CardTitle>
@@ -588,14 +748,14 @@ export default function AdminOrderDetailPage() {
               <CardContent className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-[#E2E0DA]"
                   onClick={() => setShowInvoice(true)}
                 >
                   <FileText className="h-4 w-4 mr-2" /> View Invoice
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-[#E2E0DA]"
                   onClick={() => setShowInvoice(true)}
                 >
                   <Printer className="h-4 w-4 mr-2" /> Print Invoice
@@ -603,29 +763,26 @@ export default function AdminOrderDetailPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-[#E2E0DA] shadow-soft">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Quick Actions</CardTitle>
+                <CardTitle className="text-base text-[#1A1A1A]">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-[#E2E0DA]"
                   onClick={() => router.push("/profile/admin/orders")}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back to Orders
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() =>
-                    router.push(
-                      `/profile/admin/users?search=${order.user_email}`,
-                    )
-                  }
-                >
-                  <User className="h-4 w-4 mr-2" /> View Customer
-                </Button>
+                <Link href={`/profile/admin/users?search=${order.user_email}`}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-[#E2E0DA]"
+                  >
+                    <User className="h-4 w-4 mr-2" /> View Customer
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -636,11 +793,11 @@ export default function AdminOrderDetailPage() {
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Order Status</DialogTitle>
+            <DialogTitle className="text-[#1A1A1A]">Update Order Status</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Select value={newStatus} onValueChange={setNewStatus}>
-              <SelectTrigger>
+              <SelectTrigger className="border-[#E2E0DA]">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -657,6 +814,7 @@ export default function AdminOrderDetailPage() {
             <Button
               variant="outline"
               onClick={() => setShowStatusDialog(false)}
+              className="border-[#E2E0DA]"
             >
               Cancel
             </Button>
@@ -668,6 +826,46 @@ export default function AdminOrderDetailPage() {
               {isUpdating ? "Updating..." : "Update Status"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Item Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm !== null} onOpenChange={() => setShowDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-[#1A1A1A]">Remove Item?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-[#6B7280]">
+            Are you sure you want to remove this item from the order?
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(null)}
+              className="border-[#E2E0DA]"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => showDeleteConfirm !== null && removeItem(showDeleteConfirm)}
+            >
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invoice Dialog */}
+      <Dialog open={showInvoice} onOpenChange={setShowInvoice}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#1A1A1A]">
+              <FileText className="h-5 w-5" />
+              Tax Invoice
+            </DialogTitle>
+          </DialogHeader>
+          {order && <Invoice order={order} showActions={true} />}
         </DialogContent>
       </Dialog>
     </div>

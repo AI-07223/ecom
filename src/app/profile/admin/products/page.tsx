@@ -468,7 +468,7 @@ function ProductsContent() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 min-w-[140px]">
                     <Switch
                       checked={formData.track_inventory}
                       onCheckedChange={(checked) =>
@@ -477,10 +477,11 @@ function ProductsContent() {
                           track_inventory: checked,
                         }))
                       }
+                      className="data-[state=checked]:bg-[#2D5A27]"
                     />
-                    <Label>Track inventory</Label>
+                    <Label className="text-sm cursor-pointer">Track inventory</Label>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 min-w-[140px]">
                     <Switch
                       checked={formData.allow_backorder}
                       onCheckedChange={(checked) =>
@@ -489,8 +490,9 @@ function ProductsContent() {
                           allow_backorder: checked,
                         }))
                       }
+                      className="data-[state=checked]:bg-[#2D5A27]"
                     />
-                    <Label>Allow backorders</Label>
+                    <Label className="text-sm cursor-pointer">Allow backorders</Label>
                   </div>
                 </div>
               </CardContent>
@@ -543,17 +545,18 @@ function ProductsContent() {
                 <CardTitle>Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-6">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-3 min-w-[120px]">
                     <Switch
                       checked={formData.is_active}
                       onCheckedChange={(checked) =>
                         setFormData((prev) => ({ ...prev, is_active: checked }))
                       }
+                      className="data-[state=checked]:bg-[#2D5A27]"
                     />
-                    <Label>Active</Label>
+                    <Label className="text-sm cursor-pointer">Active</Label>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 min-w-[120px]">
                     <Switch
                       checked={formData.is_featured}
                       onCheckedChange={(checked) =>
@@ -562,8 +565,9 @@ function ProductsContent() {
                           is_featured: checked,
                         }))
                       }
+                      className="data-[state=checked]:bg-[#2D5A27]"
                     />
-                    <Label>Featured</Label>
+                    <Label className="text-sm cursor-pointer">Featured</Label>
                   </div>
                 </div>
               </CardContent>

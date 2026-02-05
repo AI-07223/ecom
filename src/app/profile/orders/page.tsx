@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Package, ChevronRight, Eye } from 'lucide-react'
+import Image from 'next/image'
+import { Package, ChevronRight, Eye, ImageIcon, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,26 +14,32 @@ import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 
+interface OrderItem {
+    product_id: string
+    product_name: string
+    product_image?: string
+    quantity: number
+    price: number
+    total: number
+}
+
 interface Order {
     id: string
     order_number: string
     status: string
     payment_status: string
     total: number
-    items: Array<{
-        product_name: string
-        quantity: number
-    }>
+    items: OrderItem[]
     created_at: { toDate: () => Date } | Date
 }
 
 const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    processing: 'bg-purple-100 text-purple-800',
-    shipped: 'bg-indigo-100 text-indigo-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
+    pending: 'bg-amber-100 text-amber-800 border-amber-200',
+    confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
+    processing: 'bg-purple-100 text-purple-800 border-purple-200',
+    shipped: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    delivered: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    cancelled: 'bg-red-100 text-red-800 border-red-200',
 }
 
 export default function OrdersPage() {
@@ -95,8 +102,8 @@ export default function OrdersPage() {
 
     if (authLoading || !user) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="min-h-screen flex items-center justify-center bg-[#FAFAF5]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5A27]"></div>
             </div>
         )
     }
@@ -104,10 +111,10 @@ export default function OrdersPage() {
     if (isLoading) {
         return (
             <div className="container mx-auto px-4 py-8">
-                <Skeleton className="h-10 w-48 mb-8" />
+                <Skeleton className="h-10 w-48 mb-8 bg-[#E2E0DA]" />
                 <div className="space-y-4">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-32" />
+                        <Skeleton key={i} className="h-32 bg-[#E2E0DA]" />
                     ))}
                 </div>
             </div>
@@ -115,63 +122,130 @@ export default function OrdersPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Breadcrumb */}
-            <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-                <Link href="/profile" className="hover:text-foreground">Profile</Link>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-foreground">Orders</span>
-            </nav>
-
-            <h1 className="text-2xl font-bold mb-8">My Orders</h1>
-
-            {orders.length === 0 ? (
-                <div className="text-center py-16">
-                    <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h2 className="text-xl font-semibold mb-2">No Orders Yet</h2>
-                    <p className="text-muted-foreground mb-6">
-                        You haven&apos;t placed any orders yet.
-                    </p>
-                    <Link href="/products">
-                        <Button style={{ backgroundColor: settings.primary_color }}>
-                            Start Shopping
-                        </Button>
-                    </Link>
+        <div className="min-h-screen bg-[#FAFAF5] pb-20">
+            {/* Header */}
+            <div className="bg-white border-b border-[#E2E0DA] sticky top-0 z-10">
+                <div className="container mx-auto px-4 py-4">
+                    <nav className="flex items-center space-x-2 text-sm text-[#6B7280] mb-2">
+                        <Link href="/profile" className="hover:text-[#1A1A1A]">Profile</Link>
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="text-[#1A1A1A]">Orders</span>
+                    </nav>
+                    <h1 className="text-xl font-bold text-[#1A1A1A]">My Orders</h1>
                 </div>
-            ) : (
-                <div className="space-y-4">
-                    {orders.map((order) => (
-                        <Card key={order.id}>
-                            <CardContent className="p-6">
-                                <div className="flex flex-col sm:flex-row justify-between gap-4">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-semibold">{order.order_number}</span>
-                                            <Badge className={statusColors[order.status] || 'bg-gray-100'}>
-                                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                            </Badge>
+            </div>
+
+            <div className="container mx-auto px-4 py-6">
+                {orders.length === 0 ? (
+                    <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E0DA]">
+                        <Package className="h-16 w-16 mx-auto text-[#9CA3AF] mb-4" />
+                        <h2 className="text-xl font-semibold mb-2 text-[#1A1A1A]">No Orders Yet</h2>
+                        <p className="text-[#6B7280] mb-6">
+                            You haven&apos;t placed any orders yet.
+                        </p>
+                        <Link href="/products">
+                            <Button 
+                                className="h-12 px-6 rounded-xl"
+                                style={{ backgroundColor: settings.primary_color }}
+                            >
+                                Start Shopping
+                            </Button>
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {orders.map((order) => (
+                            <Card key={order.id} className="border-[#E2E0DA] shadow-soft overflow-hidden">
+                                <CardContent className="p-4">
+                                    {/* Order Header */}
+                                    <div className="flex items-start justify-between gap-4 mb-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                <span className="font-semibold text-[#1A1A1A]">
+                                                    {order.order_number}
+                                                </span>
+                                                <Badge className={`${statusColors[order.status] || 'bg-gray-100'} text-xs`}>
+                                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-xs text-[#6B7280] flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {formatDate(order.created_at)}
+                                            </p>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Placed on {formatDate(order.created_at)}
-                                        </p>
-                                        <p className="text-sm">
-                                            {order.items?.length || 0} items • {formatPrice(order.total)}
-                                        </p>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg" style={{ color: settings.primary_color }}>
+                                                {formatPrice(order.total)}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center">
+
+                                    {/* Order Items Preview */}
+                                    {order.items && order.items.length > 0 && (
+                                        <div className="flex items-center gap-3 py-3 border-t border-b border-[#E2E0DA]">
+                                            <div className="flex -space-x-2">
+                                                {order.items.slice(0, 3).map((item, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="relative w-10 h-10 rounded-lg border-2 border-white bg-[#F0EFE8] overflow-hidden"
+                                                    >
+                                                        {item.product_image ? (
+                                                            <Image
+                                                                src={item.product_image}
+                                                                alt={item.product_name}
+                                                                fill
+                                                                className="object-cover"
+                                                                sizes="40px"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <ImageIcon className="h-4 w-4 text-[#9CA3AF]" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {order.items.length > 3 && (
+                                                    <div className="w-10 h-10 rounded-lg border-2 border-white bg-[#E2E0DA] flex items-center justify-center">
+                                                        <span className="text-xs font-medium text-[#6B7280]">
+                                                            +{order.items.length - 3}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm text-[#1A1A1A] truncate">
+                                                    {order.items[0].product_name}
+                                                    {order.items.length > 1 && ` +${order.items.length - 1} more`}
+                                                </p>
+                                                <p className="text-xs text-[#6B7280]">
+                                                    {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Order Footer */}
+                                    <div className="flex items-center justify-between pt-3">
+                                        <p className="text-sm text-[#6B7280]">
+                                            {order.items?.length || 0} products
+                                        </p>
                                         <Link href={`/profile/orders/${order.id}`}>
-                                            <Button variant="outline">
-                                                <Eye className="h-4 w-4 mr-2" />
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                className="h-9 rounded-lg border-[#E2E0DA] hover:bg-[#F0EFE8] tap-active"
+                                            >
+                                                <Eye className="h-4 w-4 mr-1" />
                                                 View Details
                                             </Button>
                                         </Link>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

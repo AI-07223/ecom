@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { X, Loader2, ImagePlus, Minimize2 } from "lucide-react";
+import { X, Loader2, ImagePlus, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -30,8 +30,9 @@ export function ImageUpload({
   const [compressingFiles, setCompressingFiles] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, source: "gallery" | "camera" = "gallery") => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -62,7 +63,13 @@ export function ImageUpload({
           continue;
         }
 
-        // Compress image if needed
+        // Validate file size (max 10MB before compression)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name} is too large. Maximum size is 10MB.`);
+          continue;
+        }
+
+        // Compress image if needed (target 300KB)
         if (needsCompression(file, 300)) {
           setCompressingFiles((prev) => [...prev, file.name]);
           const originalSize = getFileSizeKB(file);
@@ -84,7 +91,7 @@ export function ImageUpload({
         // Create unique filename
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(7);
-        const extension = file.name.split(".").pop();
+        const extension = file.name.split(".").pop() || "jpg";
         const filename = `${folder}/${timestamp}-${randomString}.${extension}`;
 
         // Upload to Firebase Storage
@@ -134,6 +141,9 @@ export function ImageUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
   };
 
   const addUrlImage = () => {
@@ -168,93 +178,120 @@ export function ImageUpload({
     onChange(newImages);
   };
 
+  const remainingSlots = maxImages - value.length;
+
   return (
     <div className="space-y-4">
       {/* Upload Area */}
-      <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          isUploading
-            ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-primary/50"
-        }`}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          disabled={isUploading || value.length >= maxImages}
-        />
+      {remainingSlots > 0 && !isUploading && (
+        <div className="grid grid-cols-2 gap-3">
+          {/* Gallery Upload */}
+          <div
+            className="border-2 border-dashed border-[#E2E0DA] rounded-xl p-4 text-center transition-colors hover:border-[#2D5A27] hover:bg-[#F0EFE8] cursor-pointer tap-active"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handleFileSelect(e, "gallery")}
+              className="hidden"
+              disabled={isUploading || remainingSlots <= 0}
+            />
+            <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
+              <ImagePlus className="h-5 w-5 text-[#2D5A27]" />
+            </div>
+            <p className="text-sm font-medium text-[#1A1A1A]">Gallery</p>
+            <p className="text-xs text-[#6B7280] mt-0.5">Choose from photos</p>
+          </div>
 
-        {isUploading ? (
+          {/* Camera Capture */}
+          <div
+            className="border-2 border-dashed border-[#E2E0DA] rounded-xl p-4 text-center transition-colors hover:border-[#2D5A27] hover:bg-[#F0EFE8] cursor-pointer tap-active"
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => handleFileSelect(e, "camera")}
+              className="hidden"
+              disabled={isUploading || remainingSlots <= 0}
+            />
+            <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
+              <Camera className="h-5 w-5 text-[#2D5A27]" />
+            </div>
+            <p className="text-sm font-medium text-[#1A1A1A]">Camera</p>
+            <p className="text-xs text-[#6B7280] mt-0.5">Take a photo</p>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Progress */}
+      {isUploading && (
+        <div className="border-2 border-[#2D5A27] rounded-xl p-6 text-center bg-[#F0EFE8]">
           <div className="space-y-3">
-            <Loader2 className="h-10 w-10 mx-auto animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
+            <Loader2 className="h-10 w-10 mx-auto animate-spin text-[#2D5A27]" />
+            <p className="text-sm text-[#6B7280]">
               {compressingFiles.length > 0
                 ? `Compressing ${compressingFiles[0]}...`
                 : `Uploading... ${Math.round(uploadProgress)}%`}
             </p>
-            <div className="w-full max-w-xs mx-auto bg-muted rounded-full h-2">
+            <div className="w-full max-w-xs mx-auto bg-[#E2E0DA] rounded-full h-2">
               <div
-                className="bg-primary h-2 rounded-full transition-all"
+                className="bg-[#2D5A27] h-2 rounded-full transition-all"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#6B7280]">
               Images are automatically compressed to 300KB max
             </p>
           </div>
-        ) : (
-          <div
-            className="cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <ImagePlus className="h-8 w-8 text-muted-foreground" />
-              <Minimize2 className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium">Click to upload images</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              PNG, JPG, WEBP up to 5MB ({value.length}/{maxImages} images)
-            </p>
-            <p className="text-xs text-green-600 mt-1">
-              ✓ Automatic compression to 300KB
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* URL Input Fallback */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="Or paste image URL here..."
-          value={urlInput}
-          onChange={(e) => setUrlInput(e.target.value)}
-          onKeyDown={(e) =>
-            e.key === "Enter" && (e.preventDefault(), addUrlImage())
-          }
-        />
-        <Button type="button" variant="outline" onClick={addUrlImage}>
-          Add URL
-        </Button>
+      {remainingSlots > 0 && !isUploading && (
+        <div className="flex gap-2">
+          <Input
+            placeholder="Or paste image URL here..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.preventDefault(), addUrlImage())
+            }
+            className="border-[#E2E0DA] focus:border-[#2D5A27]"
+          />
+          <Button type="button" variant="outline" onClick={addUrlImage} className="border-[#E2E0DA]">
+            Add URL
+          </Button>
+        </div>
+      )}
+
+      {/* Image Limit Indicator */}
+      <div className="flex items-center justify-between text-xs text-[#6B7280]">
+        <span>{value.length} / {maxImages} images</span>
+        {remainingSlots === 0 && (
+          <span className="text-amber-600">Maximum images reached</span>
+        )}
       </div>
 
       {/* Image Preview Grid */}
       {value.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
           {value.map((url, index) => (
             <div
               key={`${url}-${index}`}
-              className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
+              className="relative aspect-square rounded-xl overflow-hidden bg-[#F0EFE8] border border-[#E2E0DA] group"
             >
               <Image
                 src={url}
-                alt={`Product image ${index + 1}`}
+                alt={`Image ${index + 1}`}
                 fill
                 className="object-cover"
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
                 unoptimized
               />
 
@@ -265,7 +302,7 @@ export function ImageUpload({
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="h-8 w-8"
+                    className="h-8 w-8 bg-white/90 hover:bg-white"
                     onClick={() => moveImage(index, index - 1)}
                   >
                     ←
@@ -285,7 +322,7 @@ export function ImageUpload({
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="h-8 w-8"
+                    className="h-8 w-8 bg-white/90 hover:bg-white"
                     onClick={() => moveImage(index, index + 1)}
                   >
                     →
@@ -295,17 +332,22 @@ export function ImageUpload({
 
               {/* Main image badge */}
               {index === 0 && (
-                <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                <div className="absolute top-2 left-2 bg-[#2D5A27] text-white text-xs px-2 py-1 rounded-lg font-medium">
                   Main
                 </div>
               )}
+
+              {/* Image number */}
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                {index + 1}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        First image will be used as the product thumbnail.
+      <p className="text-xs text-[#6B7280]">
+        First image will be used as the product thumbnail. Tap arrows to reorder, X to remove.
       </p>
     </div>
   );

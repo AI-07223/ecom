@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Package,
@@ -21,6 +22,10 @@ import {
   TrendingDown,
   AlertCircle,
   ChevronRight,
+  ArrowUpRight,
+  Package2,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +45,7 @@ interface DashboardStats {
   processingOrders: number;
   lowStockProducts: number;
   todayOrders: number;
+  deliveredOrders: number;
 }
 
 export default function AdminDashboardPage() {
@@ -117,6 +123,7 @@ export default function AdminDashboardPage() {
           processingOrders: orders.filter((o) => o.status === "processing").length,
           lowStockProducts: lowStock.length,
           todayOrders,
+          deliveredOrders: orders.filter((o) => o.status === "delivered").length,
         });
         setRecentOrders(sortedOrders);
         setLowStockItems(lowStock);
@@ -154,25 +161,46 @@ export default function AdminDashboardPage() {
     return styles[status] || "bg-gray-100 text-gray-700 border-gray-200";
   };
 
+  const getStatusIcon = (status: string) => {
+    const icons: Record<string, typeof Clock> = {
+      pending: Clock,
+      processing: Package2,
+      shipped: ShoppingBag,
+      delivered: CheckCircle2,
+      cancelled: AlertCircle,
+    };
+    return icons[status] || Clock;
+  };
+
   const quickActions = [
-    { icon: Plus, label: "Add Product", href: "/profile/admin/products?action=new", color: "#2D5A27" },
-    { icon: FolderTree, label: "Category", href: "/profile/admin/categories?action=new", color: "#3b82f6" },
-    { icon: ShoppingBag, label: "Orders", href: "/profile/admin/orders", color: "#8b5cf6" },
-    { icon: Ticket, label: "Coupon", href: "/profile/admin/coupons?action=new", color: "#f59e0b" },
+    { icon: Plus, label: "Add Product", href: "/profile/admin/products?action=new", color: "#2D5A27", bgColor: "#E8F5E9" },
+    { icon: FolderTree, label: "Category", href: "/profile/admin/categories?action=new", color: "#1565C0", bgColor: "#E3F2FD" },
+    { icon: ShoppingBag, label: "Orders", href: "/profile/admin/orders", color: "#7B1FA2", bgColor: "#F3E5F5" },
+    { icon: Ticket, label: "Coupon", href: "/profile/admin/coupons?action=new", color: "#E65100", bgColor: "#FBE9E7" },
+  ];
+
+  const menuItems = [
+    { label: "Products", href: "/profile/admin/products", icon: Package, count: stats?.totalProducts, color: "#2D5A27" },
+    { label: "Categories", href: "/profile/admin/categories", icon: FolderTree, color: "#1565C0" },
+    { label: "Orders", href: "/profile/admin/orders", icon: ShoppingBag, count: stats?.pendingOrders, countColor: "bg-amber-500", color: "#7B1FA2" },
+    { label: "Customers", href: "/profile/admin/users", icon: Users, count: stats?.totalUsers, color: "#00838F" },
+    { label: "Coupons", href: "/profile/admin/coupons", icon: Ticket, color: "#E65100" },
+    { label: "Item Requests", href: "/profile/admin/item-requests", icon: FileQuestion, color: "#C62828" },
+    { label: "Settings", href: "/profile/admin/settings", icon: Settings, color: "#455A64" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] pb-20">
+    <div className="min-h-screen bg-[#FAFAF5] pb-24">
       {/* Header */}
       <div className="bg-white border-b border-[#E2E0DA] sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-[#1A1A1A]">Admin Dashboard</h1>
-              <p className="text-sm text-[#6B7280]">Manage your store</p>
+              <p className="text-sm text-[#6B7280]">Welcome back, manage your store</p>
             </div>
             <Link href="/">
-              <Button variant="outline" size="sm" className="rounded-xl border-[#E2E0DA]">
+              <Button variant="outline" size="sm" className="rounded-xl border-[#E2E0DA] text-[#6B7280]">
                 View Store
               </Button>
             </Link>
@@ -185,14 +213,14 @@ export default function AdminDashboardPage() {
         {isLoading ? (
           <Skeleton className="h-32 rounded-2xl bg-[#E2E0DA]" />
         ) : (
-          <Card className="bg-gradient-to-br from-[#2D5A27] to-[#3B7D34] border-0 text-white">
+          <Card className="bg-gradient-to-br from-[#2D5A27] to-[#3B7D34] border-0 text-white overflow-hidden">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-white/80 text-sm">Total Revenue</p>
                   <p className="text-3xl font-bold mt-1">{formatCurrency(stats?.totalRevenue || 0)}</p>
                   <div className="flex items-center gap-2 mt-2">
-                    <div className="flex items-center gap-1 text-emerald-300 text-sm">
+                    <div className="flex items-center gap-1 text-emerald-200 text-sm">
                       <TrendingUp className="h-4 w-4" />
                       <span>{stats?.todayOrders} orders today</span>
                     </div>
@@ -217,59 +245,65 @@ export default function AdminDashboardPage() {
             </>
           ) : (
             <>
-              <Card className="border-[#E2E0DA] shadow-soft">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                      <ShoppingCart className="h-5 w-5 text-blue-600" />
+              <Link href="/profile/admin/orders" className="tap-active">
+                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <ShoppingCart className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-[#1A1A1A]">{stats?.totalOrders}</p>
+                        <p className="text-xs text-[#6B7280]">Total Orders</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1A1A1A]">{stats?.totalOrders}</p>
-                      <p className="text-xs text-[#6B7280]">Total Orders</p>
-                    </div>
-                  </div>
-                  {stats && stats.pendingOrders > 0 && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
-                      <AlertCircle className="h-3 w-3" />
-                      {stats.pendingOrders} pending
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    {stats && stats.pendingOrders > 0 && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
+                        <AlertCircle className="h-3 w-3" />
+                        {stats.pendingOrders} pending
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="border-[#E2E0DA] shadow-soft">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                      <Package className="h-5 w-5 text-emerald-600" />
+              <Link href="/profile/admin/products" className="tap-active">
+                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                        <Package className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-[#1A1A1A]">{stats?.totalProducts}</p>
+                        <p className="text-xs text-[#6B7280]">Products</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1A1A1A]">{stats?.totalProducts}</p>
-                      <p className="text-xs text-[#6B7280]">Products</p>
-                    </div>
-                  </div>
-                  {stats && stats.lowStockProducts > 0 && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-red-600">
-                      <TrendingDown className="h-3 w-3" />
-                      {stats.lowStockProducts} low stock
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    {stats && stats.lowStockProducts > 0 && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-red-600">
+                        <TrendingDown className="h-3 w-3" />
+                        {stats.lowStockProducts} low stock
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="border-[#E2E0DA] shadow-soft">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                      <UserCheck className="h-5 w-5 text-purple-600" />
+              <Link href="/profile/admin/users" className="tap-active">
+                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                        <UserCheck className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-[#1A1A1A]">{stats?.totalUsers}</p>
+                        <p className="text-xs text-[#6B7280]">Customers</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1A1A1A]">{stats?.totalUsers}</p>
-                      <p className="text-xs text-[#6B7280]">Customers</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
               <Card className="border-[#E2E0DA] shadow-soft">
                 <CardContent className="p-4">
@@ -300,7 +334,7 @@ export default function AdminDashboardPage() {
                   <div className="flex flex-col items-center gap-2">
                     <div
                       className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                      style={{ backgroundColor: `${action.color}15` }}
+                      style={{ backgroundColor: action.bgColor }}
                     >
                       <action.icon className="h-6 w-6" style={{ color: action.color }} />
                     </div>
@@ -317,7 +351,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base text-[#1A1A1A]">Recent Orders</CardTitle>
             <Link href="/profile/admin/orders">
-              <Button variant="ghost" size="sm" className="text-[#2D5A27] h-8">
+              <Button variant="ghost" size="sm" className="text-[#2D5A27] h-8 hover:bg-[#2D5A27]/10">
                 View All
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -337,28 +371,34 @@ export default function AdminDashboardPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {recentOrders.map((order) => (
-                  <Link
-                    key={order.id}
-                    href={`/profile/admin/orders/${order.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-[#F0EFE8] tap-active"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-[#1A1A1A] text-sm">
-                          #{order.id.slice(-6).toUpperCase()}
-                        </p>
-                        <Badge variant="outline" className={`text-xs ${getStatusBadge(order.status)}`}>
-                          {order.status}
-                        </Badge>
+                {recentOrders.map((order) => {
+                  const StatusIcon = getStatusIcon(order.status);
+                  return (
+                    <Link
+                      key={order.id}
+                      href={`/profile/admin/orders/${order.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-[#F0EFE8] tap-active hover:bg-[#E8E7E0] transition-colors"
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getStatusBadge(order.status).split(' ')[0]}`}>
+                        <StatusIcon className={`h-5 w-5 ${order.status === 'pending' ? 'text-amber-600' : order.status === 'delivered' ? 'text-emerald-600' : 'text-blue-600'}`} />
                       </div>
-                      <p className="text-xs text-[#6B7280]">
-                        {order.items?.length || 0} items • {formatCurrency(order.total)}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
-                  </Link>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-[#1A1A1A] text-sm">
+                            #{order.id.slice(-6).toUpperCase()}
+                          </p>
+                          <Badge variant="outline" className={`text-xs ${getStatusBadge(order.status)}`}>
+                            {order.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-[#6B7280]">
+                          {order.items?.length || 0} items • {formatCurrency(order.total)}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -379,18 +419,26 @@ export default function AdminDashboardPage() {
                   <Link
                     key={product.id}
                     href={`/profile/admin/products?action=edit&id=${product.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white border border-red-100 tap-active"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white border border-red-100 tap-active"
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                      {product.thumbnail ? (
+                        <Image
+                          src={product.thumbnail}
+                          alt={product.name}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
                         <Package className="h-5 w-5 text-red-500" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-[#1A1A1A] text-sm truncate">{product.name}</p>
-                        <p className="text-xs text-[#6B7280]">{product.sku || "No SKU"}</p>
-                      </div>
+                      )}
                     </div>
-                    <Badge variant="destructive" className="text-xs">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[#1A1A1A] text-sm truncate">{product.name}</p>
+                      <p className="text-xs text-[#6B7280]">{product.sku || "No SKU"}</p>
+                    </div>
+                    <Badge variant="destructive" className="text-xs shrink-0">
                       {product.quantity} left
                     </Badge>
                   </Link>
@@ -400,32 +448,42 @@ export default function AdminDashboardPage() {
           </Card>
         )}
 
-        {/* Management Links */}
+        {/* Management Menu */}
         <Card className="border-[#E2E0DA] shadow-soft">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-[#1A1A1A]">Management</CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
-            {[
-              { label: "All Products", href: "/profile/admin/products", icon: Package },
-              { label: "Categories", href: "/profile/admin/categories", icon: FolderTree },
-              { label: "All Orders", href: "/profile/admin/orders", icon: ShoppingBag },
-              { label: "Customers", href: "/profile/admin/users", icon: Users },
-              { label: "Coupons", href: "/profile/admin/coupons", icon: Ticket },
-              { label: "Item Requests", href: "/profile/admin/item-requests", icon: FileQuestion },
-              { label: "Settings", href: "/profile/admin/settings", icon: Settings },
-            ].map((item, index, arr) => (
+            {menuItems.map((item, index, arr) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between p-4 tap-active ${
+                className={`flex items-center justify-between p-4 tap-active hover:bg-[#F0EFE8] transition-colors ${
                   index !== arr.length - 1 ? "border-b border-[#E2E0DA]" : ""
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
-                    <item.icon className="h-5 w-5 text-[#2D5A27]" />
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${item.color}15` }}
+                  >
+                    <item.icon className="h-5 w-5" style={{ color: item.color }} />
                   </div>
-                  <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+                  <div>
+                    <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+                    {item.count !== undefined && (
+                      <p className="text-xs text-[#6B7280]">{item.count} {item.label.toLowerCase()}</p>
+                    )}
+                  </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-[#9CA3AF]" />
+                <div className="flex items-center gap-2">
+                  {item.count !== undefined && item.count > 0 && item.countColor && (
+                    <Badge className={`${item.countColor} text-white text-xs`}>
+                      {item.count}
+                    </Badge>
+                  )}
+                  <ChevronRight className="h-5 w-5 text-[#9CA3AF]" />
+                </div>
               </Link>
             ))}
           </CardContent>

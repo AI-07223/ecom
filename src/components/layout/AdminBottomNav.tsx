@@ -90,28 +90,6 @@ const adminNavItems: NavItem[] = [
   },
 ];
 
-// Helper function to darken a hex color
-function darkenColor(hex: string, percent: number): string {
-  hex = hex.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const darkenedR = Math.max(0, Math.floor(r * (1 - percent / 100)));
-  const darkenedG = Math.max(0, Math.floor(g * (1 - percent / 100)));
-  const darkenedB = Math.max(0, Math.floor(b * (1 - percent / 100)));
-  return `#${darkenedR.toString(16).padStart(2, "0")}${darkenedG.toString(16).padStart(2, "0")}${darkenedB.toString(16).padStart(2, "0")}`;
-}
-
-// Helper to check if a color is light or dark
-function isLightColor(hex: string): boolean {
-  hex = hex.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5;
-}
-
 export function AdminBottomNav() {
   const pathname = usePathname();
   const { settings } = useSiteSettings();
@@ -120,12 +98,14 @@ export function AdminBottomNav() {
   const [showMoreButton, setShowMoreButton] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Generate admin colors based on site settings
-  const adminBg = darkenColor(settings.primary_color, 75);
-  const adminBgLight = darkenColor(settings.primary_color, 60);
-  const adminAccent = settings.accent_color;
-  const adminTextColor = "#ffffff";
-  const adminTextMuted = `${settings.accent_color}cc`;
+  // Use app theme colors - green/cream
+  const bgColor = "#FAFAF5";
+  const borderColor = "#E2E0DA";
+  const primaryColor = settings.primary_color;
+  const textColor = "#1A1A1A";
+  const mutedTextColor = "#6B7280";
+  const cardBg = "#FFFFFF";
+  const hoverBg = "#F0EFE8";
 
   // Check scroll position
   useEffect(() => {
@@ -153,8 +133,6 @@ export function AdminBottomNav() {
   // Only show on admin pages
   if (!pathname.startsWith("/profile/admin")) return null;
 
-  const activeTextColor = isLightColor(adminAccent) ? "#1a1a1a" : "#ffffff";
-
   const handleSignOut = async () => {
     await signOut();
     setIsOpen(false);
@@ -162,24 +140,24 @@ export function AdminBottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-lg border-t safe-area-bottom"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom bg-white overflow-hidden max-h-[80px]"
       style={{
-        backgroundColor: adminBg,
-        borderColor: `${settings.primary_color}40`,
+        backgroundColor: bgColor,
+        borderColor: borderColor,
       }}
     >
       <div className="flex items-center h-16">
         {/* Back to Store button */}
         <Link
           href="/profile"
-          className="flex-shrink-0 flex flex-col items-center justify-center min-w-[56px] h-14 px-2 rounded-xl mx-0.5 transition-colors"
+          className="flex-shrink-0 flex flex-col items-center justify-center min-w-[56px] h-14 px-2 rounded-xl mx-0.5 tap-active"
           style={{
-            backgroundColor: adminBgLight,
-            color: adminTextColor,
+            backgroundColor: hoverBg,
+            color: textColor,
           }}
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="text-[9px] mt-0.5 font-medium">Back</span>
+          <ArrowLeft className="h-5 w-5 text-[#2D5A27]" />
+          <span className="text-[9px] mt-0.5 font-medium text-[#6B7280]">Back</span>
         </Link>
 
         {/* Scrollable nav items */}
@@ -188,9 +166,8 @@ export function AdminBottomNav() {
           className="flex-1 flex items-center overflow-x-auto scrollbar-hide scroll-smooth px-1"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {adminNavItems.map((item, index) => {
+          {adminNavItems.map((item) => {
             const active = isActive(item.href);
-            const isAlternate = index % 2 === 1;
 
             return (
               <Link
@@ -199,16 +176,12 @@ export function AdminBottomNav() {
                 className={`
                   flex-shrink-0 flex flex-col items-center justify-center
                   min-w-[64px] h-14 px-2 rounded-xl mx-0.5
-                  transition-all duration-200 ease-out
+                  transition-all duration-200 ease-out tap-active
                   ${active ? "scale-105" : ""}
                 `}
                 style={{
-                  backgroundColor: active
-                    ? adminAccent
-                    : isAlternate
-                      ? adminBgLight
-                      : "transparent",
-                  color: active ? activeTextColor : adminTextMuted,
+                  backgroundColor: active ? primaryColor : "transparent",
+                  color: active ? "#ffffff" : mutedTextColor,
                 }}
               >
                 <item.icon
@@ -231,11 +204,11 @@ export function AdminBottomNav() {
               variant="ghost"
               size="icon"
               className={`
-                flex-shrink-0 h-14 w-14 mr-1 rounded-xl
+                flex-shrink-0 h-14 w-14 mr-1 rounded-xl tap-active
                 transition-all duration-300
                 ${showMoreButton ? "opacity-100" : "opacity-50"}
               `}
-              style={{ color: adminTextMuted }}
+              style={{ color: mutedTextColor }}
             >
               <div className="flex flex-col items-center">
                 <Menu className="h-5 w-5" />
@@ -245,17 +218,17 @@ export function AdminBottomNav() {
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="h-auto max-h-[85vh] rounded-t-3xl p-0"
+            className="h-auto max-h-[85vh] rounded-t-3xl p-0 border-t"
             style={{
-              backgroundColor: adminBg,
-              borderColor: `${settings.primary_color}40`,
+              backgroundColor: bgColor,
+              borderColor: borderColor,
             }}
           >
             {/* Pull indicator */}
             <div className="flex justify-center pt-3 pb-2">
               <div
                 className="w-12 h-1.5 rounded-full"
-                style={{ backgroundColor: `${settings.accent_color}40` }}
+                style={{ backgroundColor: `${primaryColor}40` }}
               />
             </div>
 
@@ -266,27 +239,27 @@ export function AdminBottomNav() {
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center"
                   style={{
-                    background: `linear-gradient(135deg, ${settings.accent_color}30, ${settings.primary_color}30)`,
+                    background: `linear-gradient(135deg, ${settings.accent_color}30, ${primaryColor}30)`,
                   }}
                 >
                   <Crown
                     className="h-6 w-6"
-                    style={{ color: settings.accent_color }}
+                    style={{ color: primaryColor }}
                   />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center gap-2">
                     <SheetTitle
                       className="text-base truncate"
-                      style={{ color: adminTextColor }}
+                      style={{ color: textColor }}
                     >
                       Admin Panel
                     </SheetTitle>
                     <Badge
                       className="text-[10px] px-1.5 py-0"
                       style={{
-                        backgroundColor: settings.accent_color,
-                        color: activeTextColor,
+                        backgroundColor: primaryColor,
+                        color: "#ffffff",
                       }}
                     >
                       Admin
@@ -294,7 +267,7 @@ export function AdminBottomNav() {
                   </div>
                   <p
                     className="text-xs truncate"
-                    style={{ color: adminTextMuted }}
+                    style={{ color: mutedTextColor }}
                   >
                     {profile?.full_name || user?.email || "Administrator"}
                   </p>
@@ -306,19 +279,19 @@ export function AdminBottomNav() {
             <div className="px-6 pb-4">
               <div
                 className="grid grid-cols-4 gap-3 p-3 rounded-2xl"
-                style={{ backgroundColor: adminBgLight }}
+                style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
               >
                 {/* Back to Store */}
                 <SheetClose asChild>
                   <Link
                     href="/profile"
-                    className="flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 hover:opacity-80"
+                    className="flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 hover:opacity-80 tap-active"
                     style={{
-                      backgroundColor: `${settings.accent_color}20`,
-                      color: adminTextColor,
+                      backgroundColor: hoverBg,
+                      color: textColor,
                     }}
                   >
-                    <ArrowLeft className="h-5 w-5" />
+                    <ArrowLeft className="h-5 w-5 text-[#2D5A27]" />
                     <span className="text-xs font-medium mt-1">Back</span>
                   </Link>
                 </SheetClose>
@@ -330,12 +303,12 @@ export function AdminBottomNav() {
                     <SheetClose key={item.href} asChild>
                       <Link
                         href={item.href}
-                        className="flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200"
+                        className="flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 tap-active"
                         style={{
                           backgroundColor: active
-                            ? adminAccent
-                            : `${settings.accent_color}20`,
-                          color: active ? activeTextColor : adminTextColor,
+                            ? primaryColor
+                            : hoverBg,
+                          color: active ? "#ffffff" : textColor,
                         }}
                       >
                         <item.icon className="h-5 w-5" />
@@ -366,11 +339,12 @@ export function AdminBottomNav() {
                         )}
                         style={{
                           backgroundColor: active
-                            ? adminAccent
+                            ? primaryColor
                             : index % 2 === 0
-                              ? `${adminBgLight}50`
+                              ? cardBg
                               : "transparent",
-                          color: active ? activeTextColor : adminTextColor,
+                          color: active ? "#ffffff" : textColor,
+                          border: active ? "none" : `1px solid ${index % 2 === 0 ? borderColor : "transparent"}`,
                         }}
                       >
                         <div
@@ -380,8 +354,8 @@ export function AdminBottomNav() {
                           )}
                           style={{
                             backgroundColor: active
-                              ? `${activeTextColor}20`
-                              : adminBgLight,
+                              ? "rgba(255,255,255,0.2)"
+                              : hoverBg,
                           }}
                         >
                           <item.icon className="h-5 w-5" />
@@ -393,7 +367,7 @@ export function AdminBottomNav() {
                           {item.description && (
                             <p
                               className="text-xs"
-                              style={{ color: adminTextMuted }}
+                              style={{ color: active ? "rgba(255,255,255,0.8)" : mutedTextColor }}
                             >
                               {item.description}
                             </p>
@@ -402,7 +376,7 @@ export function AdminBottomNav() {
                         {active && (
                           <div
                             className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: activeTextColor }}
+                            style={{ backgroundColor: "#ffffff" }}
                           />
                         )}
                       </Link>
@@ -416,17 +390,18 @@ export function AdminBottomNav() {
                 <SheetClose asChild>
                   <Link
                     href="/profile"
-                    className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200"
+                    className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200 tap-active"
                     style={{
-                      backgroundColor: `${settings.accent_color}15`,
-                      color: adminTextColor,
+                      backgroundColor: cardBg,
+                      border: `1px solid ${borderColor}`,
+                      color: textColor,
                     }}
                   >
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: adminBgLight }}
+                      style={{ backgroundColor: hoverBg }}
                     >
-                      <User className="h-5 w-5" />
+                      <User className="h-5 w-5 text-[#2D5A27]" />
                     </div>
                     <span className="text-sm font-medium">My Profile</span>
                   </Link>
@@ -434,14 +409,15 @@ export function AdminBottomNav() {
 
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left tap-active"
                   style={{
-                    backgroundColor: "rgba(239, 68, 68, 0.15)",
-                    color: "#ef4444",
+                    backgroundColor: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    color: "#dc2626",
                   }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/20">
-                    <LogOut className="h-5 w-5" />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100">
+                    <LogOut className="h-5 w-5 text-red-600" />
                   </div>
                   <span className="text-sm font-medium">Sign Out</span>
                 </button>

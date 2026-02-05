@@ -186,7 +186,7 @@ export default function CartPage() {
   const total = subtotal - discount + shipping;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] pb-32">
+    <div className="min-h-screen bg-[#FAFAF5] pb-40">
       {/* Header */}
       <div className="bg-white border-b border-[#E2E0DA] sticky top-14 z-10">
         <div className="container mx-auto px-4 py-3">
@@ -359,7 +359,7 @@ export default function CartPage() {
       </div>
 
       {/* Fixed Bottom Checkout Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E0DA] p-4 pb-safe z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E0DA] p-4 z-50 pb-[calc(1rem+env(safe-area-inset-bottom)+72px)] md:pb-safe">
         <div className="container mx-auto max-w-md">
           <Link href="/checkout">
             <Button className="w-full h-14 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white font-semibold text-base tap-active shadow-elevated">

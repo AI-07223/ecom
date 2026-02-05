@@ -41,9 +41,9 @@ export function MobileBottomNav() {
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 overflow-hidden">
         {/* Background with safe area */}
-        <div className="bg-white border-t border-[#E2E0DA] pb-safe">
+        <div className="bg-white border-t border-[#E2E0DA] pb-safe max-h-[80px]">
           <div className="flex items-center justify-around h-[64px]">
             {navItems.map((item) => {
               const active = isActive(item.href);

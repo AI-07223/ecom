@@ -158,15 +158,15 @@ export default function HomePage() {
                   href={`/categories/${category.slug}`}
                   className="flex-shrink-0 tap-active"
                 >
-                  <div className="w-20 sm:w-24 bg-[#F0EFE8] rounded-2xl p-3 text-center hover:bg-[#E8E7E0] transition-colors">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-2 rounded-xl bg-white border border-[#E2E0DA] flex items-center justify-center overflow-hidden">
+                  <div className="w-24 sm:w-28 bg-[#F0EFE8] rounded-2xl p-3 text-center hover:bg-[#E8E7E0] transition-colors">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-2 rounded-xl bg-white border border-[#E2E0DA] flex items-center justify-center overflow-hidden">
                       {category.image_url ? (
                         <Image
                           src={category.image_url}
                           alt={category.name}
-                          width={40}
-                          height={40}
-                          className="object-cover w-8 h-8 sm:w-10 sm:h-10 rounded-lg"
+                          width={48}
+                          height={48}
+                          className="object-cover w-10 h-10 sm:w-12 sm:h-12 rounded-lg"
                         />
                       ) : (
                         <span className="text-xl font-bold text-[#2D5A27]">
