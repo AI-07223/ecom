@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Trash2, Minus, Plus, ArrowRight, ShoppingBag, Ticket, X } from "lucide-react";
@@ -44,6 +44,7 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [editingQuantities, setEditingQuantities] = useState<Record<string, string>>({});
 
   const formatPrice = (price: number) => {
     return `₹${price.toLocaleString("en-IN")}`;
@@ -124,6 +125,38 @@ export default function CartPage() {
     toast.success("Coupon removed");
   };
 
+  // Handle manual quantity input
+  const handleQuantityInputChange = useCallback((productId: string, value: string) => {
+    // Only allow numeric input
+    if (value === "" || /^\d+$/.test(value)) {
+      setEditingQuantities(prev => ({ ...prev, [productId]: value }));
+    }
+  }, []);
+
+  const handleQuantityInputBlur = useCallback((productId: string, maxStock: number) => {
+    const value = editingQuantities[productId];
+    if (value === undefined || value === "") return;
+    
+    let quantity = parseInt(value, 10);
+    
+    // Validate bounds
+    if (isNaN(quantity) || quantity < 1) {
+      quantity = 1;
+    } else if (quantity > maxStock) {
+      quantity = maxStock;
+      toast.error(`Maximum available quantity is ${maxStock}`);
+    }
+    
+    updateQuantity(productId, quantity);
+    setEditingQuantities(prev => ({ ...prev, [productId]: "" }));
+  }, [editingQuantities, updateQuantity]);
+
+  const handleQuantityInputKeyDown = useCallback((e: React.KeyboardEvent, productId: string, maxStock: number) => {
+    if (e.key === "Enter") {
+      handleQuantityInputBlur(productId, maxStock);
+    }
+  }, [handleQuantityInputBlur]);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-[#FAFAF5] flex items-center justify-center p-4">
@@ -186,7 +219,7 @@ export default function CartPage() {
   const total = subtotal - discount + shipping;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] pb-40">
+    <div className="min-h-screen bg-[#FAFAF5] pb-52 md:pb-8">
       {/* Header */}
       <div className="bg-white border-b border-[#E2E0DA] sticky top-14 z-10">
         <div className="container mx-auto px-4 py-3">
@@ -230,19 +263,31 @@ export default function CartPage() {
                       </h3>
                     </Link>
                     <p className="text-xs text-[#6B7280] mt-0.5">{formatPrice(item.product.price)} each</p>
-                    
+
                     <div className="flex items-center justify-between mt-2">
-                      {/* Quantity Controls */}
+                      {/* Quantity Controls with Manual Input for Bulk Orders */}
                       <div className="flex items-center bg-[#F0EFE8] rounded-lg">
                         <button
-                          className="w-8 h-8 flex items-center justify-center tap-active"
+                          className="w-8 h-8 flex items-center justify-center tap-active hover:bg-[#E2E0DA] rounded-l-lg transition-colors"
                           onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                         >
                           <Minus className="h-3.5 w-3.5 text-[#6B7280]" />
                         </button>
-                        <span className="w-8 text-center text-sm font-medium text-[#1A1A1A]">{item.quantity}</span>
+                        
+                        {/* Manual Quantity Input for Bulk Orders */}
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={editingQuantities[item.product_id] ?? item.quantity}
+                          onChange={(e) => handleQuantityInputChange(item.product_id, e.target.value)}
+                          onBlur={() => handleQuantityInputBlur(item.product_id, item.product.quantity)}
+                          onKeyDown={(e) => handleQuantityInputKeyDown(e, item.product_id, item.product.quantity)}
+                          className="w-12 h-8 p-0 text-center text-sm font-medium text-[#1A1A1A] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          aria-label="Quantity"
+                        />
+                        
                         <button
-                          className="w-8 h-8 flex items-center justify-center tap-active"
+                          className="w-8 h-8 flex items-center justify-center tap-active hover:bg-[#E2E0DA] rounded-r-lg transition-colors disabled:opacity-50"
                           onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                           disabled={item.quantity >= item.product.quantity}
                         >
@@ -257,12 +302,20 @@ export default function CartPage() {
                         </span>
                         <button
                           onClick={() => removeFromCart(item.product_id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 tap-active"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 tap-active hover:bg-red-50"
+                          aria-label="Remove item"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
+                    
+                    {/* Stock Info */}
+                    {item.product.quantity <= 10 && item.product.quantity > 0 && (
+                      <p className="text-[10px] text-amber-600 mt-1">
+                        Only {item.product.quantity} left in stock
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -277,7 +330,7 @@ export default function CartPage() {
               <Ticket className="h-4 w-4 text-[#2D5A27]" />
               Apply Coupon
             </div>
-            
+
             {appliedCoupon ? (
               <div className="flex items-center justify-between p-3 bg-[#2D5A27]/10 rounded-xl">
                 <div className="flex items-center gap-2">
@@ -323,7 +376,7 @@ export default function CartPage() {
         <Card className="border-[#E2E0DA] shadow-soft">
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-[#1A1A1A]">Order Summary</h3>
-            
+
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-[#6B7280]">
                 <span>Subtotal</span>
@@ -359,10 +412,10 @@ export default function CartPage() {
       </div>
 
       {/* Fixed Bottom Checkout Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E0DA] p-4 z-50 pb-[calc(1rem+env(safe-area-inset-bottom)+72px)] md:pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-[#E2E0DA] p-4 z-40 pb-[calc(1rem+env(safe-area-inset-bottom)+64px)] md:pb-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="container mx-auto max-w-md">
           <Link href="/checkout">
-            <Button className="w-full h-14 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white font-semibold text-base tap-active shadow-elevated">
+            <Button className="w-full h-14 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white font-semibold text-base tap-active shadow-lg">
               Proceed to Checkout
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

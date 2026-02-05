@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/providers/CartProvider";
 import { useWishlist } from "@/providers/WishlistProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { Product } from "@/types/database.types";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +20,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { isWholeseller } = useAuth();
+  const [isAdding, setIsAdding] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
 
   const displayPrice = isWholeseller && product.wholeseller_price
     ? product.wholeseller_price
@@ -29,8 +33,8 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const discount = product.compare_at_price
     ? Math.round(
-        ((product.compare_at_price - product.price) / product.compare_at_price) * 100
-      )
+      ((product.compare_at_price - product.price) / product.compare_at_price) * 100
+    )
     : 0;
 
   const formatPrice = (price: number) => {
@@ -39,6 +43,19 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const inWishlist = isInWishlist(product.id);
   const outOfStock = product.quantity === 0;
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (outOfStock || isAdding) return;
+    
+    setIsAdding(true);
+    await addToCart(product.id);
+    setIsAdding(false);
+    setIsAdded(true);
+    
+    // Reset to default state after animation
+    setTimeout(() => setIsAdded(false), 1500);
+  };
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden border border-[#E2E0DA] shadow-soft card-press">
@@ -54,27 +71,29 @@ export function ProductCard({ product }: ProductCardProps) {
           />
         </Link>
 
-        {/* Discount Badge */}
-        {discount > 0 && (
-          <Badge className="absolute top-3 left-3 bg-[#2D5A27] text-white font-bold text-[10px] px-2 py-0.5 rounded-full">
-            -{discount}%
-          </Badge>
-        )}
+        {/* Badges Container */}
+        <div className="absolute top-2 left-2 right-10 flex flex-wrap gap-1">
+          {/* Discount Badge */}
+          {discount > 0 && (
+            <Badge className="bg-[#2D5A27] text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-sm">
+              -{discount}%
+            </Badge>
+          )}
 
-        {/* Wholesale Badge */}
-        {isWholeseller && product.wholeseller_price && (
-          <Badge className="absolute top-3 right-12 bg-[#4CAF50] text-white text-[10px] px-2 py-0.5 rounded-full">
-            Wholesale
-          </Badge>
-        )}
+          {/* Wholesale Badge */}
+          {isWholeseller && product.wholeseller_price && (
+            <Badge className="bg-[#4CAF50] text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm">
+              Wholesale
+            </Badge>
+          )}
+        </div>
 
         {/* Wishlist Button */}
         <button
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center tap-active shadow-sm ${
-            inWishlist
-              ? "bg-red-500 text-white"
-              : "bg-white/90 backdrop-blur-sm text-[#6B7280] hover:text-red-500"
-          }`}
+          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center tap-active shadow-md ${inWishlist
+            ? "bg-red-500 text-white"
+            : "bg-white text-[#6B7280] hover:text-red-500"
+            }`}
           onClick={(e) => {
             e.preventDefault();
             toggleWishlist(product.id);
@@ -121,19 +140,27 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Add to Cart Button with Animation */}
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-9 rounded-xl border-[#2D5A27] text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white font-medium tap-active"
-          onClick={(e) => {
-            e.preventDefault();
-            addToCart(product.id);
-          }}
-          disabled={outOfStock}
+          className={cn(
+            "w-full h-9 rounded-xl border-[#2D5A27] font-medium tap-active transition-all duration-300",
+            isAdded 
+              ? "bg-green-500 border-green-500 text-white hover:bg-green-600 hover:text-white" 
+              : "text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white"
+          )}
+          onClick={handleAddToCart}
+          disabled={outOfStock || isAdding}
         >
-          <ShoppingCart className="h-4 w-4 mr-1.5" />
-          {outOfStock ? "Out of Stock" : "Add"}
+          {isAdding ? (
+            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+          ) : isAdded ? (
+            <Check className="h-4 w-4 mr-1.5" />
+          ) : (
+            <ShoppingCart className="h-4 w-4 mr-1.5" />
+          )}
+          {outOfStock ? "Out of Stock" : isAdded ? "Added!" : "Add"}
         </Button>
 
         {/* Wholesaler Savings */}

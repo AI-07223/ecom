@@ -9,14 +9,38 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWishlist } from "@/providers/WishlistProvider";
 import { useCart } from "@/providers/CartProvider";
 import { useAuth } from "@/providers/AuthProvider";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function WishlistPage() {
   const { user } = useAuth();
   const { items, isLoading, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   const formatPrice = (price: number) => {
     return `₹${price.toLocaleString("en-IN")}`;
+  };
+
+  const handleAddToCart = async (productId: string, wishlistItemId: string) => {
+    setAddingIds(prev => new Set(prev).add(productId));
+    await addToCart(productId);
+    setAddingIds(prev => {
+      const next = new Set(prev);
+      next.delete(productId);
+      return next;
+    });
+    setAddedIds(prev => new Set(prev).add(productId));
+    removeFromWishlist(wishlistItemId);
+    
+    setTimeout(() => {
+      setAddedIds(prev => {
+        const next = new Set(prev);
+        next.delete(productId);
+        return next;
+      });
+    }, 1500);
   };
 
   if (!user) {
@@ -83,8 +107,8 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5]">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#FAFAF5] pb-24 md:pb-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#1A1A1A] flex items-center gap-2">
             <span className="w-1 h-6 bg-gradient-to-b from-[#2D5A27] to-[#4CAF50] rounded-full" />
@@ -95,72 +119,84 @@ export default function WishlistPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {items.map((item) => (
-            <Card key={item.id} className="group overflow-hidden border-[#E2E0DA] shadow-soft hover:shadow-soft-lg transition-all">
-              <CardContent className="p-0">
-                <Link href={`/products/${item.product.slug}`}>
-                  <div className="relative aspect-square overflow-hidden bg-[#F0EFE8]">
-                    <Image
-                      src={
-                        item.product.thumbnail ||
-                        item.product.images[0] ||
-                        "/placeholder.svg"
-                      }
-                      alt={item.product.name}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    />
-                  </div>
-                </Link>
-
-                <div className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          {items.map((item) => {
+            const isAdding = addingIds.has(item.product.id);
+            const isAdded = addedIds.has(item.product.id);
+            const outOfStock = item.product.quantity === 0;
+            
+            return (
+              <Card key={item.id} className="group overflow-hidden border-[#E2E0DA] shadow-soft hover:shadow-soft-lg transition-all">
+                <CardContent className="p-0">
                   <Link href={`/products/${item.product.slug}`}>
-                    <h3 className="font-medium text-[#1A1A1A] line-clamp-1 hover:text-[#2D5A27] transition-colors">
-                      {item.product.name}
-                    </h3>
+                    <div className="relative aspect-square overflow-hidden bg-[#F0EFE8]">
+                      <Image
+                        src={
+                          item.product.thumbnail ||
+                          item.product.images[0] ||
+                          "/placeholder.svg"
+                        }
+                        alt={item.product.name}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    </div>
                   </Link>
 
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="font-semibold text-[#2D5A27]">
-                      {formatPrice(item.product.price)}
-                    </span>
-                    {item.product.compare_at_price && (
-                      <span className="text-sm text-[#9CA3AF] line-through">
-                        {formatPrice(item.product.compare_at_price)}
-                      </span>
-                    )}
-                  </div>
+                  <div className="p-3 md:p-4">
+                    <Link href={`/products/${item.product.slug}`}>
+                      <h3 className="font-medium text-[#1A1A1A] text-sm line-clamp-1 hover:text-[#2D5A27] transition-colors">
+                        {item.product.name}
+                      </h3>
+                    </Link>
 
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-[#2D5A27] hover:bg-[#3B7D34] rounded-xl"
-                      onClick={() => {
-                        addToCart(item.product.id);
-                        removeFromWishlist(item.product_id);
-                      }}
-                      disabled={item.product.quantity === 0}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-1" />
-                      {item.product.quantity === 0
-                        ? "Out of Stock"
-                        : "Add to Cart"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => removeFromWishlist(item.product_id)}
-                      className="border-[#E2E0DA] text-red-500 hover:bg-red-50 hover:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="font-semibold text-[#2D5A27]">
+                        {formatPrice(item.product.price)}
+                      </span>
+                      {item.product.compare_at_price && (
+                        <span className="text-sm text-[#9CA3AF] line-through">
+                          {formatPrice(item.product.compare_at_price)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Fixed button layout - stacked on mobile, side by side on larger screens */}
+                    <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                      <Button
+                        size="sm"
+                        className={cn(
+                          "flex-1 rounded-xl transition-all duration-300",
+                          isAdded 
+                            ? "bg-green-500 hover:bg-green-600" 
+                            : "bg-[#2D5A27] hover:bg-[#3B7D34]"
+                        )}
+                        onClick={() => handleAddToCart(item.product.id, item.product_id)}
+                        disabled={outOfStock || isAdding}
+                      >
+                        {isAdding ? (
+                          <span className="animate-spin mr-1">⟳</span>
+                        ) : (
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                        )}
+                        {outOfStock ? "Out of Stock" : isAdded ? "Added!" : "Add"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeFromWishlist(item.product_id)}
+                        className="border-[#E2E0DA] text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0"
+                        aria-label="Remove from wishlist"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
