@@ -41,63 +41,109 @@ export function MobileBottomNav() {
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 overflow-hidden">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 w-full overflow-hidden">
         {/* Background with safe area */}
-        <div className="bg-white border-t border-[#E2E0DA] pb-safe max-h-[80px]">
-          <div className="flex items-center justify-around h-[64px]">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex flex-col items-center justify-center flex-1 h-full tap-active"
-                >
-                  <div
-                    className={`flex items-center justify-center w-12 h-8 rounded-full transition-all ${
-                      active ? "bg-[#2D5A27]/10" : ""
-                    }`}
-                  >
-                    <item.icon
-                      className={`h-5 w-5 transition-colors ${
-                        active ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                      }`}
-                    />
-                  </div>
-                  <span
-                    className={`text-[11px] font-medium mt-0.5 transition-colors ${
-                      active ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-
-            {/* Cart Tab */}
+        <div className="bg-white border-t border-[#E2E0DA] pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] w-full">
+          {/* Fixed 5-column grid layout */}
+          <div className="grid grid-cols-5 h-[60px] w-full max-w-[500px] mx-auto">
+            {/* Home */}
             <Link
-              href="/cart"
-              className="flex flex-col items-center justify-center flex-1 h-full tap-active relative"
+              href="/"
+              className="flex flex-col items-center justify-center h-full tap-active py-1"
             >
               <div
-                className={`flex items-center justify-center w-12 h-8 rounded-full transition-all ${
+                className={`flex items-center justify-center w-10 h-8 rounded-full transition-all ${
+                  isActive("/") ? "bg-[#2D5A27]/10" : ""
+                }`}
+              >
+                <Home
+                  className={`h-[18px] w-[18px] transition-colors ${
+                    isActive("/") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                  }`}
+                />
+              </div>
+              <span
+                className={`text-[10px] font-medium mt-0.5 transition-colors ${
+                  isActive("/") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                }`}
+              >
+                Home
+              </span>
+            </Link>
+
+            {/* Categories */}
+            <Link
+              href="/categories"
+              className="flex flex-col items-center justify-center h-full tap-active py-1"
+            >
+              <div
+                className={`flex items-center justify-center w-10 h-8 rounded-full transition-all ${
+                  isActive("/categories") ? "bg-[#2D5A27]/10" : ""
+                }`}
+              >
+                <Grid3X3
+                  className={`h-[18px] w-[18px] transition-colors ${
+                    isActive("/categories") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                  }`}
+                />
+              </div>
+              <span
+                className={`text-[10px] font-medium mt-0.5 transition-colors ${
+                  isActive("/categories") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                }`}
+              >
+                Categories
+              </span>
+            </Link>
+
+            {/* Shop */}
+            <Link
+              href="/products"
+              className="flex flex-col items-center justify-center h-full tap-active py-1"
+            >
+              <div
+                className={`flex items-center justify-center w-10 h-8 rounded-full transition-all ${
+                  isActive("/products") ? "bg-[#2D5A27]/10" : ""
+                }`}
+              >
+                <ShoppingBag
+                  className={`h-[18px] w-[18px] transition-colors ${
+                    isActive("/products") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                  }`}
+                />
+              </div>
+              <span
+                className={`text-[10px] font-medium mt-0.5 transition-colors ${
+                  isActive("/products") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                }`}
+              >
+                Shop
+              </span>
+            </Link>
+
+            {/* Cart */}
+            <Link
+              href="/cart"
+              className="flex flex-col items-center justify-center h-full tap-active relative py-1"
+            >
+              <div
+                className={`flex items-center justify-center w-10 h-8 rounded-full transition-all ${
                   isActive("/cart") ? "bg-[#2D5A27]/10" : ""
                 }`}
               >
                 <ShoppingCart
-                  className={`h-5 w-5 transition-colors ${
+                  className={`h-[18px] w-[18px] transition-colors ${
                     isActive("/cart") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
                   }`}
                 />
-                {itemCount > 0 && (
-                  <Badge className="absolute top-0 right-2 h-4 min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-[#2D5A27] text-white">
-                    {itemCount > 9 ? "9+" : itemCount}
-                  </Badge>
-                )}
               </div>
+              {itemCount > 0 && (
+                <Badge className="absolute top-0.5 right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-[#2D5A27] text-white border-2 border-white">
+                  {itemCount > 9 ? "9+" : itemCount}
+                </Badge>
+              )}
               <span
-                className={`text-[11px] font-medium mt-0.5 transition-colors ${
+                className={`text-[10px] font-medium mt-0.5 transition-colors ${
                   isActive("/cart") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
                 }`}
               >
@@ -105,11 +151,11 @@ export function MobileBottomNav() {
               </span>
             </Link>
 
-            {/* Profile Tab */}
+            {/* Profile */}
             <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
               <SheetTrigger asChild>
-                <button className="flex flex-col items-center justify-center flex-1 h-full tap-active">
-                  <div className="flex items-center justify-center w-12 h-8">
+                <button className="flex flex-col items-center justify-center h-full tap-active py-1">
+                  <div className="flex items-center justify-center w-10 h-8">
                     {user ? (
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center ring-2 ring-white">
                         <span className="text-white text-[10px] font-bold">
@@ -117,10 +163,10 @@ export function MobileBottomNav() {
                         </span>
                       </div>
                     ) : (
-                      <User className="h-5 w-5 text-[#9CA3AF]" />
+                      <User className="h-[18px] w-[18px] text-[#9CA3AF]" />
                     )}
                   </div>
-                  <span className="text-[11px] font-medium mt-0.5 text-[#9CA3AF]">
+                  <span className="text-[10px] font-medium mt-0.5 text-[#9CA3AF]">
                     Profile
                   </span>
                 </button>
@@ -301,7 +347,7 @@ export function MobileBottomNav() {
       </nav>
 
       {/* Spacer for bottom nav */}
-      <div className="h-[64px] md:hidden" />
+      <div className="h-[calc(60px+env(safe-area-inset-bottom))] md:hidden" />
     </>
   );
 }
