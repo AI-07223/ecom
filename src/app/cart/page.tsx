@@ -3,28 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Trash2,
-  Minus,
-  Plus,
-  ArrowRight,
-  ShoppingBag,
-  Ticket,
-  X,
-} from "lucide-react";
+import { Trash2, Minus, Plus, ArrowRight, ShoppingBag, Ticket, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/providers/CartProvider";
-import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -55,21 +39,19 @@ export default function CartPage() {
     applyCoupon: setAppliedCouponInContext,
     removeCoupon: removeCouponFromContext,
   } = useCart();
-  const { settings } = useSiteSettings();
   const { user } = useAuth();
 
-  // Coupon UI state (only for input handling)
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
   const formatPrice = (price: number) => {
-    return `${settings.currency_symbol}${price.toLocaleString("en-IN")}`;
+    return `₹${price.toLocaleString("en-IN")}`;
   };
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
-      setCouponError("Please enter a coupon code");
+      setCouponError("Enter a coupon code");
       return;
     }
 
@@ -79,7 +61,7 @@ export default function CartPage() {
     try {
       const couponsQuery = query(
         collection(db, "coupons"),
-        where("code", "==", couponCode.trim().toUpperCase()),
+        where("code", "==", couponCode.trim().toUpperCase())
       );
       const couponSnap = await getDocs(couponsQuery);
 
@@ -91,57 +73,47 @@ export default function CartPage() {
 
       const couponDoc = couponSnap.docs[0];
       const couponData = couponDoc.data() as Coupon;
-      couponData.code = couponDoc.id; // Ensure code is set
 
-      // Check if coupon is active
       if (!couponData.is_active) {
-        setCouponError("This coupon is no longer active");
+        setCouponError("Coupon is not active");
         setCouponLoading(false);
         return;
       }
 
-      // Check expiration
       if (couponData.expires_at) {
-        const expiryDate =
-          "toDate" in couponData.expires_at
-            ? couponData.expires_at.toDate()
-            : new Date(couponData.expires_at);
+        const expiryDate = "toDate" in couponData.expires_at
+          ? couponData.expires_at.toDate()
+          : new Date(couponData.expires_at);
         if (expiryDate < new Date()) {
-          setCouponError("This coupon has expired");
+          setCouponError("Coupon has expired");
           setCouponLoading(false);
           return;
         }
       }
 
-      // Check max uses
       if (couponData.max_uses !== null && couponData.max_uses > 0) {
         if (couponData.current_uses >= couponData.max_uses) {
-          setCouponError("This coupon has reached its maximum usage limit");
+          setCouponError("Coupon limit reached");
           setCouponLoading(false);
           return;
         }
       }
 
-      // Check minimum order value
       if (couponData.min_order_value && subtotal < couponData.min_order_value) {
-        setCouponError(
-          `Minimum order value is ${formatPrice(couponData.min_order_value)}`,
-        );
+        setCouponError(`Min order: ${formatPrice(couponData.min_order_value)}`);
         setCouponLoading(false);
         return;
       }
 
-      // Store in cart context so it persists to checkout
       setAppliedCouponInContext({
         code: couponDoc.id,
         discount_type: couponData.discount_type,
         discount_value: couponData.discount_value,
       });
       setCouponCode("");
-      toast.success(`Coupon ${couponDoc.id} applied successfully!`);
+      toast.success(`Coupon ${couponDoc.id} applied!`);
     } catch (error) {
-      console.error("Error applying coupon:", error);
-      setCouponError("Failed to apply coupon. Please try again.");
+      setCouponError("Failed to apply coupon");
     }
     setCouponLoading(false);
   };
@@ -154,32 +126,34 @@ export default function CartPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Please Sign In</h1>
-        <p className="text-muted-foreground mb-6">
-          Sign in to view your cart and start shopping
-        </p>
-        <Link href="/login?redirect=/cart">
-          <Button style={{ backgroundColor: settings.primary_color }}>
-            Sign In
-          </Button>
-        </Link>
+      <div className="min-h-screen bg-[#FAFAF5] flex items-center justify-center p-4">
+        <Card className="w-full max-w-sm border-[#E2E0DA]">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2D5A27]/10 flex items-center justify-center">
+              <ShoppingBag className="h-8 w-8 text-[#2D5A27]" />
+            </div>
+            <h1 className="text-xl font-bold text-[#1A1A1A] mb-2">Sign In Required</h1>
+            <p className="text-[#6B7280] text-sm mb-6">Sign in to view your cart and continue shopping</p>
+            <Link href="/login?redirect=/cart">
+              <Button className="w-full h-12 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] font-semibold tap-active">
+                Sign In
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-8">Shopping Cart</h1>
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
+      <div className="min-h-screen bg-[#FAFAF5]">
+        <div className="container mx-auto px-4 py-4">
+          <div className="animate-pulse space-y-4">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 w-full" />
+              <div key={i} className="h-28 bg-[#E2E0DA] rounded-2xl" />
             ))}
           </div>
-          <Skeleton className="h-64" />
         </div>
       </div>
     );
@@ -187,18 +161,22 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Your Cart is Empty</h1>
-        <p className="text-muted-foreground mb-6">
-          Looks like you haven&apos;t added anything to your cart yet.
-        </p>
-        <Link href="/products">
-          <Button style={{ backgroundColor: settings.primary_color }}>
-            Start Shopping
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-        </Link>
+      <div className="min-h-screen bg-[#FAFAF5] flex items-center justify-center p-4">
+        <Card className="w-full max-w-sm border-[#E2E0DA]">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2D5A27]/10 flex items-center justify-center">
+              <ShoppingBag className="h-8 w-8 text-[#2D5A27]" />
+            </div>
+            <h1 className="text-xl font-bold text-[#1A1A1A] mb-2">Your Cart is Empty</h1>
+            <p className="text-[#6B7280] text-sm mb-6">Add items to your cart and they will appear here</p>
+            <Link href="/products">
+              <Button className="w-full h-12 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] font-semibold tap-active">
+                Browse Products
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -208,39 +186,38 @@ export default function CartPage() {
   const total = subtotal - discount + shipping;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">
-          Shopping Cart ({itemCount} items)
-        </h1>
-        <Button variant="ghost" size="sm" onClick={clearCart}>
-          Clear Cart
-        </Button>
+    <div className="min-h-screen bg-[#FAFAF5] pb-32">
+      {/* Header */}
+      <div className="bg-white border-b border-[#E2E0DA] sticky top-14 z-10">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-bold text-[#1A1A1A]">Shopping Cart ({itemCount})</h1>
+            <button
+              onClick={clearCart}
+              className="text-sm text-red-500 font-medium tap-active"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 py-4">
         {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-3 mb-6">
           {items.map((item) => (
-            <Card key={item.id}>
-              <CardContent className="p-4">
-                <div className="flex gap-4">
+            <Card key={item.id} className="border-[#E2E0DA] shadow-soft overflow-hidden">
+              <CardContent className="p-3">
+                <div className="flex gap-3">
                   {/* Product Image */}
-                  <Link
-                    href={`/products/${item.product.slug}`}
-                    className="shrink-0"
-                  >
-                    <div className="relative w-24 h-24 rounded-md overflow-hidden bg-muted">
+                  <Link href={`/products/${item.product.slug}`} className="shrink-0">
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-[#F0EFE8]">
                       <Image
-                        src={
-                          item.product.thumbnail ||
-                          item.product.images[0] ||
-                          "/placeholder.svg"
-                        }
+                        src={item.product.thumbnail || item.product.images[0] || "/placeholder.svg"}
                         alt={item.product.name}
                         fill
                         className="object-cover"
-                        sizes="96px"
+                        sizes="80px"
                       />
                     </div>
                   </Link>
@@ -248,63 +225,44 @@ export default function CartPage() {
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
                     <Link href={`/products/${item.product.slug}`}>
-                      <h3 className="font-medium hover:text-primary transition-colors line-clamp-1">
+                      <h3 className="font-medium text-[#1A1A1A] text-sm line-clamp-2 hover:text-[#2D5A27]">
                         {item.product.name}
                       </h3>
                     </Link>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {formatPrice(item.product.price)} each
-                    </p>
-
-                    <div className="flex items-center justify-between">
+                    <p className="text-xs text-[#6B7280] mt-0.5">{formatPrice(item.product.price)} each</p>
+                    
+                    <div className="flex items-center justify-between mt-2">
                       {/* Quantity Controls */}
-                      <div className="flex items-center border rounded-md">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            updateQuantity(item.product_id, item.quantity - 1)
-                          }
+                      <div className="flex items-center bg-[#F0EFE8] rounded-lg">
+                        <button
+                          className="w-8 h-8 flex items-center justify-center tap-active"
+                          onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                         >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-8 text-center text-sm">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            updateQuantity(item.product_id, item.quantity + 1)
-                          }
+                          <Minus className="h-3.5 w-3.5 text-[#6B7280]" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-medium text-[#1A1A1A]">{item.quantity}</span>
+                        <button
+                          className="w-8 h-8 flex items-center justify-center tap-active"
+                          onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                           disabled={item.quantity >= item.product.quantity}
                         >
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                          <Plus className="h-3.5 w-3.5 text-[#6B7280]" />
+                        </button>
                       </div>
 
-                      {/* Remove Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => removeFromCart(item.product_id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {/* Price & Remove */}
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-[#2D5A27]">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </span>
+                        <button
+                          onClick={() => removeFromCart(item.product_id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 tap-active"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Item Total */}
-                  <div className="text-right">
-                    <p
-                      className="font-semibold"
-                      style={{ color: settings.primary_color }}
-                    >
-                      {formatPrice(item.product.price * item.quantity)}
-                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -312,117 +270,103 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Order Summary */}
-        <div>
-          <Card className="sticky top-24">
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Coupon Input */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Ticket className="h-4 w-4" />
-                  Have a coupon?
+        {/* Coupon Section */}
+        <Card className="border-[#E2E0DA] shadow-soft mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#1A1A1A] mb-3">
+              <Ticket className="h-4 w-4 text-[#2D5A27]" />
+              Apply Coupon
+            </div>
+            
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between p-3 bg-[#2D5A27]/10 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#2D5A27]">{appliedCoupon.code}</span>
+                  <span className="text-xs text-[#4CAF50]">
+                    {appliedCoupon.discount_type === "percentage"
+                      ? `${appliedCoupon.discount_value}% off`
+                      : `${formatPrice(appliedCoupon.discount_value)} off`}
+                  </span>
                 </div>
-                {appliedCoupon ? (
-                  <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <Ticket className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-700">
-                        {appliedCoupon.code}
-                      </span>
-                      <span className="text-xs text-green-600">
-                        {appliedCoupon.discount_type === "percentage"
-                          ? `${appliedCoupon.discount_value}% off`
-                          : `${formatPrice(appliedCoupon.discount_value)} off`}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-green-700 hover:text-red-500"
-                      onClick={handleRemoveCoupon}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter code"
-                        value={couponCode}
-                        onChange={(e) => {
-                          setCouponCode(e.target.value.toUpperCase());
-                          setCouponError("");
-                        }}
-                        className="flex-1 h-9 text-sm uppercase"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleApplyCoupon}
-                        disabled={couponLoading}
-                        className="h-9"
-                      >
-                        {couponLoading ? "Applying..." : "Apply"}
-                      </Button>
-                    </div>
-                    {couponError && (
-                      <p className="text-xs text-red-500">{couponError}</p>
-                    )}
-                  </div>
-                )}
+                <button
+                  onClick={handleRemoveCoupon}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg tap-active"
+                >
+                  <X className="h-4 w-4 text-[#6B7280]" />
+                </button>
               </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter code"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setCouponError("");
+                  }}
+                  className="flex-1 h-10 uppercase bg-[#F0EFE8] border-0 rounded-xl text-sm focus:ring-2 focus:ring-[#2D5A27]/20"
+                />
+                <Button
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading}
+                  className="h-10 px-4 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white font-medium tap-active"
+                >
+                  {couponLoading ? "..." : "Apply"}
+                </Button>
+              </div>
+            )}
+            {couponError && <p className="text-xs text-red-500 mt-2">{couponError}</p>}
+          </CardContent>
+        </Card>
 
-              <Separator />
-
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatPrice(subtotal)}</span>
+        {/* Order Summary */}
+        <Card className="border-[#E2E0DA] shadow-soft">
+          <CardContent className="p-4 space-y-3">
+            <h3 className="font-semibold text-[#1A1A1A]">Order Summary</h3>
+            
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between text-[#6B7280]">
+                <span>Subtotal</span>
+                <span className="text-[#1A1A1A] font-medium">{formatPrice(subtotal)}</span>
               </div>
               {discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
+                <div className="flex justify-between text-[#4CAF50]">
                   <span>Discount</span>
-                  <span>-{formatPrice(discount)}</span>
+                  <span className="font-medium">-{formatPrice(discount)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Shipping</span>
-                <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
+              <div className="flex justify-between text-[#6B7280]">
+                <span>Shipping</span>
+                <span className="text-[#1A1A1A] font-medium">
+                  {shipping === 0 ? "Free" : formatPrice(shipping)}
+                </span>
               </div>
               {shipping > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-[#9CA3AF]">
                   Free shipping on orders over {formatPrice(999)}
                 </p>
               )}
-              <Separator />
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Total</span>
-                <span style={{ color: settings.primary_color }}>
-                  {formatPrice(total)}
-                </span>
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col gap-3">
-              <Link href="/checkout" className="w-full">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  style={{ backgroundColor: settings.primary_color }}
-                >
-                  Proceed to Checkout
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-              <Link href="/products" className="w-full">
-                <Button variant="outline" className="w-full">
-                  Continue Shopping
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
+            </div>
+
+            <Separator className="bg-[#E2E0DA]" />
+
+            <div className="flex justify-between">
+              <span className="font-semibold text-[#1A1A1A]">Total</span>
+              <span className="font-bold text-lg text-[#2D5A27]">{formatPrice(total)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Fixed Bottom Checkout Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E0DA] p-4 pb-safe z-40">
+        <div className="container mx-auto max-w-md">
+          <Link href="/checkout">
+            <Button className="w-full h-14 rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white font-semibold text-base tap-active shadow-elevated">
+              Proceed to Checkout
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -10,13 +10,12 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/providers/AuthProvider'
-import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 export default function SignupPage() {
     const router = useRouter()
     const { signUp, signInWithGoogle, signInWithGithub, isLoading } = useAuth()
-    const { settings } = useSiteSettings()
 
     const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
@@ -67,24 +66,30 @@ export default function SignupPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="min-h-screen flex items-center justify-center bg-[#FAFAF5]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5A27]"></div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center py-12 px-4">
-            <Card className="w-full max-w-md">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-b from-[#FAFAF5] to-white">
+            <Card className="w-full max-w-md border-[#E2E0DA] shadow-soft-lg">
                 <CardHeader className="text-center">
-                    <CardTitle
-                        className="text-2xl font-bold"
-                        style={{ color: settings.primary_color }}
-                    >
+                    <div className="mx-auto w-16 h-16 rounded-full bg-[#2D5A27]/10 flex items-center justify-center mb-4">
+                        <Image
+                            src="/logo.jpeg"
+                            alt="Royal Trading"
+                            width={48}
+                            height={48}
+                            className="rounded-full"
+                        />
+                    </div>
+                    <CardTitle className="text-2xl font-bold text-[#2D5A27]">
                         Create an Account
                     </CardTitle>
-                    <CardDescription>
-                        Join {settings.site_name} and start shopping
+                    <CardDescription className="text-[#6B7280]">
+                        Join Royal Trading and start shopping
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -93,7 +98,7 @@ export default function SignupPage() {
                         <Button
                             variant="outline"
                             onClick={handleGoogleSignIn}
-                            className="w-full"
+                            className="w-full border-[#E2E0DA] hover:bg-[#F0EFE8] hover:border-[#2D5A27]/30"
                         >
                             <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                                 <path
@@ -118,7 +123,7 @@ export default function SignupPage() {
                         <Button
                             variant="outline"
                             onClick={handleGithubSignIn}
-                            className="w-full"
+                            className="w-full border-[#E2E0DA] hover:bg-[#F0EFE8] hover:border-[#2D5A27]/30"
                         >
                             <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -129,10 +134,10 @@ export default function SignupPage() {
 
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
-                            <Separator className="w-full" />
+                            <Separator className="w-full bg-[#E2E0DA]" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">
+                            <span className="bg-white px-2 text-[#9CA3AF]">
                                 Or continue with email
                             </span>
                         </div>
@@ -141,75 +146,75 @@ export default function SignupPage() {
                     {/* Email/Password Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="fullName">Full Name</Label>
+                            <Label htmlFor="fullName" className="text-[#1A1A1A]">Full Name</Label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                                 <Input
                                     id="fullName"
                                     type="text"
                                     placeholder="John Doe"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="pl-10"
+                                    className="pl-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email" className="text-[#1A1A1A]">Email</Label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                                 <Input
                                     id="email"
                                     type="email"
                                     placeholder="you@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="pl-10"
+                                    className="pl-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password" className="text-[#1A1A1A]">Password</Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                                 <Input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="pl-10 pr-10"
+                                    className="pl-10 pr-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#2D5A27]"
                                 >
                                     {showPassword ? (
-                                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                        <EyeOff className="h-4 w-4" />
                                     ) : (
-                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                        <Eye className="h-4 w-4" />
                                     )}
                                 </button>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Label htmlFor="confirmPassword" className="text-[#1A1A1A]">Confirm Password</Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                                 <Input
                                     id="confirmPassword"
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="••••••••"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="pl-10"
+                                    className="pl-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                                     required
                                 />
                             </div>
@@ -217,20 +222,18 @@ export default function SignupPage() {
 
                         <Button
                             type="submit"
-                            className="w-full"
+                            className="w-full bg-[#2D5A27] hover:bg-[#3B7D34]"
                             disabled={loading}
-                            style={{ backgroundColor: settings.primary_color }}
                         >
                             {loading ? 'Creating account...' : 'Create Account'}
                         </Button>
                     </form>
 
-                    <p className="text-center text-sm text-muted-foreground">
+                    <p className="text-center text-sm text-[#6B7280]">
                         Already have an account?{' '}
                         <Link
                             href="/login"
-                            className="font-medium hover:underline"
-                            style={{ color: settings.primary_color }}
+                            className="font-medium text-[#2D5A27] hover:text-[#3B7D34] hover:underline"
                         >
                             Sign in
                         </Link>

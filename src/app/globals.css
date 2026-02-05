@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Royal Trading Company - Fresh Green & Cream Theme */
+/* Royal Trading Company - Native App Theme */
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -58,7 +58,9 @@
 }
 
 :root {
-    --radius: 0.75rem;
+    --radius: 1rem;
+    
+    /* Native App Theme */
     --background: #FAFAF5;
     --foreground: #1A1A1A;
     --card: #FFFFFF;
@@ -74,594 +76,276 @@
     --accent: #4CAF50;
     --accent-foreground: #FFFFFF;
     --destructive: #ef4444;
+    --destructive-foreground: #FFFFFF;
     --border: #E2E0DA;
     --input: #E2E0DA;
     --ring: #2D5A27;
-    --chart-1: #2D5A27;
-    --chart-2: #3B7D34;
-    --chart-3: #4CAF50;
-    --chart-4: #81C784;
-    --chart-5: #A5D6A7;
-    --sidebar: #2D5A27;
-    --sidebar-foreground: #FFFFFF;
-    --sidebar-primary: #4CAF50;
-    --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #1E3D1C;
-    --sidebar-accent-foreground: #FFFFFF;
-    --sidebar-border: #3B7D34;
-    --sidebar-ring: #4CAF50;
-
-    /* Premium Brand CSS Variables */
-    --royal-green: #2D5A27;
-    --royal-green-light: #3B7D34;
-    --royal-green-dark: #1E3D1C;
-    --royal-green-dim: #4A7C44;
-    --royal-cream: #FAFAF5;
-    --royal-cream-dark: #F0EFE8;
-    --royal-accent: #4CAF50;
+    
+    /* App-specific */
+    --app-safe-top: env(safe-area-inset-top, 0px);
+    --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --app-nav-height: 64px;
+    --app-bottom-nav-height: 72px;
 }
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
-    }
-
-    body {
-        @apply bg-background text-foreground;
-        font-feature-settings:
-            "rlig" 1,
-            "calt" 1;
-        overscroll-behavior: none;
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    input,
-    textarea,
-    [contenteditable="true"],
-    .selectable {
-        -webkit-user-select: text;
-        user-select: text;
+        @apply border-border;
     }
 
     html {
         scroll-behavior: smooth;
         -webkit-tap-highlight-color: transparent;
-        overscroll-behavior-y: contain;
+        overscroll-behavior-y: none;
     }
 
-    .overflow-x-auto,
-    .overflow-y-auto,
-    .overflow-auto {
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
+    body {
+        @apply bg-background text-foreground antialiased;
+        font-feature-settings: "rlig" 1, "calt" 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        /* Prevent text selection for app-like feel */
+        -webkit-user-select: none;
+        user-select: none;
     }
 
-    button,
-    a,
-    [role="button"] {
+    /* Allow text selection on inputs and content areas */
+    input, textarea, [contenteditable="true"], .selectable {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+
+    /* Native app button reset */
+    button {
         touch-action: manipulation;
+    }
+
+    /* Focus visible for accessibility */
+    *:focus-visible {
+        outline: 2px solid #2D5A27;
+        outline-offset: 2px;
     }
 }
 
 @layer utilities {
-    .scrollbar-hide {
+    /* Safe areas */
+    .pb-safe {
+        padding-bottom: var(--app-safe-bottom);
+    }
+    
+    .pt-safe {
+        padding-top: var(--app-safe-top);
+    }
+
+    /* Hide scrollbar */
+    .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-
-    .scrollbar-hide::-webkit-scrollbar {
+    
+    .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
 
-    .safe-area-bottom {
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* Native app tap effects */
+    .tap-active {
+        transition: transform 0.1s ease, opacity 0.1s ease;
+    }
+    
+    .tap-active:active {
+        transform: scale(0.96);
+        opacity: 0.8;
     }
 
-    .safe-area-top {
-        padding-top: env(safe-area-inset-top, 0px);
+    /* Card press effect */
+    .card-press {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    
+    .card-press:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    /* Premium glass effect - light */
-    .glass-light {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(45, 90, 39, 0.1);
+    /* Glass morphism */
+    .glass {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
     }
 
-    /* Premium glass effect - dark green */
     .glass-dark {
         background: rgba(45, 90, 39, 0.95);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
     }
 
-    /* Green gradient text */
-    .text-gradient-green {
-        background: linear-gradient(135deg,
-                #2D5A27 0%,
-                #3B7D34 50%,
-                #4CAF50 100%);
+    /* Gradient text */
+    .text-gradient {
+        background: linear-gradient(135deg, #2D5A27 0%, #4CAF50 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
-    /* Shimmer green text animation */
-    .text-gradient-green-shimmer {
-        background: linear-gradient(90deg,
-                #2D5A27 0%,
-                #3B7D34 25%,
-                #4CAF50 50%,
-                #3B7D34 75%,
-                #2D5A27 100%);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: shimmer-text 3s linear infinite;
+    /* Section backgrounds */
+    .bg-elevated {
+        background-color: #FFFFFF;
+    }
+    
+    .bg-base {
+        background-color: #FAFAF5;
+    }
+    
+    .bg-subtle {
+        background-color: #F0EFE8;
     }
 
-    /* Cream gradient backgrounds */
-    .bg-gradient-cream {
-        background: linear-gradient(180deg, #FFFFFF 0%, #FAFAF5 100%);
+    /* Native app shadows */
+    .shadow-elevated {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    
+    .shadow-floating {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
-    .bg-gradient-cream-radial {
-        background: radial-gradient(ellipse at top, #FFFFFF 0%, #FAFAF5 70%);
+    /* Bottom sheet styles */
+    .bottom-sheet {
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15);
     }
 
-    /* Green gradient */
-    .bg-gradient-green {
-        background: linear-gradient(135deg,
-                #2D5A27 0%,
-                #3B7D34 50%,
-                #2D5A27 100%);
-    }
-
-    .bg-gradient-green-shine {
-        background: linear-gradient(90deg,
-                #2D5A27 0%,
-                #3B7D34 25%,
-                #4CAF50 50%,
-                #3B7D34 75%,
-                #2D5A27 100%);
-        background-size: 200% auto;
-        animation: shimmer 3s linear infinite;
-    }
-
-    /* Premium shadows */
-    .shadow-green {
-        box-shadow:
-            0 4px 20px rgba(45, 90, 39, 0.15),
-            0 2px 8px rgba(45, 90, 39, 0.1);
-    }
-
-    .shadow-green-lg {
-        box-shadow:
-            0 8px 40px rgba(45, 90, 39, 0.2),
-            0 4px 12px rgba(45, 90, 39, 0.1);
-    }
-
-    .shadow-soft {
-        box-shadow:
-            0 2px 8px rgba(0, 0, 0, 0.04),
-            0 4px 16px rgba(0, 0, 0, 0.06);
-    }
-
-    .shadow-soft-lg {
-        box-shadow:
-            0 4px 12px rgba(0, 0, 0, 0.05),
-            0 8px 32px rgba(0, 0, 0, 0.08);
-    }
-
-    /* Border glow green */
-    .border-glow-green {
-        border: 1px solid rgba(45, 90, 39, 0.3);
-        box-shadow:
-            0 0 20px rgba(45, 90, 39, 0.1),
-            inset 0 0 20px rgba(45, 90, 39, 0.05);
-    }
-
-    /* Smooth transitions */
-    .transition-smooth {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* App-like tap scale effect */
-    .tap-scale {
-        transition: transform 0.1s ease-out, opacity 0.1s ease-out;
-    }
-
-    .tap-scale:active {
-        transform: scale(0.97);
-        opacity: 0.9;
-    }
-
-    /* iOS-like button press */
-    .press-scale {
-        transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    .press-scale:active {
-        transform: scale(0.95);
-    }
-
+    /* Touch target sizing */
     .touch-target {
         min-height: 44px;
         min-width: 44px;
     }
 
-    /* App-like card hover */
-    .card-hover {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* Hide on mobile */
+    .hide-mobile {
+        display: none;
+    }
+    
+    @media (min-width: 768px) {
+        .hide-mobile {
+            display: block;
+        }
+        .hide-desktop {
+            display: none;
+        }
     }
 
-    .card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    /* Animation utilities */
+    .animate-slide-up {
+        animation: slideUp 0.3s ease-out;
     }
-
-    /* Native app-like navigation item */
-    .nav-item-active {
-        position: relative;
+    
+    .animate-fade-in {
+        animation: fadeIn 0.2s ease-out;
     }
-
-    .nav-item-active::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 20px;
-        height: 3px;
-        background: var(--royal-green);
-        border-radius: 3px 3px 0 0;
+    
+    .animate-scale-in {
+        animation: scaleIn 0.2s ease-out;
     }
 }
 
 /* Animations */
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slide-up {
+@keyframes slideUp {
     from {
         opacity: 0;
         transform: translateY(20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-@keyframes slide-in-right {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-@keyframes slide-in-bottom {
-    from {
-        opacity: 0;
-        transform: translateY(100%);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes scale-in {
+@keyframes scaleIn {
     from {
         opacity: 0;
         transform: scale(0.95);
     }
-
     to {
         opacity: 1;
         transform: scale(1);
     }
 }
 
-@keyframes shimmer {
+@keyframes pulse-ring {
     0% {
-        background-position: 200% center;
-    }
-
-    100% {
-        background-position: -200% center;
-    }
-}
-
-@keyframes shimmer-text {
-    0% {
-        background-position: 200% center;
-    }
-
-    100% {
-        background-position: -200% center;
-    }
-}
-
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-@keyframes pulse-green {
-
-    0%,
-    100% {
         box-shadow: 0 0 0 0 rgba(45, 90, 39, 0.4);
     }
-
-    50% {
+    100% {
         box-shadow: 0 0 0 8px rgba(45, 90, 39, 0);
     }
 }
 
-@keyframes glow-pulse {
-
-    0%,
-    100% {
-        box-shadow:
-            0 0 5px rgba(45, 90, 39, 0.2),
-            0 0 10px rgba(45, 90, 39, 0.1);
-    }
-
-    50% {
-        box-shadow:
-            0 0 20px rgba(45, 90, 39, 0.4),
-            0 0 30px rgba(45, 90, 39, 0.2);
-    }
-}
-
-@keyframes bounce-subtle {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-3px);
-    }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.4s ease-out;
-}
-
-.animate-slide-up {
-    animation: slide-up 0.5s ease-out;
-}
-
-.animate-slide-in-right {
-    animation: slide-in-right 0.4s ease-out;
-}
-
-.animate-slide-in-bottom {
-    animation: slide-in-bottom 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.animate-scale-in {
-    animation: scale-in 0.3s ease-out;
-}
-
-.animate-float {
-    animation: float 3s ease-in-out infinite;
-}
-
-.animate-pulse-green {
-    animation: pulse-green 2s ease-in-out infinite;
-}
-
-.animate-glow-pulse {
-    animation: glow-pulse 2s ease-in-out infinite;
-}
-
-.animate-bounce-subtle {
-    animation: bounce-subtle 2s ease-in-out infinite;
-}
-
-/* Staggered animations */
-.stagger-1 {
-    animation-delay: 0.05s;
-}
-
-.stagger-2 {
-    animation-delay: 0.1s;
-}
-
-.stagger-3 {
-    animation-delay: 0.15s;
-}
-
-.stagger-4 {
-    animation-delay: 0.2s;
-}
-
-.stagger-5 {
-    animation-delay: 0.25s;
-}
-
-.stagger-6 {
-    animation-delay: 0.3s;
-}
-
-/* Sheet/Modal enhancements - App-like bottom sheets */
-[data-slot="sheet-overlay"] {
-    transition:
-        opacity 0.3s ease-out,
-        backdrop-filter 0.3s ease-out;
-}
-
-[data-slot="sheet-content"] {
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-}
-
+/* Sheet component overrides */
 [data-slot="sheet-content"][data-side="bottom"] {
-    border-top-left-radius: 1.5rem;
-    border-top-right-radius: 1.5rem;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
     background: #FFFFFF;
-    border-top: 1px solid rgba(45, 90, 39, 0.1);
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15);
 }
 
-[data-slot="sheet-content"][data-side="right"] {
-    background: #FFFFFF;
-    border-left: 1px solid rgba(45, 90, 39, 0.1);
+/* Toast positioning for mobile */
+[data-sonner-toaster] {
+    --offset: 80px !important;
 }
 
-/* Prevent body scroll when sheet is open */
-body:has([data-state="open"][data-slot="sheet-content"]) {
-    overflow: hidden;
-}
-
-/* Sonner Toast - Mobile positioning for app-like feel */
+/* Mobile-specific styles */
 @media (max-width: 768px) {
-
-    [data-sonner-toaster][data-position="bottom-right"],
-    [data-sonner-toaster][data-position="bottom-left"],
-    [data-sonner-toaster][data-position="bottom-center"] {
-        bottom: 80px !important;
+    body {
+        /* Prevent pull-to-refresh on mobile */
+        overscroll-behavior-y: none;
     }
-
-    [data-sonner-toaster] {
-        z-index: 100 !important;
+    
+    /* Larger touch targets on mobile */
+    button, a {
+        min-height: 44px;
     }
-
-    [data-sonner-toast] {
-        max-width: calc(100vw - 32px) !important;
-        background: #FFFFFF !important;
-        border: 1px solid rgba(45, 90, 39, 0.2) !important;
-        color: #1A1A1A !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-        border-radius: 12px !important;
+    
+    /* Input styling for mobile */
+    input, textarea, select {
+        font-size: 16px !important;
+        border-radius: 12px;
+    }
+    
+    /* Card border radius for mobile */
+    .card, [data-slot="card"] {
+        border-radius: 16px;
     }
 }
 
-/* Premium focus states */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-    outline: 2px solid #2D5A27;
-    outline-offset: 2px;
-}
-
-/* Custom selection color - green on cream */
+/* Selection color */
 ::selection {
     background: rgba(45, 90, 39, 0.2);
     color: #1A1A1A;
 }
 
-/* Scrollbar styling for light theme */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #F0EFE8;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #C0C0B8;
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #2D5A27;
-}
-
-/* Mobile-specific app-like styles */
-@media (max-width: 768px) {
-
-    /* Smoother page transitions */
-    main {
-        animation: fade-in 0.2s ease-out;
-    }
-
-    /* App-like cards */
-    .card,
-    [data-slot="card"] {
-        border-radius: 16px;
-    }
-
-    /* Larger touch targets */
-    button,
-    a,
-    [role="button"] {
-        min-height: 44px;
-    }
-
-    /* App-like input fields */
-    input,
-    textarea,
-    select {
-        font-size: 16px !important;
-        /* Prevent zoom on iOS */
-        border-radius: 12px;
-    }
-}
-
-/* iOS-like blur header */
-@supports (backdrop-filter: blur(20px)) {
-    .header-blur {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: saturate(180%) blur(20px);
-        -webkit-backdrop-filter: saturate(180%) blur(20px);
-    }
-}
-
-/* Android-like ripple effect */
-.ripple {
-    position: relative;
-    overflow: hidden;
-}
-
-.ripple::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(45, 90, 39, 0.1);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s;
-}
-
-.ripple:active::after {
-    width: 200%;
-    height: 200%;
 }

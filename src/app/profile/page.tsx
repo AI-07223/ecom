@@ -13,7 +13,6 @@ import {
   LogOut,
   MapPin,
   Phone,
-  Mail,
   FileQuestion,
   Store,
 } from "lucide-react";
@@ -29,7 +28,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/providers/AuthProvider";
-import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 
 const menuItems = [
   {
@@ -115,7 +113,6 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, profile, isAdmin, isWholeseller, isLoading, signOut } =
     useAuth();
-  const { settings } = useSiteSettings();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -125,8 +122,8 @@ export default function ProfilePage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF5]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5A27]"></div>
       </div>
     );
   }
@@ -140,236 +137,217 @@ export default function ProfilePage() {
     : user.email?.charAt(0).toUpperCase() || "U";
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Profile Header */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback
-                  className="text-2xl"
-                  style={{
-                    backgroundColor: settings.primary_color,
-                    color: "white",
-                  }}
-                >
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-center sm:text-left flex-1">
-                <div className="flex items-center justify-center sm:justify-start gap-2">
-                  <h1 className="text-2xl font-bold">
-                    {profile?.full_name || "User"}
-                  </h1>
-                  {isAdmin ? (
-                    <Badge style={{ backgroundColor: settings.primary_color }}>
-                      Admin
-                    </Badge>
-                  ) : isWholeseller ? (
-                    <Badge
-                      variant="outline"
-                      style={{
-                        borderColor: settings.accent_color,
-                        color: settings.accent_color,
-                      }}
-                    >
-                      Wholeseller
-                    </Badge>
-                  ) : null}
-                </div>
-                <p className="text-muted-foreground">{user.email}</p>
-                {profile?.phone && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 justify-center sm:justify-start mt-1">
-                    <Phone className="h-3 w-3" />
-                    {profile.phone}
-                  </p>
-                )}
-              </div>
-              <Button variant="outline" onClick={() => signOut()}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Account Menu */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                My Account
-              </CardTitle>
-              <CardDescription>
-                Manage your account and view your activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {menuItems.map((item, index) => (
-                <Link key={item.href} href={item.href}>
-                  <div
-                    className={`flex items-center justify-between p-4 hover:bg-muted/50 transition-colors ${
-                      index !== menuItems.length - 1 ? "border-b" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="p-2 rounded-full"
-                        style={{
-                          backgroundColor: `${settings.primary_color}15`,
-                        }}
+    <div className="min-h-screen bg-[#FAFAF5]">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Profile Header */}
+          <Card className="mb-8 border-[#E2E0DA] shadow-soft">
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <Avatar className="h-24 w-24 border-4 border-[#2D5A27]/10">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-2xl bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] text-white">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center sm:text-left flex-1">
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <h1 className="text-2xl font-bold text-[#1A1A1A]">
+                      {profile?.full_name || "User"}
+                    </h1>
+                    {isAdmin ? (
+                      <Badge className="bg-[#2D5A27] text-white">
+                        Admin
+                      </Badge>
+                    ) : isWholeseller ? (
+                      <Badge
+                        variant="outline"
+                        className="border-[#4CAF50] text-[#4CAF50]"
                       >
-                        <item.icon
-                          className="h-4 w-4"
-                          style={{ color: settings.primary_color }}
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.label}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        Wholeseller
+                      </Badge>
+                    ) : null}
                   </div>
-                </Link>
-              ))}
+                  <p className="text-[#6B7280]">{user.email}</p>
+                  {profile?.phone && (
+                    <p className="text-sm text-[#6B7280] flex items-center gap-1 justify-center sm:justify-start mt-1">
+                      <Phone className="h-3 w-3" />
+                      {profile.phone}
+                    </p>
+                  )}
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => signOut()}
+                  className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Wholeseller Panel - Only visible to wholesellers (but not admins) */}
-          {isWholeseller && !isAdmin && (
-            <Card
-              className="border-2"
-              style={{ borderColor: settings.accent_color }}
-            >
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Account Menu */}
+            <Card className="border-[#E2E0DA] shadow-soft">
               <CardHeader>
-                <CardTitle
-                  className="flex items-center gap-2"
-                  style={{ color: settings.accent_color }}
-                >
-                  <Store className="h-5 w-5" />
-                  Wholeseller Panel
+                <CardTitle className="flex items-center gap-2 text-[#1A1A1A]">
+                  <div className="w-8 h-8 rounded-lg bg-[#2D5A27]/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-[#2D5A27]" />
+                  </div>
+                  My Account
                 </CardTitle>
-                <CardDescription>
-                  Request products and manage your account
+                <CardDescription className="text-[#6B7280]">
+                  Manage your account and view your activity
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                {wholesellerMenuItems.map((item, index) => (
+                {menuItems.map((item, index) => (
                   <Link key={item.href} href={item.href}>
                     <div
-                      className={`flex items-center justify-between p-4 hover:bg-muted/50 transition-colors ${
-                        index !== wholesellerMenuItems.length - 1
-                          ? "border-b"
-                          : ""
+                      className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${
+                        index !== menuItems.length - 1 ? "border-b border-[#E2E0DA]" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div
-                          className="p-2 rounded-full"
-                          style={{
-                            backgroundColor: `${settings.accent_color}15`,
-                          }}
-                        >
-                          <item.icon
-                            className="h-4 w-4"
-                            style={{ color: settings.accent_color }}
-                          />
+                        <div className="p-2 rounded-full bg-[#2D5A27]/10">
+                          <item.icon className="h-4 w-4 text-[#2D5A27]" />
                         </div>
                         <div>
-                          <p className="font-medium">{item.label}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium text-[#1A1A1A]">{item.label}</p>
+                          <p className="text-sm text-[#6B7280]">
                             {item.description}
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      <ChevronRight className="h-5 w-5 text-[#9CA3AF]" />
                     </div>
                   </Link>
                 ))}
               </CardContent>
             </Card>
-          )}
 
-          {/* Admin Panel - Only visible to admins */}
-          {isAdmin && (
-            <Card
-              className="border-2"
-              style={{ borderColor: settings.primary_color }}
-            >
-              <CardHeader>
-                <CardTitle
-                  className="flex items-center gap-2"
-                  style={{ color: settings.primary_color }}
-                >
-                  <Shield className="h-5 w-5" />
-                  Admin Panel
-                </CardTitle>
-                <CardDescription>
-                  Manage your store and view analytics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                {adminMenuItems.map((item, index) => (
-                  <Link key={item.href} href={item.href}>
-                    <div
-                      className={`flex items-center justify-between p-4 hover:bg-muted/50 transition-colors ${
-                        index !== adminMenuItems.length - 1 ? "border-b" : ""
-                      }`}
-                    >
-                      <div>
-                        <p className="font-medium">{item.label}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.description}
-                        </p>
+            {/* Wholeseller Panel - Only visible to wholesellers (but not admins) */}
+            {isWholeseller && !isAdmin && (
+              <Card className="border-2 border-[#4CAF50] shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[#4CAF50]">
+                    <div className="w-8 h-8 rounded-lg bg-[#4CAF50]/10 flex items-center justify-center">
+                      <Store className="h-4 w-4 text-[#4CAF50]" />
+                    </div>
+                    Wholeseller Panel
+                  </CardTitle>
+                  <CardDescription className="text-[#6B7280]">
+                    Request products and manage your account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {wholesellerMenuItems.map((item, index) => (
+                    <Link key={item.href} href={item.href}>
+                      <div
+                        className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${
+                          index !== wholesellerMenuItems.length - 1
+                            ? "border-b border-[#E2E0DA]"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-[#4CAF50]/10">
+                            <item.icon className="h-4 w-4 text-[#4CAF50]" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-[#1A1A1A]">{item.label}</p>
+                            <p className="text-sm text-[#6B7280]">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-[#9CA3AF]" />
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </Link>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Address Card - Show if not admin or in additional column */}
-          {!isAdmin && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Shipping Address
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile?.address && Object.keys(profile.address).length > 0 ? (
-                  <div className="text-sm">
-                    <p>{profile.address.street}</p>
-                    <p>
-                      {profile.address.city}, {profile.address.state}{" "}
-                      {profile.address.postal_code}
-                    </p>
-                    <p>{profile.address.country}</p>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-muted-foreground mb-3">
-                      No address saved
-                    </p>
-                    <Link href="/profile/settings">
-                      <Button variant="outline" size="sm">
-                        Add Address
-                      </Button>
                     </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Admin Panel - Only visible to admins */}
+            {isAdmin && (
+              <Card className="border-2 border-[#2D5A27] shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[#2D5A27]">
+                    <div className="w-8 h-8 rounded-lg bg-[#2D5A27]/10 flex items-center justify-center">
+                      <Shield className="h-4 w-4 text-[#2D5A27]" />
+                    </div>
+                    Admin Panel
+                  </CardTitle>
+                  <CardDescription className="text-[#6B7280]">
+                    Manage your store and view analytics
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {adminMenuItems.map((item, index) => (
+                    <Link key={item.href} href={item.href}>
+                      <div
+                        className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${
+                          index !== adminMenuItems.length - 1 ? "border-b border-[#E2E0DA]" : ""
+                        }`}
+                      >
+                        <div>
+                          <p className="font-medium text-[#1A1A1A]">{item.label}</p>
+                          <p className="text-sm text-[#6B7280]">
+                            {item.description}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-[#9CA3AF]" />
+                      </div>
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Address Card - Show if not admin or in additional column */}
+            {!isAdmin && (
+              <Card className="border-[#E2E0DA] shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[#1A1A1A]">
+                    <div className="w-8 h-8 rounded-lg bg-[#2D5A27]/10 flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-[#2D5A27]" />
+                    </div>
+                    Shipping Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {profile?.address && Object.keys(profile.address).length > 0 ? (
+                    <div className="text-sm text-[#1A1A1A]">
+                      <p>{profile.address.street}</p>
+                      <p>
+                        {profile.address.city}, {profile.address.state}{" "}
+                        {profile.address.postal_code}
+                      </p>
+                      <p>{profile.address.country}</p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-[#6B7280] mb-3">
+                        No address saved
+                      </p>
+                      <Link href="/profile/settings">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-[#2D5A27] text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white"
+                        >
+                          Add Address
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>

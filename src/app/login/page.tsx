@@ -17,17 +17,16 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/providers/AuthProvider";
-import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { toast } from "sonner";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
+import Image from "next/image";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/profile";
   const { signIn, signInWithGoogle, signInWithGithub, isLoading } = useAuth();
-  const { settings } = useSiteSettings();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,8 +89,8 @@ function LoginForm() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF5]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5A27]"></div>
       </div>
     );
   }
@@ -99,28 +98,34 @@ function LoginForm() {
   // Forgot Password View
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-b from-[#FAFAF5] to-white">
+        <Card className="w-full max-w-md border-[#E2E0DA] shadow-soft-lg">
           <CardHeader className="text-center">
-            <CardTitle
-              className="text-2xl font-bold"
-              style={{ color: settings.primary_color }}
-            >
+            <div className="mx-auto w-16 h-16 rounded-full bg-[#2D5A27]/10 flex items-center justify-center mb-4">
+              <Image
+                src="/logo.jpeg"
+                alt="Royal Trading"
+                width={48}
+                height={48}
+                className="rounded-full"
+              />
+            </div>
+            <CardTitle className="text-2xl font-bold text-[#2D5A27]">
               Reset Password
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-[#6B7280]">
               Enter your email to receive a password reset link
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {resetSent ? (
               <div className="text-center space-y-4">
-                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                <div className="mx-auto w-16 h-16 bg-[#2D5A27]/10 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-[#2D5A27]" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#6B7280]">
                   We&apos;ve sent a password reset link to{" "}
-                  <strong>{resetEmail}</strong>. Please check your inbox and
+                  <strong className="text-[#1A1A1A]">{resetEmail}</strong>. Please check your inbox and
                   follow the instructions.
                 </p>
                 <Button
@@ -129,8 +134,7 @@ function LoginForm() {
                     setResetSent(false);
                     setResetEmail("");
                   }}
-                  className="w-full"
-                  style={{ backgroundColor: settings.primary_color }}
+                  className="w-full bg-[#2D5A27] hover:bg-[#3B7D34]"
                 >
                   Back to Login
                 </Button>
@@ -138,16 +142,16 @@ function LoginForm() {
             ) : (
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="resetEmail">Email</Label>
+                  <Label htmlFor="resetEmail" className="text-[#1A1A1A]">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                     <Input
                       id="resetEmail"
                       type="email"
                       placeholder="you@example.com"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                       required
                     />
                   </div>
@@ -155,9 +159,8 @@ function LoginForm() {
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-[#2D5A27] hover:bg-[#3B7D34]"
                   disabled={resetLoading}
-                  style={{ backgroundColor: settings.primary_color }}
                 >
                   {resetLoading ? "Sending..." : "Send Reset Link"}
                 </Button>
@@ -165,7 +168,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(false)}
-                  className="flex items-center justify-center w-full text-sm text-muted-foreground hover:text-foreground"
+                  className="flex items-center justify-center w-full text-sm text-[#6B7280] hover:text-[#2D5A27] transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
                   Back to Login
@@ -179,17 +182,23 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-b from-[#FAFAF5] to-white">
+      <Card className="w-full max-w-md border-[#E2E0DA] shadow-soft-lg">
         <CardHeader className="text-center">
-          <CardTitle
-            className="text-2xl font-bold"
-            style={{ color: settings.primary_color }}
-          >
+          <div className="mx-auto w-16 h-16 rounded-full bg-[#2D5A27]/10 flex items-center justify-center mb-4">
+            <Image
+              src="/logo.jpeg"
+              alt="Royal Trading"
+              width={48}
+              height={48}
+              className="rounded-full"
+            />
+          </div>
+          <CardTitle className="text-2xl font-bold text-[#2D5A27]">
             Welcome Back
           </CardTitle>
-          <CardDescription>
-            Sign in to your {settings.site_name} account
+          <CardDescription className="text-[#6B7280]">
+            Sign in to your Royal Trading account
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -198,7 +207,7 @@ function LoginForm() {
             <Button
               variant="outline"
               onClick={handleGoogleSignIn}
-              className="w-full"
+              className="w-full border-[#E2E0DA] hover:bg-[#F0EFE8] hover:border-[#2D5A27]/30"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                 <path
@@ -223,7 +232,7 @@ function LoginForm() {
             <Button
               variant="outline"
               onClick={handleGithubSignIn}
-              className="w-full"
+              className="w-full border-[#E2E0DA] hover:bg-[#F0EFE8] hover:border-[#2D5A27]/30"
             >
               <svg
                 className="h-5 w-5 mr-2"
@@ -238,10 +247,10 @@ function LoginForm() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
+              <Separator className="w-full bg-[#E2E0DA]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
+              <span className="bg-white px-2 text-[#9CA3AF]">
                 Or continue with email
               </span>
             </div>
@@ -250,16 +259,16 @@ function LoginForm() {
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-[#1A1A1A]">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                   required
                 />
               </div>
@@ -267,36 +276,35 @@ function LoginForm() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-[#1A1A1A]">Password</Label>
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-xs text-primary hover:underline"
-                  style={{ color: settings.primary_color }}
+                  className="text-xs text-[#2D5A27] hover:text-[#3B7D34] hover:underline"
                 >
                   Forgot password?
                 </button>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#2D5A27]"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="h-4 w-4" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="h-4 w-4" />
                   )}
                 </button>
               </div>
@@ -304,20 +312,18 @@ function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[#2D5A27] hover:bg-[#3B7D34]"
               disabled={loading}
-              style={{ backgroundColor: settings.primary_color }}
             >
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-[#6B7280]">
             Don&apos;t have an account?{" "}
             <Link
               href="/signup"
-              className="font-medium hover:underline"
-              style={{ color: settings.primary_color }}
+              className="font-medium text-[#2D5A27] hover:text-[#3B7D34] hover:underline"
             >
               Sign up
             </Link>
@@ -330,10 +336,11 @@ function LoginForm() {
 
 function LoginSkeleton() {
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAFAF5]">
+      <Card className="w-full max-w-md border-[#E2E0DA]">
         <CardHeader className="text-center">
-          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-16 w-16 rounded-full mx-auto" />
+          <Skeleton className="h-8 w-48 mx-auto mt-4" />
           <Skeleton className="h-4 w-64 mx-auto mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">

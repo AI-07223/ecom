@@ -980,7 +980,7 @@ export default function Invoice({ order, showActions = true }: InvoiceProps) {
         {/* Footer */}
         <div className="border-t bg-gray-50 p-4 text-center">
           <p className="text-xs text-gray-500">
-            This is a preview. Click "Print Invoice" for a professional PDF
+            This is a preview. Click &quot;Print Invoice&quot; for a professional PDF
             version.
           </p>
         </div>
