@@ -16,11 +16,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/categories", label: "Categories", icon: Grid3X3 },
   { href: "/products", label: "Shop", icon: ShoppingBag },
+  { href: "/cart", label: "Cart", icon: ShoppingCart, showBadge: true },
 ];
 
 export function MobileBottomNav() {
@@ -29,8 +31,7 @@ export function MobileBottomNav() {
   const { user, profile, isAdmin, signOut } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Hide on desktop and admin pages
-  if (typeof window !== "undefined" && window.innerWidth >= 768) return null;
+  // Hide on admin pages
   if (pathname.startsWith("/profile/admin")) return null;
 
   const isActive = (href: string) => {
@@ -40,126 +41,89 @@ export function MobileBottomNav() {
 
   return (
     <>
-      {/* Bottom Navigation Bar */}
-      <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 w-full bg-white border-t border-[#E2E0DA] touch-none select-none"
-        style={{ 
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
+      {/* Fixed Bottom Navigation - Using CSS custom properties for safe areas */}
+      <nav
+        className={cn(
+          "md:hidden fixed bottom-0 left-0 right-0 z-50",
+          "bg-white border-t border-[#E2E0DA]",
+          "touch-none select-none",
+          "transform-gpu will-change-transform"
+        )}
+        style={{
+          // Total height includes nav height + safe area
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+          // Safe area padding at bottom
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          // Subtle shadow for elevation
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
         }}
+        aria-label="Mobile navigation"
       >
-        {/* Fixed 5-column grid layout */}
-        <div className="grid grid-cols-5 h-[68px] w-full">
-          {/* Home */}
-          <Link
-            href="/"
-            className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          >
-            <div
-              className={`flex items-center justify-center w-10 h-9 rounded-full transition-all ${
-                isActive("/") ? "bg-[#2D5A27]/10" : ""
-              }`}
+        {/* Flexbox container - distributes items evenly */}
+        <div className="flex items-stretch h-full">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center",
+                "min-h-[44px] tap-active no-underline",
+                "relative"
+              )}
             >
-              <Home
-                className={`h-[20px] w-[20px] transition-colors ${
-                  isActive("/") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                }`}
-              />
-            </div>
-            <span
-              className={`text-[10px] font-medium mt-0.5 transition-colors ${
-                isActive("/") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-              }`}
-            >
-              Home
-            </span>
-          </Link>
+              {/* Icon container - 44x44px touch target */}
+              <div
+                className={cn(
+                  "flex items-center justify-center w-11 h-11 rounded-full transition-all",
+                  isActive(item.href) && "bg-[#2D5A27]/10"
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    "w-5 h-5 transition-colors",
+                    isActive(item.href) ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                  )}
+                />
+              </div>
+              {/* Label */}
+              <span
+                className={cn(
+                  "text-[10px] font-medium leading-none mt-0.5",
+                  isActive(item.href) ? "text-[#2D5A27]" : "text-[#9CA3AF]"
+                )}
+              >
+                {item.label}
+              </span>
 
-          {/* Categories */}
-          <Link
-            href="/categories"
-            className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          >
-            <div
-              className={`flex items-center justify-center w-10 h-9 rounded-full transition-all ${
-                isActive("/categories") ? "bg-[#2D5A27]/10" : ""
-              }`}
-            >
-              <Grid3X3
-                className={`h-[20px] w-[20px] transition-colors ${
-                  isActive("/categories") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                }`}
-              />
-            </div>
-            <span
-              className={`text-[10px] font-medium mt-0.5 transition-colors ${
-                isActive("/categories") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-              }`}
-            >
-              Categories
-            </span>
-          </Link>
+              {/* Cart badge */}
+              {item.showBadge && itemCount > 0 && (
+                <Badge
+                  className={cn(
+                    "absolute top-1 right-1/4 -translate-x-1/2",
+                    "h-4.5 min-w-[18px] px-1",
+                    "flex items-center justify-center",
+                    "text-[10px] font-bold",
+                    "bg-[#2D5A27] text-white",
+                    "border-2 border-white rounded-full"
+                  )}
+                >
+                  {itemCount > 9 ? "9+" : itemCount}
+                </Badge>
+              )}
+            </Link>
+          ))}
 
-          {/* Shop */}
-          <Link
-            href="/products"
-            className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          >
-            <div
-              className={`flex items-center justify-center w-10 h-9 rounded-full transition-all ${
-                isActive("/products") ? "bg-[#2D5A27]/10" : ""
-              }`}
-            >
-              <ShoppingBag
-                className={`h-[20px] w-[20px] transition-colors ${
-                  isActive("/products") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                }`}
-              />
-            </div>
-            <span
-              className={`text-[10px] font-medium mt-0.5 transition-colors ${
-                isActive("/products") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-              }`}
-            >
-              Shop
-            </span>
-          </Link>
-
-          {/* Cart */}
-          <Link
-            href="/cart"
-            className="flex flex-col items-center justify-center h-full tap-active relative no-underline"
-          >
-            <div
-              className={`flex items-center justify-center w-10 h-9 rounded-full transition-all ${
-                isActive("/cart") ? "bg-[#2D5A27]/10" : ""
-              }`}
-            >
-              <ShoppingCart
-                className={`h-[20px] w-[20px] transition-colors ${
-                  isActive("/cart") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                }`}
-              />
-            </div>
-            {itemCount > 0 && (
-              <Badge className="absolute top-0.5 right-1.5 h-4.5 min-w-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-[#2D5A27] text-white border-2 border-white rounded-full">
-                {itemCount > 9 ? "9+" : itemCount}
-              </Badge>
-            )}
-            <span
-              className={`text-[10px] font-medium mt-0.5 transition-colors ${
-                isActive("/cart") ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-              }`}
-            >
-              Cart
-            </span>
-          </Link>
-
-          {/* Profile */}
+          {/* Profile Sheet Trigger */}
           <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
             <SheetTrigger asChild>
-              <button className="flex flex-col items-center justify-center h-full tap-active bg-transparent border-none">
-                <div className="flex items-center justify-center w-10 h-9">
+              <button
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center",
+                  "min-h-[44px] tap-active",
+                  "bg-transparent border-none"
+                )}
+              >
+                <div className="flex items-center justify-center w-11 h-11">
                   {user ? (
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center ring-2 ring-white">
                       <span className="text-white text-[10px] font-bold">
@@ -167,10 +131,10 @@ export function MobileBottomNav() {
                       </span>
                     </div>
                   ) : (
-                    <User className="h-[20px] w-[20px] text-[#9CA3AF]" />
+                    <User className="w-5 h-5 text-[#9CA3AF]" />
                   )}
                 </div>
-                <span className="text-[10px] font-medium mt-0.5 text-[#9CA3AF]">
+                <span className="text-[10px] font-medium leading-none mt-0.5 text-[#9CA3AF]">
                   Profile
                 </span>
               </button>
@@ -349,8 +313,14 @@ export function MobileBottomNav() {
         </div>
       </nav>
 
-      {/* Spacer for bottom nav */}
-      <div className="h-[68px] md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
+      {/* Spacer for bottom nav - matches nav height exactly */}
+      <div
+        className="md:hidden"
+        style={{
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+        }}
+        aria-hidden="true"
+      />
     </>
   );
 }

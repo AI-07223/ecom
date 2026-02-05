@@ -56,7 +56,7 @@ export function AdminBottomNav() {
   const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Use app theme colors - green/cream
+  // App theme colors
   const bgColor = "#FAFAF5";
   const borderColor = "#E2E0DA";
   const primaryColor = settings.primary_color;
@@ -79,245 +79,325 @@ export function AdminBottomNav() {
   };
 
   return (
-    <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 w-full bg-white border-t touch-none select-none"
-      style={{ 
-        borderColor: borderColor,
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
-      }}
-    >
-      {/* Fixed 5-column grid layout */}
-      <div className="grid grid-cols-5 h-[68px] w-full">
-        {/* Back button */}
-        <Link
-          href="/profile"
-          className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          style={{ backgroundColor: hoverBg }}
-        >
-          <div className="flex items-center justify-center w-10 h-9">
-            <ArrowLeft className="h-[20px] w-[20px] text-[#2D5A27]" />
-          </div>
-          <span className="text-[10px] font-medium text-[#6B7280]">Back</span>
-        </Link>
-
-        {/* Dashboard */}
-        <Link
-          href="/profile/admin"
-          className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          style={{
-            backgroundColor: isActive("/profile/admin") && pathname === "/profile/admin" ? primaryColor : "transparent",
-          }}
-        >
-          <div className="flex items-center justify-center w-10 h-9">
-            <LayoutDashboard
-              className="h-[20px] w-[20px]"
-              style={{ color: isActive("/profile/admin") && pathname === "/profile/admin" ? "#ffffff" : mutedTextColor }}
-            />
-          </div>
-          <span
-            className="text-[10px] font-medium"
-            style={{ color: isActive("/profile/admin") && pathname === "/profile/admin" ? "#ffffff" : mutedTextColor }}
+    <>
+      {/* Fixed Admin Bottom Navigation */}
+      <nav
+        className={cn(
+          "md:hidden fixed bottom-0 left-0 right-0 z-50",
+          "bg-white border-t",
+          "touch-none select-none",
+          "transform-gpu will-change-transform"
+        )}
+        style={{
+          borderColor: borderColor,
+          // Total height includes nav height + safe area
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+          // Safe area padding at bottom
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
+        }}
+        aria-label="Admin navigation"
+      >
+        {/* Flexbox container - Back, Dashboard, Products, Orders, More */}
+        <div className="flex items-stretch h-full">
+          {/* Back button */}
+          <Link
+            href="/profile"
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center",
+              "min-h-[44px] tap-active no-underline"
+            )}
+            style={{ backgroundColor: hoverBg }}
           >
-            Dash
-          </span>
-        </Link>
+            <div className="flex items-center justify-center w-11 h-11">
+              <ArrowLeft className="w-5 h-5 text-[#2D5A27]" />
+            </div>
+            <span className="text-[10px] font-medium leading-none mt-0.5 text-[#6B7280]">
+              Back
+            </span>
+          </Link>
 
-        {/* Products */}
-        <Link
-          href="/profile/admin/products"
-          className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          style={{
-            backgroundColor: isActive("/profile/admin/products") ? primaryColor : "transparent",
-          }}
-        >
-          <div className="flex items-center justify-center w-10 h-9">
-            <Package
-              className="h-[20px] w-[20px]"
-              style={{ color: isActive("/profile/admin/products") ? "#ffffff" : mutedTextColor }}
-            />
-          </div>
-          <span
-            className="text-[10px] font-medium"
-            style={{ color: isActive("/profile/admin/products") ? "#ffffff" : mutedTextColor }}
-          >
-            Products
-          </span>
-        </Link>
-
-        {/* Orders */}
-        <Link
-          href="/profile/admin/orders"
-          className="flex flex-col items-center justify-center h-full tap-active no-underline"
-          style={{
-            backgroundColor: isActive("/profile/admin/orders") ? primaryColor : "transparent",
-          }}
-        >
-          <div className="flex items-center justify-center w-10 h-9">
-            <ShoppingBag
-              className="h-[20px] w-[20px]"
-              style={{ color: isActive("/profile/admin/orders") ? "#ffffff" : mutedTextColor }}
-            />
-          </div>
-          <span
-            className="text-[10px] font-medium"
-            style={{ color: isActive("/profile/admin/orders") ? "#ffffff" : mutedTextColor }}
-          >
-            Orders
-          </span>
-        </Link>
-
-        {/* More Menu */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <button className="flex flex-col items-center justify-center h-full tap-active bg-transparent border-none">
-              <div className="flex items-center justify-center w-10 h-9">
-                <Menu className="h-[20px] w-[20px] text-[#6B7280]" />
-              </div>
-              <span className="text-[10px] font-medium text-[#6B7280]">More</span>
-            </button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="h-auto max-h-[85vh] rounded-t-3xl p-0 border-t"
+          {/* Dashboard */}
+          <Link
+            href="/profile/admin"
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center",
+              "min-h-[44px] tap-active no-underline"
+            )}
             style={{
-              backgroundColor: bgColor,
-              borderColor: borderColor,
+              backgroundColor:
+                isActive("/profile/admin") && pathname === "/profile/admin"
+                  ? primaryColor
+                  : "transparent",
             }}
           >
-            {/* Pull indicator */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div
-                className="w-12 h-1.5 rounded-full"
-                style={{ backgroundColor: `${primaryColor}40` }}
+            <div className="flex items-center justify-center w-11 h-11">
+              <LayoutDashboard
+                className="w-5 h-5"
+                style={{
+                  color:
+                    isActive("/profile/admin") && pathname === "/profile/admin"
+                      ? "#ffffff"
+                      : mutedTextColor,
+                }}
               />
             </div>
+            <span
+              className="text-[10px] font-medium leading-none mt-0.5"
+              style={{
+                color:
+                  isActive("/profile/admin") && pathname === "/profile/admin"
+                    ? "#ffffff"
+                    : mutedTextColor,
+              }}
+            >
+              Dash
+            </span>
+          </Link>
 
-            {/* Admin Header with User Info */}
-            <SheetHeader className="px-6 pb-4">
-              <div className="flex items-center gap-3">
-                {/* Admin Badge */}
+          {/* Products */}
+          <Link
+            href="/profile/admin/products"
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center",
+              "min-h-[44px] tap-active no-underline"
+            )}
+            style={{
+              backgroundColor: isActive("/profile/admin/products")
+                ? primaryColor
+                : "transparent",
+            }}
+          >
+            <div className="flex items-center justify-center w-11 h-11">
+              <Package
+                className="w-5 h-5"
+                style={{
+                  color: isActive("/profile/admin/products")
+                    ? "#ffffff"
+                    : mutedTextColor,
+                }}
+              />
+            </div>
+            <span
+              className="text-[10px] font-medium leading-none mt-0.5"
+              style={{
+                color: isActive("/profile/admin/products")
+                  ? "#ffffff"
+                  : mutedTextColor,
+              }}
+            >
+              Products
+            </span>
+          </Link>
+
+          {/* Orders */}
+          <Link
+            href="/profile/admin/orders"
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center",
+              "min-h-[44px] tap-active no-underline"
+            )}
+            style={{
+              backgroundColor: isActive("/profile/admin/orders")
+                ? primaryColor
+                : "transparent",
+            }}
+          >
+            <div className="flex items-center justify-center w-11 h-11">
+              <ShoppingBag
+                className="w-5 h-5"
+                style={{
+                  color: isActive("/profile/admin/orders")
+                    ? "#ffffff"
+                    : mutedTextColor,
+                }}
+              />
+            </div>
+            <span
+              className="text-[10px] font-medium leading-none mt-0.5"
+              style={{
+                color: isActive("/profile/admin/orders")
+                  ? "#ffffff"
+                  : mutedTextColor,
+              }}
+            >
+              Orders
+            </span>
+          </Link>
+
+          {/* More Menu */}
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <button
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center",
+                  "min-h-[44px] tap-active",
+                  "bg-transparent border-none"
+                )}
+              >
+                <div className="flex items-center justify-center w-11 h-11">
+                  <Menu className="w-5 h-5 text-[#6B7280]" />
+                </div>
+                <span className="text-[10px] font-medium leading-none mt-0.5 text-[#6B7280]">
+                  More
+                </span>
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="h-auto max-h-[85vh] rounded-t-3xl p-0 border-t"
+              style={{
+                backgroundColor: bgColor,
+                borderColor: borderColor,
+              }}
+            >
+              {/* Pull indicator */}
+              <div className="flex justify-center pt-3 pb-2">
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{
-                    background: `linear-gradient(135deg, ${settings.accent_color}30, ${primaryColor}30)`,
-                  }}
-                >
-                  <Crown className="h-6 w-6" style={{ color: primaryColor }} />
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-2">
-                    <SheetTitle className="text-base truncate" style={{ color: textColor }}>
-                      Admin Panel
-                    </SheetTitle>
-                    <Badge
-                      className="text-[10px] px-1.5 py-0"
-                      style={{ backgroundColor: primaryColor, color: "#ffffff" }}
-                    >
-                      Admin
-                    </Badge>
-                  </div>
-                  <p className="text-xs truncate" style={{ color: mutedTextColor }}>
-                    {profile?.full_name || user?.email || "Administrator"}
-                  </p>
-                </div>
-              </div>
-            </SheetHeader>
-
-            {/* All Admin Menu Items */}
-            <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-6 pb-8">
-              <div className="grid grid-cols-1 gap-1">
-                {adminNavItems.map((item, index) => {
-                  const active = isActive(item.href);
-                  return (
-                    <SheetClose key={item.href} asChild>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-4 p-4 rounded-xl",
-                          "transition-all duration-200 tap-scale",
-                          active ? "font-medium" : "hover:opacity-80"
-                        )}
-                        style={{
-                          backgroundColor: active
-                            ? primaryColor
-                            : index % 2 === 0
-                              ? cardBg
-                              : "transparent",
-                          color: active ? "#ffffff" : textColor,
-                          border: active ? "none" : `1px solid ${index % 2 === 0 ? borderColor : "transparent"}`,
-                        }}
-                      >
-                        <div
-                          className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center",
-                            active && "shadow-sm"
-                          )}
-                          style={{
-                            backgroundColor: active ? "rgba(255,255,255,0.2)" : hoverBg,
-                          }}
-                        >
-                          <item.icon className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-sm font-medium">{item.label}</span>
-                          {item.description && (
-                            <p
-                              className="text-xs"
-                              style={{ color: active ? "rgba(255,255,255,0.8)" : mutedTextColor }}
-                            >
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                        {active && <div className="w-2 h-2 rounded-full bg-white" />}
-                      </Link>
-                    </SheetClose>
-                  );
-                })}
+                  className="w-12 h-1.5 rounded-full"
+                  style={{ backgroundColor: `${primaryColor}40` }}
+                />
               </div>
 
-              {/* User Actions */}
-              <div className="mt-4 space-y-2">
-                <SheetClose asChild>
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200 tap-active"
+              {/* Admin Header with User Info */}
+              <SheetHeader className="px-6 pb-4">
+                <div className="flex items-center gap-3">
+                  {/* Admin Badge */}
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
                     style={{
-                      backgroundColor: cardBg,
-                      border: `1px solid ${borderColor}`,
-                      color: textColor,
+                      background: `linear-gradient(135deg, ${settings.accent_color}30, ${primaryColor}30)`,
                     }}
                   >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: hoverBg }}
-                    >
-                      <User className="h-5 w-5 text-[#2D5A27]" />
-                    </div>
-                    <span className="text-sm font-medium">My Profile</span>
-                  </Link>
-                </SheetClose>
-
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left tap-active"
-                  style={{
-                    backgroundColor: "#fef2f2",
-                    border: "1px solid #fecaca",
-                    color: "#dc2626",
-                  }}
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100">
-                    <LogOut className="h-5 w-5 text-red-600" />
+                    <Crown className="h-6 w-6" style={{ color: primaryColor }} />
                   </div>
-                  <span className="text-sm font-medium">Sign Out</span>
-                </button>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-2">
+                      <SheetTitle className="text-base truncate" style={{ color: textColor }}>
+                        Admin Panel
+                      </SheetTitle>
+                      <Badge
+                        className="text-[10px] px-1.5 py-0"
+                        style={{ backgroundColor: primaryColor, color: "#ffffff" }}
+                      >
+                        Admin
+                      </Badge>
+                    </div>
+                    <p className="text-xs truncate" style={{ color: mutedTextColor }}>
+                      {profile?.full_name || user?.email || "Administrator"}
+                    </p>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              {/* All Admin Menu Items */}
+              <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-6 pb-8">
+                <div className="grid grid-cols-1 gap-1">
+                  {adminNavItems.map((item, index) => {
+                    const active = isActive(item.href);
+                    return (
+                      <SheetClose key={item.href} asChild>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            "flex items-center gap-4 p-4 rounded-xl",
+                            "transition-all duration-200 tap-active",
+                            active ? "font-medium" : "hover:opacity-80"
+                          )}
+                          style={{
+                            backgroundColor: active
+                              ? primaryColor
+                              : index % 2 === 0
+                                ? cardBg
+                                : "transparent",
+                            color: active ? "#ffffff" : textColor,
+                            border: active
+                              ? "none"
+                              : `1px solid ${index % 2 === 0 ? borderColor : "transparent"}`,
+                          }}
+                        >
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-xl flex items-center justify-center",
+                              active && "shadow-sm"
+                            )}
+                            style={{
+                              backgroundColor: active ? "rgba(255,255,255,0.2)" : hoverBg,
+                            }}
+                          >
+                            <item.icon className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium">{item.label}</span>
+                            {item.description && (
+                              <p
+                                className="text-xs"
+                                style={{
+                                  color: active ? "rgba(255,255,255,0.8)" : mutedTextColor,
+                                }}
+                              >
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
+                          {active && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </Link>
+                      </SheetClose>
+                    );
+                  })}
+                </div>
+
+                {/* User Actions */}
+                <div className="mt-4 space-y-2">
+                  <SheetClose asChild>
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200 tap-active"
+                      style={{
+                        backgroundColor: cardBg,
+                        border: `1px solid ${borderColor}`,
+                        color: textColor,
+                      }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: hoverBg }}
+                      >
+                        <User className="h-5 w-5 text-[#2D5A27]" />
+                      </div>
+                      <span className="text-sm font-medium">My Profile</span>
+                    </Link>
+                  </SheetClose>
+
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left tap-active"
+                    style={{
+                      backgroundColor: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      color: "#dc2626",
+                    }}
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100">
+                      <LogOut className="h-5 w-5 text-red-600" />
+                    </div>
+                    <span className="text-sm font-medium">Sign Out</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </nav>
+
+      {/* Spacer for admin bottom nav */}
+      <div
+        className="md:hidden"
+        style={{
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+        }}
+        aria-hidden="true"
+      />
+    </>
   );
 }

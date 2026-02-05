@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -21,21 +21,31 @@ export const metadata: Metadata = {
   description: "Your trusted destination for premium crockery, cutlery, homecare, and cleaning essentials since 2020",
 };
 
+// Viewport configuration with safe area support for mobile
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover", // Critical for safe area insets on notched devices
+  themeColor: "#2D5A27",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="en" className="overflow-x-hidden">
+      <body className={`${inter.variable} font-sans antialiased overflow-x-hidden`}>
         <SiteSettingsProvider>
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
                 <div className="min-h-screen flex flex-col">
                   <Navbar />
-                  <main className="flex-1 pb-20 md:pb-0">{children}</main>
+                  <main className="flex-1">{children}</main>
                   <Footer />
                 </div>
                 <MobileBottomNav />
@@ -43,7 +53,7 @@ export default function RootLayout({
                 <Toaster
                   position="bottom-right"
                   richColors
-                  className="!bottom-[72px] md:!bottom-4"
+                  className="!bottom-[calc(64px+env(safe-area-inset-bottom,0px)+8px)] md:!bottom-4"
                   toastOptions={{
                     classNames: {
                       toast:

@@ -59,7 +59,7 @@
 
 :root {
     --radius: 1rem;
-    
+
     /* Native App Theme */
     --background: #FAFAF5;
     --foreground: #1A1A1A;
@@ -80,7 +80,7 @@
     --border: #E2E0DA;
     --input: #E2E0DA;
     --ring: #2D5A27;
-    
+
     /* App-specific */
     --app-safe-top: env(safe-area-inset-top, 0px);
     --app-safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -115,7 +115,10 @@
     }
 
     /* Allow text selection on inputs and content areas */
-    input, textarea, [contenteditable="true"], .selectable {
+    input,
+    textarea,
+    [contenteditable="true"],
+    .selectable {
         -webkit-user-select: text;
         user-select: text;
     }
@@ -133,13 +136,29 @@
 }
 
 @layer utilities {
+
     /* Safe areas */
     .pb-safe {
-        padding-bottom: var(--app-safe-bottom);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
-    
+
     .pt-safe {
-        padding-top: var(--app-safe-top);
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    /* Bottom navigation utilities */
+    .bottom-nav {
+        touch-action: none;
+        -webkit-touch-callout: none;
+        overscroll-behavior: none;
+    }
+
+    .bottom-nav-height {
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .bottom-nav-spacer {
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
     }
 
     /* Hide scrollbar */
@@ -147,7 +166,7 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    
+
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
@@ -156,7 +175,7 @@
     .tap-active {
         transition: transform 0.1s ease, opacity 0.1s ease;
     }
-    
+
     .tap-active:active {
         transform: scale(0.96);
         opacity: 0.8;
@@ -166,7 +185,7 @@
     .card-press {
         transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    
+
     .card-press:active {
         transform: scale(0.98);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -197,11 +216,11 @@
     .bg-elevated {
         background-color: #FFFFFF;
     }
-    
+
     .bg-base {
         background-color: #FAFAF5;
     }
-    
+
     .bg-subtle {
         background-color: #F0EFE8;
     }
@@ -210,7 +229,7 @@
     .shadow-elevated {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
     }
-    
+
     .shadow-floating {
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
     }
@@ -232,11 +251,12 @@
     .hide-mobile {
         display: none;
     }
-    
+
     @media (min-width: 768px) {
         .hide-mobile {
             display: block;
         }
+
         .hide-desktop {
             display: none;
         }
@@ -246,11 +266,11 @@
     .animate-slide-up {
         animation: slideUp 0.3s ease-out;
     }
-    
+
     .animate-fade-in {
         animation: fadeIn 0.2s ease-out;
     }
-    
+
     .animate-scale-in {
         animation: scaleIn 0.2s ease-out;
     }
@@ -262,6 +282,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -269,8 +290,13 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes scaleIn {
@@ -278,6 +304,7 @@
         opacity: 0;
         transform: scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -288,6 +315,7 @@
     0% {
         box-shadow: 0 0 0 0 rgba(45, 90, 39, 0.4);
     }
+
     100% {
         box-shadow: 0 0 0 8px rgba(45, 90, 39, 0);
     }
@@ -308,25 +336,56 @@
 
 /* Mobile-specific styles */
 @media (max-width: 768px) {
-    body {
-        /* Prevent pull-to-refresh on mobile */
+    html, body {
+        /* Prevent pull-to-refresh and bounce effects on mobile */
         overscroll-behavior-y: none;
+        overscroll-behavior-x: none;
     }
-    
+
+    /* Fixed position elements should use transform for GPU acceleration */
+    nav[role="navigation"],
+    .fixed-bottom {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+
     /* Larger touch targets on mobile */
-    button, a {
+    button,
+    a,
+    [role="button"] {
         min-height: 44px;
     }
-    
+
     /* Input styling for mobile */
-    input, textarea, select {
+    input,
+    textarea,
+    select {
         font-size: 16px !important;
         border-radius: 12px;
     }
-    
+
     /* Card border radius for mobile */
-    .card, [data-slot="card"] {
+    .card,
+    [data-slot="card"] {
         border-radius: 16px;
+    }
+
+    /* Prevent horizontal overflow on mobile */
+    .container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Better spacing for mobile grids */
+    .grid {
+        gap: 0.75rem;
+    }
+
+    /* Improved form elements */
+    label {
+        font-size: 0.875rem;
     }
 }
 
