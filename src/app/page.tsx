@@ -61,7 +61,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#FAFAF5] pb-24 md:pb-0">
       {/* Hero Section */}
       <section className="relative bg-white">
         <div className="container mx-auto px-4 py-8 md:py-12">
@@ -72,12 +72,12 @@ export default function HomePage() {
                 <Sparkles className="h-4 w-4" />
                 Premium Quality Since 2020
               </div>
-              
+
               <h1 className="text-3xl md:text-5xl font-bold text-[#1A1A1A] leading-tight">
                 Premium Crockery,{" "}
                 <span className="text-gradient">Cutlery & Homecare</span>
               </h1>
-              
+
               <p className="text-[#6B7280] text-base md:text-lg max-w-md">
                 Your trusted destination for premium household essentials. Quality products delivered to your doorstep.
               </p>

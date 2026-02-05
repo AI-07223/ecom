@@ -263,8 +263,8 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5]">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#FAFAF5] pb-24 md:pb-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
         <Link
           href="/cart"
           className="inline-flex items-center text-sm text-[#6B7280] hover:text-[#2D5A27] mb-6 transition-colors"
@@ -279,7 +279,7 @@ export default function CheckoutPage() {
         </h1>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Shipping Form */}
             <div className="lg:col-span-2 space-y-6">
               {/* Saved Addresses */}
@@ -303,11 +303,10 @@ export default function CheckoutPage() {
                             setSelectedAddressId(addr.id);
                             setShowNewAddressForm(false);
                           }}
-                          className={`p-4 rounded-xl border-2 text-left transition-all ${
-                            selectedAddressId === addr.id && !showNewAddressForm
+                          className={`p-4 rounded-xl border-2 text-left transition-all ${selectedAddressId === addr.id && !showNewAddressForm
                               ? "border-[#2D5A27] bg-[#2D5A27]/5"
                               : "border-[#E2E0DA] hover:border-[#2D5A27]/50"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-2 mb-2">
@@ -345,11 +344,10 @@ export default function CheckoutPage() {
                           setShowNewAddressForm(true);
                           setSelectedAddressId(null);
                         }}
-                        className={`p-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all min-h-[140px] ${
-                          showNewAddressForm
+                        className={`p-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all min-h-[140px] ${showNewAddressForm
                             ? "border-[#2D5A27] bg-[#2D5A27]/5"
                             : "border-[#E2E0DA] hover:border-[#2D5A27]/50"
-                        }`}
+                          }`}
                       >
                         <Plus className="h-6 w-6 text-[#6B7280]" />
                         <span className="text-sm font-medium text-[#6B7280]">
@@ -568,18 +566,16 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("cod")}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 ${
-                      paymentMethod === "cod"
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 ${paymentMethod === "cod"
                         ? "border-[#2D5A27] bg-[#2D5A27]/5"
                         : "border-[#E2E0DA] hover:border-[#2D5A27]/50"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        paymentMethod === "cod"
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === "cod"
                           ? "bg-[#2D5A27] text-white"
                           : "bg-[#F0EFE8] text-[#6B7280]"
-                      }`}
+                        }`}
                     >
                       <Banknote className="h-5 w-5" />
                     </div>
@@ -598,18 +594,16 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("online")}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 ${
-                      paymentMethod === "online"
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 ${paymentMethod === "online"
                         ? "border-[#2D5A27] bg-[#2D5A27]/5"
                         : "border-[#E2E0DA] hover:border-[#2D5A27]/50"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        paymentMethod === "online"
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === "online"
                           ? "bg-[#2D5A27] text-white"
                           : "bg-[#F0EFE8] text-[#6B7280]"
-                      }`}
+                        }`}
                     >
                       <Smartphone className="h-5 w-5" />
                     </div>

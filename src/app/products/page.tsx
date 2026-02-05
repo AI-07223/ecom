@@ -728,9 +728,9 @@ function ProductsContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5]">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
+    <div className="min-h-screen bg-[#FAFAF5] pb-20 md:pb-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Desktop Filters */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-24 space-y-6 bg-white p-6 rounded-2xl border border-[#E2E0DA] shadow-soft">
@@ -740,9 +740,9 @@ function ProductsContent() {
                   Filters
                 </h2>
                 {hasActiveFilters && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={clearFilters}
                     className="text-[#2D5A27] hover:text-[#3B7D34] hover:bg-[#2D5A27]/10"
                   >
@@ -772,9 +772,9 @@ function ProductsContent() {
                 {/* Mobile Filter Button */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="lg:hidden border-[#E2E0DA] text-[#6B7280] hover:bg-[#F0EFE8] hover:text-[#2D5A27]"
                     >
                       <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -827,8 +827,8 @@ function ProductsContent() {
               <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E0DA]">
                 <p className="text-[#6B7280] mb-4">No products found</p>
                 {hasActiveFilters && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={clearFilters}
                     className="border-[#2D5A27] text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white"
                   >

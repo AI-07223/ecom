@@ -130,15 +130,15 @@ export default function ProfilePage() {
 
   const initials = profile?.full_name
     ? profile.full_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
     : user.email?.charAt(0).toUpperCase() || "U";
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5]">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#FAFAF5] pb-24 md:pb-8">
+      <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
           <Card className="mb-8 border-[#E2E0DA] shadow-soft">
@@ -176,8 +176,8 @@ export default function ProfilePage() {
                     </p>
                   )}
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => signOut()}
                   className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
                 >
@@ -206,9 +206,8 @@ export default function ProfilePage() {
                 {menuItems.map((item, index) => (
                   <Link key={item.href} href={item.href}>
                     <div
-                      className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${
-                        index !== menuItems.length - 1 ? "border-b border-[#E2E0DA]" : ""
-                      }`}
+                      className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${index !== menuItems.length - 1 ? "border-b border-[#E2E0DA]" : ""
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-[#2D5A27]/10">
@@ -246,11 +245,10 @@ export default function ProfilePage() {
                   {wholesellerMenuItems.map((item, index) => (
                     <Link key={item.href} href={item.href}>
                       <div
-                        className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${
-                          index !== wholesellerMenuItems.length - 1
+                        className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${index !== wholesellerMenuItems.length - 1
                             ? "border-b border-[#E2E0DA]"
                             : ""
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-full bg-[#4CAF50]/10">
@@ -289,9 +287,8 @@ export default function ProfilePage() {
                   {adminMenuItems.map((item, index) => (
                     <Link key={item.href} href={item.href}>
                       <div
-                        className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${
-                          index !== adminMenuItems.length - 1 ? "border-b border-[#E2E0DA]" : ""
-                        }`}
+                        className={`flex items-center justify-between p-4 hover:bg-[#F0EFE8] transition-colors ${index !== adminMenuItems.length - 1 ? "border-b border-[#E2E0DA]" : ""
+                          }`}
                       >
                         <div>
                           <p className="font-medium text-[#1A1A1A]">{item.label}</p>
@@ -334,8 +331,8 @@ export default function ProfilePage() {
                         No address saved
                       </p>
                       <Link href="/profile/settings">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="border-[#2D5A27] text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white"
                         >
