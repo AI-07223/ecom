@@ -18,6 +18,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -153,8 +154,13 @@ export function Navbar() {
         </nav>
       </header>
 
-      {/* Mobile Navbar - Native App Style */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50">
+      {/* Mobile Navbar - Native App Style with Safe Area */}
+      <header 
+        className="md:hidden fixed top-0 left-0 right-0 z-50"
+        style={{
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}
+      >
         {/* Main Header */}
         <div className="glass border-b border-[#E2E0DA]/50">
           <div className="flex items-center h-14 px-4 gap-3">
@@ -356,8 +362,13 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Spacer for fixed header */}
-      <div className="h-14 md:h-16" />
+      {/* Spacer for fixed header - includes safe area height on mobile */}
+      <div 
+        className="md:h-16" 
+        style={{
+          height: "calc(56px + env(safe-area-inset-top, 0px))",
+        }}
+      />
     </>
   );
 }

@@ -37,15 +37,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="overflow-x-hidden">
-      <body className={`${inter.variable} font-sans antialiased overflow-x-hidden`}>
+    <html lang="en" className="overflow-x-hidden h-full">
+      <body className={`${inter.variable} font-sans antialiased overflow-x-hidden min-h-full`}>
         <SiteSettingsProvider>
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
-                <div className="min-h-screen flex flex-col">
+                <div className="flex flex-col min-h-screen">
                   <Navbar />
-                  <main className="flex-1">{children}</main>
+                  <main className="flex-1 flex flex-col">{children}</main>
                   <Footer />
                 </div>
                 <MobileBottomNav />
