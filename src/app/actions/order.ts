@@ -1,26 +1,13 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
-
-interface OrderItem {
-  product_id: string;
-  quantity: number;
-}
-
-interface ShippingAddress {
-  full_name: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-}
+import { adminDb, adminAuth } from "@/lib/firebase/admin";
+import { FieldValue } from "firebase-admin/firestore";
+import type { OrderItem, ShippingAddress } from "@/types/database.types";
 
 interface CreateOrderInput {
   user_id: string;
-  items: OrderItem[];
+  id_token: string;
+  items: { product_id: string; quantity: number }[];
   shipping_address: ShippingAddress;
   coupon_code?: string | null;
   gst_number?: string | null;
@@ -61,6 +48,26 @@ export async function createOrder(
       payment_method,
     } = input;
 
+    // Verify authentication using the ID token from client
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(input.id_token);
+    } catch (error) {
+      console.log("[createOrder] Authentication failed: invalid ID token", error);
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const authenticatedUserId = decodedToken.uid;
+
+    // Verify the user is creating an order for themselves
+    if (authenticatedUserId !== user_id) {
+      console.log(
+        "[createOrder] Authorization failed: user mismatch",
+        { authenticatedUserId, requestedUserId: user_id },
+      );
+      return { success: false, error: "Cannot create order for another user" };
+    }
+
     // Validate input
     if (!user_id || !items || items.length === 0) {
       console.log("[createOrder] Validation failed: invalid order data");
@@ -70,7 +77,7 @@ export async function createOrder(
     if (
       !shipping_address.full_name ||
       !shipping_address.phone ||
-      !shipping_address.address ||
+      !shipping_address.street ||
       !shipping_address.city ||
       !shipping_address.state ||
       !shipping_address.postal_code
@@ -123,7 +130,7 @@ export async function createOrder(
 
     // Calculate totals using DATABASE prices (not client-provided)
     let subtotal = 0;
-    const orderItems = products.map((product) => {
+    const orderItems: OrderItem[] = products.map((product) => {
       const itemTotal = product.price * product.requested_quantity;
       subtotal += itemTotal;
       return {
@@ -131,14 +138,14 @@ export async function createOrder(
         product_name: product.name,
         product_image: product.thumbnail || product.images?.[0] || null,
         quantity: product.requested_quantity,
-        price: product.price, // Database price
+        price: product.price,
         total: itemTotal,
       };
     });
 
     // Apply coupon discount if provided
     let discount = 0;
-    let validCouponCode = null;
+    let validCouponCode: string | null = null;
     let couponRef: FirebaseFirestore.DocumentReference | null = null;
 
     if (coupon_code) {
@@ -168,9 +175,8 @@ export async function createOrder(
         }
 
         // Validate max uses
-        const currentUses =
-          couponData.current_uses || couponData.used_count || 0;
-        const maxUses = couponData.max_uses || couponData.usage_limit;
+        const currentUses = couponData.used_count || 0;
+        const maxUses = couponData.usage_limit;
         if (maxUses && currentUses >= maxUses) {
           return {
             success: false,
@@ -179,11 +185,7 @@ export async function createOrder(
         }
 
         // Check minimum order value
-        const minOrderValue =
-          couponData.min_order_amount ||
-          couponData.min_order_value ||
-          couponData.min_purchase ||
-          0;
+        const minOrderValue = couponData.min_order_amount || 0;
 
         if (subtotal < minOrderValue) {
           return {
@@ -196,8 +198,7 @@ export async function createOrder(
         if (couponData.discount_type === "percentage") {
           discount = Math.round(subtotal * (couponData.discount_value / 100));
           // Apply max discount if set
-          const maxDiscount =
-            couponData.max_discount_amount || couponData.max_discount;
+          const maxDiscount = couponData.max_discount_amount;
           if (maxDiscount && discount > maxDiscount) {
             discount = maxDiscount;
           }
@@ -249,10 +250,15 @@ export async function createOrder(
         subtotal,
         shipping,
         discount,
+        tax_amount: 0, // Set default tax amount
+        currency: "INR", // Set default currency
         coupon_code: validCouponCode,
         gst_number: gst_number?.trim() || null,
         total,
         shipping_address,
+        billing_address: null,
+        notes: null,
+        metadata: {},
         items: orderItems,
         created_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
@@ -260,24 +266,13 @@ export async function createOrder(
     });
 
     // Increment coupon usage outside transaction (after successful order creation)
-    if (validCouponCode) {
+    if (validCouponCode && couponRef) {
       try {
-        const couponsSnapshot = await adminDb
-          .collection("coupons")
-          .where("code", "==", validCouponCode)
-          .get();
-
-        if (!couponsSnapshot.empty) {
-          const couponRef = couponsSnapshot.docs[0].ref;
-          const couponData = couponsSnapshot.docs[0].data();
-          const currentUsed =
-            couponData.used_count || couponData.current_uses || 0;
-          await couponRef.update({
-            used_count: currentUsed + 1,
-            current_uses: currentUsed + 1,
-            updated_at: FieldValue.serverTimestamp(),
-          });
-        }
+        const currentUsed = (await couponRef.get()).data()?.used_count || 0;
+        await couponRef.update({
+          used_count: currentUsed + 1,
+          updated_at: FieldValue.serverTimestamp(),
+        });
       } catch (couponError) {
         // Log but don't fail the order if coupon update fails
         console.error("Failed to update coupon usage:", couponError);

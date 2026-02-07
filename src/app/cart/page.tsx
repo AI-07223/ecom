@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/providers/CartProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -113,7 +114,7 @@ export default function CartPage() {
       });
       setCouponCode("");
       toast.success(`Coupon ${couponDoc.id} applied!`);
-    } catch (error) {
+    } catch {
       setCouponError("Failed to apply coupon");
     }
     setCouponLoading(false);
@@ -160,7 +161,7 @@ export default function CartPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#FAFAF5] flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm border-[#E2E0DA]">
+        <Card className="w-full max-w-sm border-[#E2E0DA] shadow-soft">
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2D5A27]/10 flex items-center justify-center">
               <ShoppingBag className="h-8 w-8 text-[#2D5A27]" />
@@ -181,10 +182,19 @@ export default function CartPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAFAF5]">
+        {/* Header */}
+        <div className="bg-white border-b border-[#E2E0DA] sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-6 w-16" />
+            </div>
+          </div>
+        </div>
         <div className="container mx-auto px-4 py-4">
-          <div className="animate-pulse space-y-4">
+          <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-28 bg-[#E2E0DA] rounded-2xl" />
+              <Skeleton key={i} className="h-28 rounded-2xl" />
             ))}
           </div>
         </div>
@@ -195,7 +205,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[#FAFAF5] flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm border-[#E2E0DA]">
+        <Card className="w-full max-w-sm border-[#E2E0DA] shadow-soft">
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2D5A27]/10 flex items-center justify-center">
               <ShoppingBag className="h-8 w-8 text-[#2D5A27]" />
@@ -219,9 +229,9 @@ export default function CartPage() {
   const total = subtotal - discount + shipping;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] pb-52 md:pb-8">
+    <div className="min-h-screen bg-[#FAFAF5] pb-[calc(1rem+env(safe-area-inset-bottom)+64px)]">
       {/* Header */}
-      <div className="bg-white border-b border-[#E2E0DA] sticky top-14 z-10">
+      <div className="bg-white border-b border-[#E2E0DA] sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold text-[#1A1A1A]">Shopping Cart ({itemCount})</h1>
@@ -239,7 +249,7 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="space-y-3 mb-6">
           {items.map((item) => (
-            <Card key={item.id} className="border-[#E2E0DA] shadow-soft overflow-hidden">
+            <Card key={item.id} className="border-[#E2E0DA] shadow-soft overflow-hidden rounded-2xl">
               <CardContent className="p-3">
                 <div className="flex gap-3">
                   {/* Product Image */}
@@ -324,7 +334,7 @@ export default function CartPage() {
         </div>
 
         {/* Coupon Section */}
-        <Card className="border-[#E2E0DA] shadow-soft mb-4">
+        <Card className="border-[#E2E0DA] shadow-soft mb-4 rounded-2xl">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-[#1A1A1A] mb-3">
               <Ticket className="h-4 w-4 text-[#2D5A27]" />
@@ -343,7 +353,7 @@ export default function CartPage() {
                 </div>
                 <button
                   onClick={handleRemoveCoupon}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg tap-active"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg tap-active hover:bg-red-50"
                 >
                   <X className="h-4 w-4 text-[#6B7280]" />
                 </button>
@@ -373,7 +383,7 @@ export default function CartPage() {
         </Card>
 
         {/* Order Summary */}
-        <Card className="border-[#E2E0DA] shadow-soft">
+        <Card className="border-[#E2E0DA] shadow-soft rounded-2xl">
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-[#1A1A1A]">Order Summary</h3>
 

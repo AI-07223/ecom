@@ -238,7 +238,7 @@ export function MobileBottomNav() {
                     </Link>
                   )}
 
-                  {profile?.is_wholeseller && (
+                  {profile?.role === "wholeseller" && (
                     <>
                       <Link
                         href="/item-request"

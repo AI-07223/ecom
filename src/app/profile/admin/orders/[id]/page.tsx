@@ -19,7 +19,6 @@ import {
   Receipt,
   FileText,
   Building2,
-  ExternalLink,
   Save,
   X,
   Plus,
@@ -53,41 +52,12 @@ import {
 } from "@/components/ui/dialog";
 import Invoice from "@/components/orders/Invoice";
 
-interface OrderItem {
-  product_id: string;
-  product_name: string;
-  product_image?: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
+import type { Order, OrderItem, OrderStatus, PaymentStatus } from "@/types/database.types";
 
-interface Order {
-  id: string;
-  order_number: string;
-  user_id: string;
-  user_email?: string;
-  status: string;
-  payment_status: string;
-  payment_method?: string;
-  subtotal: number;
-  shipping: number;
-  discount: number;
-  coupon_code?: string | null;
-  gst_number?: string | null;
-  total: number;
-  shipping_address: {
-    full_name: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-  };
-  items: OrderItem[];
-  notes?: string;
-  created_at: { toDate: () => Date } | Date;
+// Extended Order type with Firestore timestamp
+interface OrderWithTimestamp extends Omit<Order, 'created_at' | 'updated_at'> {
+  created_at: string | { toDate: () => Date } | Date;
+  updated_at: string | { toDate: () => Date } | Date;
 }
 
 const statusSteps = [
@@ -121,11 +91,11 @@ export default function AdminOrderDetailPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const { settings } = useSiteSettings();
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<OrderWithTimestamp | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [newStatus, setNewStatus] = useState("");
+  const [newStatus, setNewStatus] = useState<OrderStatus>("pending");
   const [showInvoice, setShowInvoice] = useState(false);
   
   // Editing state
@@ -165,8 +135,17 @@ export default function AdminOrderDetailPage() {
     return `${settings.currency_symbol}${price.toLocaleString("en-IN")}`;
   };
 
-  const formatDate = (date: { toDate: () => Date } | Date | undefined) => {
+  const formatDate = (date: string | { toDate: () => Date } | Date | undefined) => {
     if (!date) return "N/A";
+    if (typeof date === "string") {
+      return new Date(date).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
     const d = "toDate" in date ? date.toDate() : date;
     return d.toLocaleDateString("en-IN", {
       year: "numeric",
@@ -178,7 +157,7 @@ export default function AdminOrderDetailPage() {
   };
 
   const handleUpdateStatus = async () => {
-    if (!order || !newStatus) return;
+    if (!order) return;
     setIsUpdating(true);
     try {
       await updateDoc(doc(db, "orders", order.id), {
@@ -195,7 +174,7 @@ export default function AdminOrderDetailPage() {
     setIsUpdating(false);
   };
 
-  const handleUpdatePaymentStatus = async (newPaymentStatus: string) => {
+  const handleUpdatePaymentStatus = async (newPaymentStatus: PaymentStatus) => {
     if (!order) return;
     try {
       await updateDoc(doc(db, "orders", order.id), {
@@ -326,7 +305,7 @@ export default function AdminOrderDetailPage() {
               <Button
                 size="sm"
                 onClick={() => {
-                  setNewStatus(order.status);
+                  setNewStatus(order.status as OrderStatus);
                   setShowStatusDialog(true);
                 }}
                 className="h-9"
@@ -581,21 +560,21 @@ export default function AdminOrderDetailPage() {
               <CardContent>
                 <div className="bg-[#F0EFE8] p-4 rounded-xl">
                   <p className="font-medium text-[#1A1A1A]">
-                    {order.shipping_address.full_name}
+                    {order.shipping_address?.full_name}
                   </p>
                   <p className="text-sm text-[#6B7280] mt-1">
-                    {order.shipping_address.phone}
+                    {order.shipping_address?.phone}
                   </p>
                   <p className="text-sm text-[#6B7280] mt-2">
-                    {order.shipping_address.address}
+                    {order.shipping_address?.street}
                   </p>
                   <p className="text-sm text-[#6B7280]">
-                    {order.shipping_address.city},{" "}
-                    {order.shipping_address.state}{" "}
-                    {order.shipping_address.postal_code}
+                    {order.shipping_address?.city},{" "}
+                    {order.shipping_address?.state}{" "}
+                    {order.shipping_address?.postal_code}
                   </p>
                   <p className="text-sm text-[#6B7280]">
-                    {order.shipping_address.country}
+                    {order.shipping_address?.country}
                   </p>
                 </div>
               </CardContent>
@@ -628,7 +607,7 @@ export default function AdminOrderDetailPage() {
                     <div>
                       <p className="text-xs text-[#6B7280]">Phone</p>
                       <p className="text-sm font-medium text-[#1A1A1A]">
-                        {order.shipping_address.phone}
+                        {order.shipping_address?.phone}
                       </p>
                     </div>
                   </div>
@@ -677,7 +656,7 @@ export default function AdminOrderDetailPage() {
                   <span className="text-sm text-[#6B7280]">Payment Status</span>
                   <Select
                     value={order.payment_status}
-                    onValueChange={handleUpdatePaymentStatus}
+                    onValueChange={(v) => handleUpdatePaymentStatus(v as PaymentStatus)}
                   >
                     <SelectTrigger className="w-[120px] h-8 text-xs">
                       <Badge className={`${paymentStatusColors[order.payment_status]} text-[10px] px-1.5 py-0`}>
@@ -796,7 +775,7 @@ export default function AdminOrderDetailPage() {
             <DialogTitle className="text-[#1A1A1A]">Update Order Status</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <Select value={newStatus} onValueChange={setNewStatus}>
+            <Select value={newStatus} onValueChange={(v) => setNewStatus(v as OrderStatus)}>
               <SelectTrigger className="border-[#E2E0DA]">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>

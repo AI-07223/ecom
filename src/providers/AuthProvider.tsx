@@ -43,6 +43,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to convert Firestore data to Profile type
+function convertToProfile(data: Record<string, unknown>, id: string): Profile {
+  // Handle timestamp conversion
+  const createdAt = data.created_at;
+  const updatedAt = data.updated_at;
+  
+  return {
+    id: id,
+    email: data.email as string,
+    full_name: (data.full_name as string | null) ?? null,
+    avatar_url: (data.avatar_url as string | null) ?? null,
+    phone: (data.phone as string | null) ?? null,
+    address: (data.address as Profile['address']) ?? null,
+    saved_addresses: (data.saved_addresses as Profile['saved_addresses']) ?? [],
+    gst_number: (data.gst_number as string | null) ?? null,
+    role: (data.role as UserRole) ?? "customer",
+    created_at: typeof createdAt === 'object' && createdAt && 'toDate' in createdAt 
+      ? (createdAt as { toDate: () => Date }).toDate().toISOString()
+      : (createdAt as string) ?? new Date().toISOString(),
+    updated_at: typeof updatedAt === 'object' && updatedAt && 'toDate' in updatedAt
+      ? (updatedAt as { toDate: () => Date }).toDate().toISOString()
+      : (updatedAt as string) ?? new Date().toISOString(),
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -60,9 +85,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profileSnap = await getDoc(profileRef);
 
         if (profileSnap.exists()) {
-          return profileSnap.data() as Profile;
+          return convertToProfile(profileSnap.data() as Record<string, unknown>, userId);
         } else {
           // Create profile for new user
+          const now = new Date().toISOString();
           const newProfile: Profile = {
             id: userId,
             email: email,
@@ -70,11 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             avatar_url: photoURL || null,
             phone: null,
             address: null,
-            is_admin: false,
-            is_wholeseller: false,
+            saved_addresses: [],
+            gst_number: null,
             role: "customer",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: now,
+            updated_at: now,
           };
           await setDoc(profileRef, {
             ...newProfile,
@@ -178,17 +204,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Determine user role
-  const role: UserRole =
-    profile?.role ||
-    (profile?.is_admin
-      ? "admin"
-      : profile?.is_wholeseller
-        ? "wholeseller"
-        : "customer");
-
-  const isAdmin = profile?.is_admin ?? false;
-  const isWholeseller = profile?.is_wholeseller ?? false;
+  // Derive role from profile - single source of truth
+  const role: UserRole = profile?.role ?? "customer";
+  const isAdmin = role === "admin";
+  const isWholeseller = role === "wholeseller";
 
   return (
     <AuthContext.Provider

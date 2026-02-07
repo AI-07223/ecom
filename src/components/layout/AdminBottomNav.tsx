@@ -18,7 +18,7 @@ import {
   LogOut,
   Crown,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import {
   Sheet,
   SheetContent,
@@ -28,7 +28,6 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { cn } from "@/lib/utils";
 
@@ -52,18 +51,8 @@ const adminNavItems: NavItem[] = [
 
 export function AdminBottomNav() {
   const pathname = usePathname();
-  const { settings } = useSiteSettings();
   const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-
-  // App theme colors
-  const bgColor = "#FAFAF5";
-  const borderColor = "#E2E0DA";
-  const primaryColor = settings.primary_color;
-  const textColor = "#1A1A1A";
-  const mutedTextColor = "#6B7280";
-  const cardBg = "#FFFFFF";
-  const hoverBg = "#F0EFE8";
 
   const isActive = (href: string) => {
     if (href === "/profile/admin") return pathname === "/profile/admin";
@@ -84,12 +73,11 @@ export function AdminBottomNav() {
       <nav
         className={cn(
           "md:hidden fixed bottom-0 left-0 right-0 z-50",
-          "bg-white border-t",
+          "bg-white border-t border-[#E2E0DA]",
           "touch-none select-none",
           "transform-gpu will-change-transform"
         )}
         style={{
-          borderColor: borderColor,
           // Total height includes nav height + safe area
           height: "calc(64px + env(safe-area-inset-bottom, 0px))",
           // Safe area padding at bottom
@@ -107,10 +95,9 @@ export function AdminBottomNav() {
               "flex-1 flex flex-col items-center justify-center",
               "min-h-[44px] tap-active no-underline"
             )}
-            style={{ backgroundColor: hoverBg }}
           >
             <div className="flex items-center justify-center w-11 h-11">
-              <ArrowLeft className="w-5 h-5 text-[#2D5A27]" />
+              <ArrowLeft className="w-5 h-5 text-[#6B7280]" />
             </div>
             <span className="text-[10px] font-medium leading-none mt-0.5 text-[#6B7280]">
               Back
@@ -122,34 +109,29 @@ export function AdminBottomNav() {
             href="/profile/admin"
             className={cn(
               "flex-1 flex flex-col items-center justify-center",
-              "min-h-[44px] tap-active no-underline"
+              "min-h-[44px] tap-active no-underline",
+              isActive("/profile/admin") && pathname === "/profile/admin"
+                ? "bg-[#2D5A27]"
+                : "bg-transparent"
             )}
-            style={{
-              backgroundColor:
-                isActive("/profile/admin") && pathname === "/profile/admin"
-                  ? primaryColor
-                  : "transparent",
-            }}
           >
             <div className="flex items-center justify-center w-11 h-11">
               <LayoutDashboard
-                className="w-5 h-5"
-                style={{
-                  color:
-                    isActive("/profile/admin") && pathname === "/profile/admin"
-                      ? "#ffffff"
-                      : mutedTextColor,
-                }}
+                className={cn(
+                  "w-5 h-5",
+                  isActive("/profile/admin") && pathname === "/profile/admin"
+                    ? "text-white"
+                    : "text-[#6B7280]"
+                )}
               />
             </div>
             <span
-              className="text-[10px] font-medium leading-none mt-0.5"
-              style={{
-                color:
-                  isActive("/profile/admin") && pathname === "/profile/admin"
-                    ? "#ffffff"
-                    : mutedTextColor,
-              }}
+              className={cn(
+                "text-[10px] font-medium leading-none mt-0.5",
+                isActive("/profile/admin") && pathname === "/profile/admin"
+                  ? "text-white"
+                  : "text-[#6B7280]"
+              )}
             >
               Dash
             </span>
@@ -160,31 +142,29 @@ export function AdminBottomNav() {
             href="/profile/admin/products"
             className={cn(
               "flex-1 flex flex-col items-center justify-center",
-              "min-h-[44px] tap-active no-underline"
+              "min-h-[44px] tap-active no-underline",
+              isActive("/profile/admin/products")
+                ? "bg-[#2D5A27]"
+                : "bg-transparent"
             )}
-            style={{
-              backgroundColor: isActive("/profile/admin/products")
-                ? primaryColor
-                : "transparent",
-            }}
           >
             <div className="flex items-center justify-center w-11 h-11">
               <Package
-                className="w-5 h-5"
-                style={{
-                  color: isActive("/profile/admin/products")
-                    ? "#ffffff"
-                    : mutedTextColor,
-                }}
+                className={cn(
+                  "w-5 h-5",
+                  isActive("/profile/admin/products")
+                    ? "text-white"
+                    : "text-[#6B7280]"
+                )}
               />
             </div>
             <span
-              className="text-[10px] font-medium leading-none mt-0.5"
-              style={{
-                color: isActive("/profile/admin/products")
-                  ? "#ffffff"
-                  : mutedTextColor,
-              }}
+              className={cn(
+                "text-[10px] font-medium leading-none mt-0.5",
+                isActive("/profile/admin/products")
+                  ? "text-white"
+                  : "text-[#6B7280]"
+              )}
             >
               Products
             </span>
@@ -195,31 +175,29 @@ export function AdminBottomNav() {
             href="/profile/admin/orders"
             className={cn(
               "flex-1 flex flex-col items-center justify-center",
-              "min-h-[44px] tap-active no-underline"
+              "min-h-[44px] tap-active no-underline",
+              isActive("/profile/admin/orders")
+                ? "bg-[#2D5A27]"
+                : "bg-transparent"
             )}
-            style={{
-              backgroundColor: isActive("/profile/admin/orders")
-                ? primaryColor
-                : "transparent",
-            }}
           >
             <div className="flex items-center justify-center w-11 h-11">
               <ShoppingBag
-                className="w-5 h-5"
-                style={{
-                  color: isActive("/profile/admin/orders")
-                    ? "#ffffff"
-                    : mutedTextColor,
-                }}
+                className={cn(
+                  "w-5 h-5",
+                  isActive("/profile/admin/orders")
+                    ? "text-white"
+                    : "text-[#6B7280]"
+                )}
               />
             </div>
             <span
-              className="text-[10px] font-medium leading-none mt-0.5"
-              style={{
-                color: isActive("/profile/admin/orders")
-                  ? "#ffffff"
-                  : mutedTextColor,
-              }}
+              className={cn(
+                "text-[10px] font-medium leading-none mt-0.5",
+                isActive("/profile/admin/orders")
+                  ? "text-white"
+                  : "text-[#6B7280]"
+              )}
             >
               Orders
             </span>
@@ -245,45 +223,30 @@ export function AdminBottomNav() {
             </SheetTrigger>
             <SheetContent
               side="bottom"
-              className="h-auto max-h-[85vh] rounded-t-3xl p-0 border-t"
-              style={{
-                backgroundColor: bgColor,
-                borderColor: borderColor,
-              }}
+              className="h-auto max-h-[85vh] rounded-t-3xl p-0 border-t border-[#E2E0DA] bg-[#FAFAF5]"
             >
               {/* Pull indicator */}
               <div className="flex justify-center pt-3 pb-2">
-                <div
-                  className="w-12 h-1.5 rounded-full"
-                  style={{ backgroundColor: `${primaryColor}40` }}
-                />
+                <div className="w-12 h-1.5 rounded-full bg-[#E2E0DA]" />
               </div>
 
               {/* Admin Header with User Info */}
-              <SheetHeader className="px-6 pb-4">
+              <SheetHeader className="px-5 pb-4">
                 <div className="flex items-center gap-3">
                   {/* Admin Badge */}
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center"
-                    style={{
-                      background: `linear-gradient(135deg, ${settings.accent_color}30, ${primaryColor}30)`,
-                    }}
-                  >
-                    <Crown className="h-6 w-6" style={{ color: primaryColor }} />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#2D5A27]/10">
+                    <Crown className="h-6 w-6 text-[#2D5A27]" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-base truncate" style={{ color: textColor }}>
+                      <SheetTitle className="text-base truncate text-[#1A1A1A]">
                         Admin Panel
                       </SheetTitle>
-                      <Badge
-                        className="text-[10px] px-1.5 py-0"
-                        style={{ backgroundColor: primaryColor, color: "#ffffff" }}
-                      >
+                      <Badge className="text-[10px] px-1.5 py-0 bg-[#2D5A27] text-white">
                         Admin
                       </Badge>
                     </div>
-                    <p className="text-xs truncate" style={{ color: mutedTextColor }}>
+                    <p className="text-xs truncate text-[#6B7280]">
                       {profile?.full_name || user?.email || "Administrator"}
                     </p>
                   </div>
@@ -291,39 +254,28 @@ export function AdminBottomNav() {
               </SheetHeader>
 
               {/* All Admin Menu Items */}
-              <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-6 pb-8">
-                <div className="grid grid-cols-1 gap-1">
-                  {adminNavItems.map((item, index) => {
+              <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-5 pb-8">
+                <div className="grid grid-cols-1 gap-2">
+                  {adminNavItems.map((item) => {
                     const active = isActive(item.href);
                     return (
                       <SheetClose key={item.href} asChild>
                         <Link
                           href={item.href}
                           className={cn(
-                            "flex items-center gap-4 p-4 rounded-xl",
-                            "transition-all duration-200 tap-active",
-                            active ? "font-medium" : "hover:opacity-80"
+                            "flex items-center gap-4 p-4 rounded-xl transition-all duration-200 tap-active",
+                            active
+                              ? "bg-[#2D5A27] text-white font-medium"
+                              : "bg-white text-[#1A1A1A] hover:bg-[#F0EFE8] border border-[#E2E0DA]"
                           )}
-                          style={{
-                            backgroundColor: active
-                              ? primaryColor
-                              : index % 2 === 0
-                                ? cardBg
-                                : "transparent",
-                            color: active ? "#ffffff" : textColor,
-                            border: active
-                              ? "none"
-                              : `1px solid ${index % 2 === 0 ? borderColor : "transparent"}`,
-                          }}
                         >
                           <div
                             className={cn(
                               "w-10 h-10 rounded-xl flex items-center justify-center",
-                              active && "shadow-sm"
+                              active
+                                ? "bg-white/20"
+                                : "bg-[#F0EFE8]"
                             )}
-                            style={{
-                              backgroundColor: active ? "rgba(255,255,255,0.2)" : hoverBg,
-                            }}
                           >
                             <item.icon className="h-5 w-5" />
                           </div>
@@ -331,10 +283,10 @@ export function AdminBottomNav() {
                             <span className="text-sm font-medium">{item.label}</span>
                             {item.description && (
                               <p
-                                className="text-xs"
-                                style={{
-                                  color: active ? "rgba(255,255,255,0.8)" : mutedTextColor,
-                                }}
+                                className={cn(
+                                  "text-xs",
+                                  active ? "text-white/80" : "text-[#6B7280]"
+                                )}
                               >
                                 {item.description}
                               </p>
@@ -352,17 +304,9 @@ export function AdminBottomNav() {
                   <SheetClose asChild>
                     <Link
                       href="/profile"
-                      className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200 tap-active"
-                      style={{
-                        backgroundColor: cardBg,
-                        border: `1px solid ${borderColor}`,
-                        color: textColor,
-                      }}
+                      className="flex items-center gap-4 p-4 rounded-xl transition-all duration-200 tap-active bg-white text-[#1A1A1A] border border-[#E2E0DA] hover:bg-[#F0EFE8]"
                     >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: hoverBg }}
-                      >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#F0EFE8]">
                         <User className="h-5 w-5 text-[#2D5A27]" />
                       </div>
                       <span className="text-sm font-medium">My Profile</span>
@@ -371,12 +315,7 @@ export function AdminBottomNav() {
 
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left tap-active"
-                    style={{
-                      backgroundColor: "#fef2f2",
-                      border: "1px solid #fecaca",
-                      color: "#dc2626",
-                    }}
+                    className="w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 text-left tap-active bg-red-50 text-red-600 border border-red-200"
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100">
                       <LogOut className="h-5 w-5 text-red-600" />

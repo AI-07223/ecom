@@ -18,7 +18,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -97,7 +97,7 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
                       pathname === link.href
                         ? "text-[#2D5A27] bg-[#2D5A27]/10"
                         : "text-[#6B7280] hover:text-[#1A1A1A] hover:bg-[#F0EFE8]"

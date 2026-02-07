@@ -36,6 +36,7 @@
     --color-input: var(--input);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -48,38 +49,61 @@
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
     --color-card: var(--card);
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-    --radius-2xl: calc(var(--radius) + 8px);
-    --radius-3xl: calc(var(--radius) + 12px);
-    --radius-4xl: calc(var(--radius) + 16px);
+    --radius-sm: var(--radius-sm);
+    --radius-md: var(--radius-md);
+    --radius-lg: var(--radius-lg);
+    --radius-xl: var(--radius-xl);
+    --radius-2xl: calc(var(--radius-xl) + 0.5rem);
+    --radius-3xl: calc(var(--radius-xl) + 1rem);
+    --radius-4xl: calc(var(--radius-xl) + 1.5rem);
 }
 
 :root {
-    --radius: 1rem;
+    /* Border Radius - Standardized Scale */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
 
-    /* Native App Theme */
+    /* Primary Colors */
+    --primary: #2D5A27;
+    --primary-light: #3B7D34;
+    --primary-dark: #1E3D1C;
+    --primary-foreground: #FFFFFF;
+
+    /* Accent Colors */
+    --accent: #4CAF50;
+    --accent-foreground: #FFFFFF;
+
+    /* Background Colors */
     --background: #FAFAF5;
+    --secondary: #F0EFE8;
+    --secondary-foreground: #1A1A1A;
+
+    /* Text Colors */
     --foreground: #1A1A1A;
+    --muted-foreground: #6B7280;
+
+    /* Border Colors */
+    --border: #E2E0DA;
+    --input: #E2E0DA;
+    --ring: #2D5A27;
+
+    /* Component Colors */
     --card: #FFFFFF;
     --card-foreground: #1A1A1A;
     --popover: #FFFFFF;
     --popover-foreground: #1A1A1A;
-    --primary: #2D5A27;
-    --primary-foreground: #FFFFFF;
-    --secondary: #F0EFE8;
-    --secondary-foreground: #1A1A1A;
     --muted: #E8E7E0;
-    --muted-foreground: #6B7280;
-    --accent: #4CAF50;
-    --accent-foreground: #FFFFFF;
     --destructive: #ef4444;
     --destructive-foreground: #FFFFFF;
-    --border: #E2E0DA;
-    --input: #E2E0DA;
-    --ring: #2D5A27;
+
+    /* Shadow System - Standardized */
+    --shadow-none: 0 0 0 0 transparent;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
 
     /* App-specific */
     --app-safe-top: env(safe-area-inset-top, 0px);
@@ -133,22 +157,41 @@
         touch-action: manipulation;
     }
 
-    /* Focus visible for accessibility */
+    /* Focus visible for accessibility - Standardized */
     *:focus-visible {
-        outline: 2px solid #2D5A27;
-        outline-offset: 2px;
+        outline: none;
+        --tw-ring-offset-width: 2px;
+        --tw-ring-color: rgb(45 90 39 / 0.2);
+        box-shadow: 0 0 0 2px var(--tw-ring-color);
     }
 }
 
 @layer utilities {
 
-    /* Safe areas */
+    /* Safe areas - Standardized */
+    .safe-top {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
     .pb-safe {
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     .pt-safe {
         padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    /* Spacing utilities for mobile layouts */
+    .pb-nav-mobile {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .pb-checkout {
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
     }
 
     /* Bottom navigation utilities */
@@ -176,6 +219,29 @@
         display: none;
     }
 
+    /* Typography Scale - Standardized */
+    .text-caption {
+        font-size: 10px;
+        line-height: 1.4;
+        font-weight: 500;
+    }
+
+    .text-small {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .text-body {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .text-lead {
+        font-size: 16px;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+
     /* Native app tap effects */
     .tap-active {
         transition: transform 0.1s ease, opacity 0.1s ease;
@@ -193,7 +259,7 @@
 
     .card-press:active {
         transform: scale(0.98);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-soft);
     }
 
     /* Glass morphism */
@@ -211,38 +277,50 @@
 
     /* Gradient text */
     .text-gradient {
-        background: linear-gradient(135deg, #2D5A27 0%, #4CAF50 100%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
-    /* Section backgrounds */
+    /* Section backgrounds - Using CSS variables */
     .bg-elevated {
-        background-color: #FFFFFF;
+        background-color: var(--card);
     }
 
     .bg-base {
-        background-color: #FAFAF5;
+        background-color: var(--background);
     }
 
     .bg-subtle {
-        background-color: #F0EFE8;
+        background-color: var(--secondary);
     }
 
-    /* Native app shadows */
+    /* Shadow System - Standardized utilities */
+    .shadow-none {
+        box-shadow: var(--shadow-none);
+    }
+
+    .shadow-sm {
+        box-shadow: var(--shadow-sm);
+    }
+
+    .shadow-soft {
+        box-shadow: var(--shadow-soft);
+    }
+
     .shadow-elevated {
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+        box-shadow: var(--shadow-elevated);
     }
 
     .shadow-floating {
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: var(--shadow-floating);
     }
 
-    /* Bottom sheet styles */
+    /* Bottom sheet styles - Using radius-xl */
     .bottom-sheet {
-        border-top-left-radius: 24px;
-        border-top-right-radius: 24px;
+        border-top-left-radius: var(--radius-xl);
+        border-top-right-radius: var(--radius-xl);
         box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15);
     }
 
@@ -278,6 +356,17 @@
 
     .animate-scale-in {
         animation: scaleIn 0.2s ease-out;
+    }
+
+    /* Ring primary utility */
+    .ring-primary\/20 {
+        --tw-ring-color: rgb(45 90 39 / 0.2);
+    }
+
+    .ring-primary-focus {
+        --tw-ring-offset-width: 2px;
+        --tw-ring-color: rgb(45 90 39 / 0.2);
+        box-shadow: 0 0 0 2px var(--tw-ring-color);
     }
 }
 
@@ -326,11 +415,11 @@
     }
 }
 
-/* Sheet component overrides */
+/* Sheet component overrides - Using radius-xl */
 [data-slot="sheet-content"][data-side="bottom"] {
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-    background: #FFFFFF;
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    background: var(--card);
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15);
 }
 
@@ -368,18 +457,18 @@
         min-height: 44px;
     }
 
-    /* Input styling for mobile */
+    /* Input styling for mobile - Using radius-md */
     input,
     textarea,
     select {
         font-size: 16px !important;
-        border-radius: 12px;
+        border-radius: var(--radius-md);
     }
 
-    /* Card border radius for mobile */
+    /* Card border radius for mobile - Using radius-lg */
     .card,
     [data-slot="card"] {
-        border-radius: 16px;
+        border-radius: var(--radius-lg);
     }
 
     /* Prevent horizontal overflow on mobile */
@@ -399,10 +488,10 @@
     }
 }
 
-/* Selection color */
+/* Selection color - Using primary with opacity */
 ::selection {
     background: rgba(45, 90, 39, 0.2);
-    color: #1A1A1A;
+    color: var(--foreground);
 }
 
 /* Scrollbar styling */
@@ -421,5 +510,5 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #2D5A27;
+    background: var(--primary);
 }

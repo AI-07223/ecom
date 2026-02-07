@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { X, Loader2, ImagePlus, Camera, Upload } from "lucide-react";
+import { X, Loader2, ImagePlus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ export function ImageUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, source: "gallery" | "camera" = "gallery") => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -57,9 +57,17 @@ export function ImageUpload({
       for (let i = 0; i < filesToUpload.length; i++) {
         let file = filesToUpload[i];
 
-        // Validate file type
+        // Validate file type (MIME type check)
         if (!file.type.startsWith("image/")) {
           toast.error(`${file.name} is not an image`);
+          continue;
+        }
+
+        // Validate file extension
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!extension || !allowedExtensions.includes(extension)) {
+          toast.error(`${file.name}: Only .jpg, .jpeg, .png, .webp, .gif files are allowed`);
           continue;
         }
 
@@ -69,12 +77,12 @@ export function ImageUpload({
           continue;
         }
 
-        // Compress image if needed (target 300KB)
-        if (needsCompression(file, 300)) {
+        // Compress image if needed (target 250KB)
+        if (needsCompression(file, 250)) {
           setCompressingFiles((prev) => [...prev, file.name]);
           const originalSize = getFileSizeKB(file);
           try {
-            file = await compressImage(file, { maxSizeKB: 300 });
+            file = await compressImage(file, { maxSizeKB: 250 });
             const compressedSize = getFileSizeKB(file);
             toast.success(
               `Compressed ${file.name} from ${originalSize}KB to ${compressedSize}KB`,
@@ -88,11 +96,11 @@ export function ImageUpload({
           );
         }
 
-        // Create unique filename
+        // Create unique filename (extension already validated above)
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(7);
-        const extension = file.name.split(".").pop() || "jpg";
-        const filename = `${folder}/${timestamp}-${randomString}.${extension}`;
+        const fileExtension = file.name.split(".").pop() || "jpg";
+        const filename = `${folder}/${timestamp}-${randomString}.${fileExtension}`;
 
         // Upload to Firebase Storage
         const storageRef = ref(storage, filename);
@@ -195,7 +203,7 @@ export function ImageUpload({
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => handleFileSelect(e, "gallery")}
+              onChange={(e) => handleFileSelect(e)}
               className="hidden"
               disabled={isUploading || remainingSlots <= 0}
             />
@@ -216,7 +224,7 @@ export function ImageUpload({
               type="file"
               accept="image/*"
               capture="environment"
-              onChange={(e) => handleFileSelect(e, "camera")}
+              onChange={(e) => handleFileSelect(e)}
               className="hidden"
               disabled={isUploading || remainingSlots <= 0}
             />
@@ -246,7 +254,7 @@ export function ImageUpload({
               />
             </div>
             <p className="text-xs text-[#6B7280]">
-              Images are automatically compressed to 300KB max
+              Images are automatically compressed to 250KB max
             </p>
           </div>
         </div>

@@ -1,5 +1,7 @@
 // Database types for Royal React E-Commerce
 
+import { Timestamp } from "firebase/firestore";
+
 export type UserRole = "customer" | "wholeseller" | "admin";
 
 export interface Profile {
@@ -9,10 +11,8 @@ export interface Profile {
   avatar_url: string | null;
   phone: string | null;
   address: Address | null;
-  saved_addresses?: SavedAddress[];
-  gst_number?: string | null;
-  is_admin: boolean;
-  is_wholeseller: boolean;
+  saved_addresses: SavedAddress[];
+  gst_number: string | null;
   role: UserRole;
   created_at: string;
   updated_at: string;
@@ -28,15 +28,20 @@ export interface SavedAddress {
   state: string;
   postal_code: string;
   country: string;
-  is_default?: boolean;
+  is_default: boolean;
 }
 
 export interface Address {
-  street?: string;
-  city?: string;
-  state?: string;
-  postal_code?: string;
-  country?: string;
+  street: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
+
+export interface ShippingAddress extends Address {
+  full_name: string;
+  phone: string;
 }
 
 export interface Category {
@@ -82,9 +87,9 @@ export interface Product {
 }
 
 export interface ProductDimensions {
-  length?: number;
-  width?: number;
-  height?: number;
+  length: number;
+  width: number;
+  height: number;
 }
 
 export interface CartItem {
@@ -103,6 +108,7 @@ export interface WishlistItem {
   product_id: string;
   product?: Product;
   created_at: string;
+  updated_at: string;
 }
 
 export type OrderStatus =
@@ -120,34 +126,35 @@ export interface Order {
   id: string;
   order_number: string;
   user_id: string;
+  user_email?: string;
+  user_phone?: string;
   status: OrderStatus;
   payment_status: PaymentStatus;
+  payment_method: "cod" | "online";
   subtotal: number;
-  discount_amount: number;
-  shipping_amount: number;
+  discount: number;
+  shipping: number;
   tax_amount: number;
   total: number;
   currency: string;
-  coupon_id: string | null;
-  shipping_address: Address;
-  billing_address: Address | null;
+  coupon_code: string | null;
+  shipping_address: ShippingAddress;
+  billing_address: ShippingAddress | null;
+  gst_number: string | null;
   notes: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-  items?: OrderItem[];
+  items: OrderItem[];
 }
 
 export interface OrderItem {
-  id: string;
-  order_id: string;
   product_id: string;
   product_name: string;
   product_image: string | null;
   quantity: number;
-  unit_price: number;
-  total_price: number;
-  created_at: string;
+  price: number;
+  total: number;
 }
 
 export type DiscountType = "percentage" | "fixed";
@@ -169,27 +176,8 @@ export interface Coupon {
   updated_at: string;
 }
 
-export interface SiteSetting {
-  id: string;
-  key: string;
-  value: unknown;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface BusinessDetails {
-  business_name: string;
-  business_address: string;
-  business_city: string;
-  business_state: string;
-  business_postal_code: string;
-  business_country: string;
-  business_gst_number: string;
-  business_pan_number: string;
-  business_phone: string;
-  business_email: string;
-}
-
+// SiteSettings - single structured document
+// Stored as key-value pairs in Firestore for flexibility
 export interface SiteSettings {
   site_name: string;
   site_description: string;
@@ -240,6 +228,22 @@ export interface ItemRequest {
   images: string[];
   status: ItemRequestStatus;
   admin_notes: string | null;
-  created_at: string | { toDate: () => Date } | Date | undefined;
-  updated_at: string | { toDate: () => Date } | Date | undefined;
+  created_at: string;
+  updated_at: string;
 }
+
+// Helper type for Firestore data conversion
+export interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+  toDate(): Date;
+}
+
+// Utility type to convert Firestore Timestamps to strings
+export type WithStringDates<T> = {
+  [K in keyof T]: T[K] extends Timestamp
+    ? string
+    : T[K] extends Timestamp | null
+      ? string | null
+      : T[K];
+};

@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
 import { WishlistItem, Product } from '@/types/database.types'
+import { timestampToString } from '@/lib/firebase/utils'
 import { useAuth } from './AuthProvider'
 import { toast } from 'sonner'
 
@@ -28,6 +29,54 @@ interface WishlistContextType {
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
+
+// Helper to convert Firestore product data to Product type
+function convertProductData(docId: string, data: Record<string, unknown>): Product {
+  return {
+    id: docId,
+    name: data.name as string,
+    slug: data.slug as string,
+    description: (data.description as string | null) ?? null,
+    short_description: (data.short_description as string | null) ?? null,
+    price: data.price as number,
+    wholeseller_price: (data.wholeseller_price as number | null) ?? null,
+    compare_at_price: (data.compare_at_price as number | null) ?? null,
+    cost_price: (data.cost_price as number | null) ?? null,
+    sku: (data.sku as string | null) ?? null,
+    barcode: (data.barcode as string | null) ?? null,
+    quantity: data.quantity as number,
+    track_inventory: data.track_inventory as boolean,
+    allow_backorder: data.allow_backorder as boolean,
+    category_id: (data.category_id as string | null) ?? null,
+    images: (data.images as string[]) ?? [],
+    thumbnail: (data.thumbnail as string | null) ?? null,
+    weight: (data.weight as number | null) ?? null,
+    dimensions: (data.dimensions as Product['dimensions']) ?? null,
+    tags: (data.tags as string[]) ?? [],
+    is_active: data.is_active as boolean,
+    is_featured: data.is_featured as boolean,
+    metadata: (data.metadata as Record<string, unknown>) ?? {},
+    created_at: timestampToString(data.created_at as Parameters<typeof timestampToString>[0]),
+    updated_at: timestampToString(data.updated_at as Parameters<typeof timestampToString>[0]),
+  };
+}
+
+// Helper to convert Firestore wishlist data to WishlistItem type
+function convertWishlistItemData(
+  docId: string,
+  data: Record<string, unknown>,
+  userId: string,
+  product?: Product,
+): WishlistItem & { product: Product } {
+  return {
+    id: docId,
+    user_id: userId,
+    product_id: data.product_id as string,
+    created_at: timestampToString(data.created_at as Parameters<typeof timestampToString>[0]),
+    updated_at: timestampToString(data.updated_at as Parameters<typeof timestampToString>[0]),
+    product: product!,
+  };
+}
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<(WishlistItem & { product: Product })[]>([])
@@ -53,13 +102,18 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
                 const productSnap = await getDoc(productRef)
 
                 if (productSnap.exists()) {
-                    wishlistItems.push({
-                        id: wishlistDoc.id,
-                        user_id: user.uid,
-                        product_id: wishlistData.product_id,
-                        created_at: wishlistData.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
-                        product: { id: productSnap.id, ...productSnap.data() } as Product,
-                    })
+                    const productData = convertProductData(
+                      productSnap.id,
+                      productSnap.data() as Record<string, unknown>,
+                    );
+                    wishlistItems.push(
+                      convertWishlistItemData(
+                        wishlistDoc.id,
+                        wishlistData as Record<string, unknown>,
+                        user.uid,
+                        productData,
+                      ),
+                    );
                 }
             }
 
@@ -97,6 +151,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             await setDoc(wishlistItemRef, {
                 product_id: productId,
                 created_at: serverTimestamp(),
+                updated_at: serverTimestamp(),
             })
 
             toast.success('Added to wishlist')

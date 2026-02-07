@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { X, Loader2, Upload, Minimize2 } from "lucide-react";
+import { X, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -35,9 +35,17 @@ export function SingleImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    // Validate file type (MIME type check)
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file extension
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    if (!extension || !allowedExtensions.includes(extension)) {
+      toast.error("Only .jpg, .jpeg, .png, .webp, .gif files are allowed");
       return;
     }
 
@@ -52,11 +60,11 @@ export function SingleImageUpload({
     let fileToUpload = file;
 
     // Compress image if needed
-    if (needsCompression(file, 300)) {
+    if (needsCompression(file, 250)) {
       setIsCompressing(true);
       const originalSize = getFileSizeKB(file);
       try {
-        fileToUpload = await compressImage(file, { maxSizeKB: 300 });
+        fileToUpload = await compressImage(file, { maxSizeKB: 250 });
         const compressedSize = getFileSizeKB(fileToUpload);
         toast.success(
           `Compressed from ${originalSize}KB to ${compressedSize}KB`,
@@ -204,7 +212,7 @@ export function SingleImageUpload({
                   PNG, JPG, WEBP up to 5MB
                 </p>
                 <p className="text-xs text-green-600 mt-1">
-                  ✓ Auto-compressed to 300KB
+                  ✓ Auto-compressed to 250KB
                 </p>
               </div>
             )}

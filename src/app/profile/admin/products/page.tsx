@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import {
   Plus,
@@ -10,7 +9,6 @@ import {
   Trash2,
   Search,
   ArrowLeft,
-  Eye,
   ImageIcon,
   Package,
 } from "lucide-react";
@@ -47,9 +45,9 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  getDoc,
   query,
   orderBy,
-  getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Product, Category } from "@/types/database.types";
@@ -671,9 +669,9 @@ function ProductsContent() {
             <div className="space-y-3">
               {paginatedProducts.map((product) => (
                 <Card key={product.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="relative w-16 h-16 bg-muted rounded-lg shrink-0 overflow-hidden">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 bg-muted rounded-lg shrink-0 overflow-hidden">
                         {product.thumbnail ? (
                           <Image
                             src={product.thumbnail}
@@ -684,17 +682,17 @@ function ProductsContent() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                            <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-semibold truncate">
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <h3 className="font-semibold truncate text-sm sm:text-base">
                               {product.name}
                             </h3>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
                               {product.sku || product.slug}
                             </p>
                           </div>
@@ -702,24 +700,24 @@ function ProductsContent() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-7 w-7 sm:h-8 sm:w-8"
                               onClick={() => openEditForm(product)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-500"
+                              className="h-7 w-7 sm:h-8 sm:w-8 text-red-500"
                               onClick={() => setDeleteConfirm(product.id)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <span
-                            className="font-medium"
+                            className="font-medium text-sm"
                             style={{ color: settings.primary_color }}
                           >
                             {formatPrice(product.price)}
@@ -732,16 +730,17 @@ function ProductsContent() {
                                   ? "outline"
                                   : "destructive"
                             }
+                            className="text-xs"
                           >
                             {product.quantity} in stock
                           </Badge>
                           {product.is_active ? (
-                            <Badge>Active</Badge>
+                            <Badge className="text-xs">Active</Badge>
                           ) : (
-                            <Badge variant="outline">Draft</Badge>
+                            <Badge variant="outline" className="text-xs">Draft</Badge>
                           )}
                           {product.is_featured && (
-                            <Badge variant="secondary">Featured</Badge>
+                            <Badge variant="secondary" className="text-xs">Featured</Badge>
                           )}
                         </div>
                       </div>

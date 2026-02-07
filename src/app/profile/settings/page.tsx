@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  LayoutDashboard,
   Package,
   FolderTree,
   ShoppingBag,
@@ -15,14 +14,12 @@ import {
   DollarSign,
   ShoppingCart,
   UserCheck,
-  ArrowRight,
   Plus,
   FileQuestion,
   TrendingUp,
   TrendingDown,
   AlertCircle,
   ChevronRight,
-  ArrowUpRight,
   Package2,
   Clock,
   CheckCircle2,
@@ -32,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers/AuthProvider";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Order, Product } from "@/types/database.types";
 
@@ -141,7 +138,7 @@ export default function AdminDashboardPage() {
   if (authLoading || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAF5]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5A27]"></div>
+        <Skeleton className="h-8 w-8 rounded-full" />
       </div>
     );
   }
@@ -211,9 +208,9 @@ export default function AdminDashboardPage() {
       <div className="container mx-auto px-4 py-4 space-y-4">
         {/* Revenue Card */}
         {isLoading ? (
-          <Skeleton className="h-32 rounded-2xl bg-[#E2E0DA]" />
+          <Skeleton className="h-32 rounded-2xl" />
         ) : (
-          <Card className="bg-gradient-to-br from-[#2D5A27] to-[#3B7D34] border-0 text-white overflow-hidden">
+          <Card className="bg-gradient-to-br from-[#2D5A27] to-[#3B7D34] border-0 text-white overflow-hidden rounded-2xl">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
@@ -238,18 +235,18 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           {isLoading ? (
             <>
-              <Skeleton className="h-24 rounded-2xl bg-[#E2E0DA]" />
-              <Skeleton className="h-24 rounded-2xl bg-[#E2E0DA]" />
-              <Skeleton className="h-24 rounded-2xl bg-[#E2E0DA]" />
-              <Skeleton className="h-24 rounded-2xl bg-[#E2E0DA]" />
+              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-24 rounded-2xl" />
             </>
           ) : (
             <>
-              <Link href="/profile/admin/orders" className="tap-active">
-                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow">
+              <Link href="/profile/admin/orders" className="tap-active block h-full">
+                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow rounded-2xl h-full">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
                         <ShoppingCart className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
@@ -267,11 +264,11 @@ export default function AdminDashboardPage() {
                 </Card>
               </Link>
 
-              <Link href="/profile/admin/products" className="tap-active">
-                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow">
+              <Link href="/profile/admin/products" className="tap-active block h-full">
+                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow rounded-2xl h-full">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
                         <Package className="h-5 w-5 text-emerald-600" />
                       </div>
                       <div>
@@ -289,11 +286,11 @@ export default function AdminDashboardPage() {
                 </Card>
               </Link>
 
-              <Link href="/profile/admin/users" className="tap-active">
-                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow">
+              <Link href="/profile/admin/users" className="tap-active block h-full">
+                <Card className="border-[#E2E0DA] shadow-soft hover:shadow-md transition-shadow rounded-2xl h-full">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
                         <UserCheck className="h-5 w-5 text-purple-600" />
                       </div>
                       <div>
@@ -305,10 +302,10 @@ export default function AdminDashboardPage() {
                 </Card>
               </Link>
 
-              <Card className="border-[#E2E0DA] shadow-soft">
+              <Card className="border-[#E2E0DA] shadow-soft rounded-2xl h-full">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                       <ShoppingBag className="h-5 w-5 text-amber-600" />
                     </div>
                     <div>
@@ -323,22 +320,22 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <Card className="border-[#E2E0DA] shadow-soft">
+        <Card className="border-[#E2E0DA] shadow-soft rounded-2xl overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-[#1A1A1A]">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {quickActions.map((action) => (
                 <Link key={action.href} href={action.href} className="tap-active">
                   <div className="flex flex-col items-center gap-2">
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0"
                       style={{ backgroundColor: action.bgColor }}
                     >
-                      <action.icon className="h-6 w-6" style={{ color: action.color }} />
+                      <action.icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: action.color }} />
                     </div>
-                    <span className="text-xs font-medium text-[#1A1A1A] text-center">{action.label}</span>
+                    <span className="text-[10px] sm:text-xs font-medium text-[#1A1A1A] text-center leading-tight">{action.label}</span>
                   </div>
                 </Link>
               ))}
@@ -347,7 +344,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Recent Orders */}
-        <Card className="border-[#E2E0DA] shadow-soft">
+        <Card className="border-[#E2E0DA] shadow-soft rounded-2xl">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base text-[#1A1A1A]">Recent Orders</CardTitle>
             <Link href="/profile/admin/orders">
@@ -361,7 +358,7 @@ export default function AdminDashboardPage() {
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 rounded-xl bg-[#E2E0DA]" />
+                  <Skeleton key={i} className="h-16 rounded-xl" />
                 ))}
               </div>
             ) : recentOrders.length === 0 ? (
@@ -406,7 +403,7 @@ export default function AdminDashboardPage() {
 
         {/* Low Stock Alert */}
         {lowStockItems.length > 0 && (
-          <Card className="border-red-200 shadow-soft bg-red-50">
+          <Card className="border-red-200 shadow-soft bg-red-50 rounded-2xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-base text-red-700 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
@@ -449,7 +446,7 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Management Menu */}
-        <Card className="border-[#E2E0DA] shadow-soft">
+        <Card className="border-[#E2E0DA] shadow-soft rounded-2xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-[#1A1A1A]">Management</CardTitle>
           </CardHeader>

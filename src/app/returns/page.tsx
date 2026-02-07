@@ -2,7 +2,6 @@
 
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import {
     RefreshCcw,
     CheckCircle,

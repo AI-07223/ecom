@@ -19,6 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import {
@@ -50,6 +57,7 @@ export default function AdminCategoriesPage() {
     slug: "",
     description: "",
     image_url: "",
+    parent_id: "",
     is_active: true,
     sort_order: 0,
   });
@@ -109,6 +117,7 @@ export default function AdminCategoriesPage() {
         slug: formData.slug,
         description: formData.description || null,
         image_url: formData.image_url || null,
+        parent_id: formData.parent_id || null,
         is_active: formData.is_active,
         sort_order: parseInt(formData.sort_order.toString()) || 0,
         created_at: editingCategory?.created_at || serverTimestamp(),
@@ -143,6 +152,7 @@ export default function AdminCategoriesPage() {
       slug: "",
       description: "",
       image_url: "",
+      parent_id: "",
       is_active: true,
       sort_order: categories.length,
     });
@@ -156,6 +166,7 @@ export default function AdminCategoriesPage() {
       slug: category.slug,
       description: category.description || "",
       image_url: category.image_url || "",
+      parent_id: category.parent_id || "",
       is_active: category.is_active,
       sort_order: category.sort_order,
     });
@@ -338,6 +349,31 @@ export default function AdminCategoriesPage() {
                 folder="categories"
                 label="Category Image"
               />
+            </div>
+            <div>
+              <Label htmlFor="parent_id" className="text-base md:text-sm mb-2 block">
+                Parent Category
+              </Label>
+              <Select
+                value={formData.parent_id}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, parent_id: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="None (Top Level)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None (Top Level)</SelectItem>
+                  {categories
+                    .filter((c) => c.id !== editingCategory?.id) // Prevent self-parenting
+                    .map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

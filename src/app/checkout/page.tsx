@@ -31,6 +31,7 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import { getAuth } from "firebase/auth";
 import { toast } from "sonner";
 import { SavedAddress } from "@/types/database.types";
 import { createOrder } from "@/app/actions/order";
@@ -62,14 +63,14 @@ export default function CheckoutPage() {
     fullName: profile?.full_name || "",
     email: user?.email || "",
     phone: profile?.phone || "",
-    address: "",
+    street: "",
     city: "",
     state: "",
     postalCode: "",
     country: "India",
   });
 
-  // Get saved addresses from profile
+  // Get saved addresses from profile - memoized to prevent effect re-runs
   const savedAddresses = profile?.saved_addresses || [];
 
   // Auto-select default address or first address on load
@@ -84,7 +85,8 @@ export default function CheckoutPage() {
     } else if (savedAddresses.length === 0) {
       setShowNewAddressForm(true);
     }
-  }, [savedAddresses, selectedAddressId, showNewAddressForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.saved_addresses, selectedAddressId, showNewAddressForm]);
 
   const formatPrice = (price: number) => {
     return `₹${price.toLocaleString("en-IN")}`;
@@ -108,7 +110,7 @@ export default function CheckoutPage() {
         return {
           full_name: addr.full_name,
           phone: addr.phone,
-          address: addr.street,
+          street: addr.street,
           city: addr.city,
           state: addr.state,
           postal_code: addr.postal_code,
@@ -119,7 +121,7 @@ export default function CheckoutPage() {
     return {
       full_name: formData.fullName,
       phone: formData.phone,
-      address: formData.address,
+      street: formData.street,
       city: formData.city,
       state: formData.state,
       postal_code: formData.postalCode,
@@ -166,7 +168,7 @@ export default function CheckoutPage() {
           label: addressLabel,
           full_name: formData.fullName,
           phone: formData.phone,
-          street: formData.address,
+          street: formData.street,
           city: formData.city,
           state: formData.state,
           postal_code: formData.postalCode,
@@ -180,9 +182,20 @@ export default function CheckoutPage() {
         });
       }
 
+      // Get ID token for server authentication
+      const auth = getAuth();
+      const idToken = await auth.currentUser?.getIdToken();
+      
+      if (!idToken) {
+        toast.error("Authentication error. Please sign in again.");
+        setIsProcessing(false);
+        return;
+      }
+
       // Create order using Server Action (validates prices server-side + decrements stock)
       const result = await createOrder({
         user_id: user.uid,
+        id_token: idToken,
         items: items.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -441,11 +454,11 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="address" className="text-[#1A1A1A]">Street Address</Label>
+                      <Label htmlFor="street" className="text-[#1A1A1A]">Street Address</Label>
                       <Input
-                        id="address"
-                        name="address"
-                        value={formData.address}
+                        id="street"
+                        name="street"
+                        value={formData.street}
                         onChange={handleInputChange}
                         required
                         className="bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"

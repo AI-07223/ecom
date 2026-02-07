@@ -113,7 +113,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-3">
+      <div className="p-4">
         {/* Category Tag */}
         {product.category?.name && (
           <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">
@@ -145,7 +145,7 @@ export function ProductCard({ product }: ProductCardProps) {
           variant="outline"
           size="sm"
           className={cn(
-            "w-full h-9 rounded-xl border-[#2D5A27] font-medium tap-active transition-all duration-300",
+            "w-full h-10 rounded-xl border-[#2D5A27] font-medium tap-active transition-all duration-300",
             isAdded 
               ? "bg-green-500 border-green-500 text-white hover:bg-green-600 hover:text-white" 
               : "text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white"

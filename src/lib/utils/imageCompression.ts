@@ -11,7 +11,7 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxSizeKB: 300,
+    maxSizeKB: 250,
     maxWidth: 1920,
     maxHeight: 1920,
     quality: 0.8,
@@ -116,7 +116,7 @@ export async function compressImage(
 
                     if (!bestBlob) {
                         // If we can't get under target, use lowest quality attempt
-                        bestBlob = await tryCompression(minQuality);
+                        bestBlob = await tryCompression(bestQuality);
                     }
 
                     // Create new file from blob
@@ -150,6 +150,6 @@ export function getFileSizeKB(file: File): number {
 /**
  * Check if file needs compression
  */
-export function needsCompression(file: File, maxSizeKB: number = 300): boolean {
+export function needsCompression(file: File, maxSizeKB: number = 250): boolean {
     return file.size > maxSizeKB * 1024;
 }

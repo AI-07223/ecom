@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ArrowRight, Truck, Shield, Clock, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Product, Category } from "@/types/database.types";
 
@@ -118,7 +118,7 @@ export default function HomePage() {
 
       {/* Features Bar */}
       <section className="border-y border-[#E2E0DA] bg-white">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-3 gap-4">
             {features.map((feature, index) => (
               <div
@@ -194,7 +194,7 @@ export default function HomePage() {
               <h2 className="text-lg font-bold text-[#1A1A1A]">Featured Products</h2>
             </div>
             <Link href="/products?featured=true" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="text-[#2D5A27] hover:text-[#3B7D34] h-9 text-sm font-medium">
+              <Button variant="ghost" size="sm" className="text-[#2D5A27] hover:text-[#3B7D34] hover:bg-[#2D5A27]/10 h-9 text-sm font-medium">
                 View All
                 <ChevronRight className="ml-0.5 h-4 w-4" />
               </Button>
@@ -207,12 +207,12 @@ export default function HomePage() {
           <div className="mt-4 text-center sm:hidden">
             <Link href="/products?featured=true">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="rounded-full text-sm h-10 px-6 border-[#E2E0DA] text-[#6B7280] hover:text-[#1A1A1A] hover:border-[#2D5A27]/30 tap-active"
+                className="text-[#2D5A27] hover:text-[#3B7D34] hover:bg-[#2D5A27]/10 h-9 text-sm font-medium"
               >
                 View All Products
-                <ChevronRight className="ml-1 h-4 w-4" />
+                <ChevronRight className="ml-0.5 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -220,7 +220,7 @@ export default function HomePage() {
       </section>
 
       {/* Trust Section */}
-      <section className="py-8 bg-white">
+      <section className="py-6 bg-white">
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-br from-[#2D5A27] to-[#3B7D34] rounded-3xl p-6 text-white">
             <h2 className="text-xl font-bold mb-2">Why Choose Royal Trading?</h2>
@@ -245,7 +245,7 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter / CTA */}
-      <section className="py-8">
+      <section className="py-6">
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-3xl p-6 shadow-elevated text-center">
             <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">

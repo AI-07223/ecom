@@ -39,19 +39,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { toast } from "sonner";
-
-interface Coupon {
-  id: string;
-  code: string;
-  discount_type: "percentage" | "fixed";
-  discount_value: number;
-  min_purchase: number | null;
-  max_uses: number | null;
-  current_uses: number;
-  is_active: boolean;
-  expires_at: { toDate: () => Date } | Date | null;
-  created_at: { toDate: () => Date } | Date;
-}
+import type { Coupon } from "@/types/database.types";
 
 export default function AdminCouponsPage() {
   const router = useRouter();
@@ -68,9 +56,12 @@ export default function AdminCouponsPage() {
     code: "",
     discount_type: "percentage" as "percentage" | "fixed",
     discount_value: "",
-    min_purchase: "",
-    max_uses: "",
+    min_order_amount: "",
+    usage_limit: "",
+    description: "",
+    max_discount_amount: "",
     is_active: true,
+    starts_at: "",
     expires_at: "",
   });
 
@@ -83,12 +74,27 @@ export default function AdminCouponsPage() {
       const couponsSnap = await getDocs(
         query(collection(db, "coupons"), orderBy("created_at", "desc")),
       );
-      setCoupons(
-        couponsSnap.docs.map((doc) => ({
+      const couponsData = couponsSnap.docs.map((doc) => {
+        const data = doc.data();
+        // Handle timestamp conversion
+        return {
           id: doc.id,
-          ...doc.data(),
-        })) as Coupon[],
-      );
+          code: data.code,
+          description: data.description || null,
+          discount_type: data.discount_type,
+          discount_value: data.discount_value,
+          min_order_amount: data.min_order_amount ?? data.min_purchase ?? 0,
+          max_discount_amount: data.max_discount_amount || null,
+          usage_limit: data.usage_limit ?? data.max_uses ?? null,
+          used_count: data.used_count ?? data.current_uses ?? 0,
+          is_active: data.is_active,
+          starts_at: data.starts_at || null,
+          expires_at: data.expires_at || null,
+          created_at: data.created_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updated_at: data.updated_at?.toDate?.()?.toISOString() || new Date().toISOString(),
+        } as Coupon;
+      });
+      setCoupons(couponsData);
     } catch (error) {
       console.error("Error fetching coupons:", error);
     }
@@ -110,16 +116,23 @@ export default function AdminCouponsPage() {
     try {
       await setDoc(doc(db, "coupons", couponId), {
         code: formData.code.toUpperCase(),
+        description: formData.description || null,
         discount_type: formData.discount_type,
         discount_value: parseFloat(formData.discount_value) || 0,
-        min_purchase: formData.min_purchase
-          ? parseFloat(formData.min_purchase)
+        min_order_amount: formData.min_order_amount
+          ? parseFloat(formData.min_order_amount)
+          : 0,
+        max_discount_amount: formData.max_discount_amount
+          ? parseFloat(formData.max_discount_amount)
           : null,
-        max_uses: formData.max_uses ? parseInt(formData.max_uses) : null,
-        current_uses: editingCoupon?.current_uses || 0,
+        usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
+        used_count: editingCoupon?.used_count || 0,
         is_active: formData.is_active,
+        starts_at: formData.starts_at ? new Date(formData.starts_at) : null,
         expires_at: formData.expires_at ? new Date(formData.expires_at) : null,
-        created_at: editingCoupon?.created_at || serverTimestamp(),
+        created_at: editingCoupon?.created_at
+          ? new Date(editingCoupon.created_at)
+          : serverTimestamp(),
         updated_at: serverTimestamp(),
       });
       toast.success(editingCoupon ? "Coupon updated" : "Coupon created");
@@ -149,9 +162,12 @@ export default function AdminCouponsPage() {
       code: "",
       discount_type: "percentage",
       discount_value: "",
-      min_purchase: "",
-      max_uses: "",
+      min_order_amount: "",
+      usage_limit: "",
+      description: "",
+      max_discount_amount: "",
       is_active: true,
+      starts_at: "",
       expires_at: "",
     });
     setEditingCoupon(null);
@@ -163,16 +179,16 @@ export default function AdminCouponsPage() {
       code: coupon.code,
       discount_type: coupon.discount_type,
       discount_value: coupon.discount_value.toString(),
-      min_purchase: coupon.min_purchase?.toString() || "",
-      max_uses: coupon.max_uses?.toString() || "",
+      min_order_amount: coupon.min_order_amount?.toString() || "",
+      usage_limit: coupon.usage_limit?.toString() || "",
+      description: coupon.description || "",
+      max_discount_amount: coupon.max_discount_amount?.toString() || "",
       is_active: coupon.is_active,
+      starts_at: coupon.starts_at
+        ? new Date(coupon.starts_at).toISOString().split("T")[0]
+        : "",
       expires_at: coupon.expires_at
-        ? ("toDate" in coupon.expires_at
-            ? coupon.expires_at.toDate()
-            : coupon.expires_at
-          )
-            .toISOString()
-            .split("T")[0]
+        ? new Date(coupon.expires_at).toISOString().split("T")[0]
         : "",
     });
     setIsDialogOpen(true);
@@ -261,19 +277,24 @@ export default function AdminCouponsPage() {
                           {coupon.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </div>
+                      {coupon.description && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {coupon.description}
+                        </p>
+                      )}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Percent className="h-3.5 w-3.5" />
                         <span>{formatDiscount(coupon)} off</span>
-                        {coupon.min_purchase ? (
+                        {coupon.min_order_amount ? (
                           <span>
                             • Min {settings.currency_symbol}
-                            {coupon.min_purchase}
+                            {coupon.min_order_amount}
                           </span>
                         ) : null}
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Used {coupon.current_uses}
-                        {coupon.max_uses ? ` / ${coupon.max_uses}` : " times"}
+                        Used {coupon.used_count}
+                        {coupon.usage_limit ? ` / ${coupon.usage_limit}` : " times"}
                       </p>
                     </div>
                     <div className="flex gap-1 shrink-0">
@@ -326,6 +347,16 @@ export default function AdminCouponsPage() {
                 required
               />
             </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Optional description"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Discount Type</Label>
@@ -358,36 +389,59 @@ export default function AdminCouponsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="min_purchase">Min Purchase</Label>
+                <Label htmlFor="min_order_amount">Min Order Amount</Label>
                 <Input
-                  id="min_purchase"
-                  name="min_purchase"
+                  id="min_order_amount"
+                  name="min_order_amount"
                   type="number"
-                  value={formData.min_purchase}
+                  value={formData.min_order_amount}
                   onChange={handleInputChange}
                   placeholder="Optional"
                 />
               </div>
               <div>
-                <Label htmlFor="max_uses">Max Uses</Label>
+                <Label htmlFor="usage_limit">Usage Limit</Label>
                 <Input
-                  id="max_uses"
-                  name="max_uses"
+                  id="usage_limit"
+                  name="usage_limit"
                   type="number"
-                  value={formData.max_uses}
+                  value={formData.usage_limit}
                   onChange={handleInputChange}
                   placeholder="Unlimited"
                 />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="starts_at">Starts At</Label>
+                <Input
+                  id="starts_at"
+                  name="starts_at"
+                  type="date"
+                  value={formData.starts_at}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="expires_at">Expires At</Label>
+                <Input
+                  id="expires_at"
+                  name="expires_at"
+                  type="date"
+                  value={formData.expires_at}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
             <div>
-              <Label htmlFor="expires_at">Expires At</Label>
+              <Label htmlFor="max_discount_amount">Max Discount Amount</Label>
               <Input
-                id="expires_at"
-                name="expires_at"
-                type="date"
-                value={formData.expires_at}
+                id="max_discount_amount"
+                name="max_discount_amount"
+                type="number"
+                value={formData.max_discount_amount}
                 onChange={handleInputChange}
+                placeholder="Optional (for percentage discounts)"
               />
             </div>
             <div className="flex items-center gap-2">

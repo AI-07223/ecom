@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Save,
   Loader2,
-  Palette,
-  Store,
   Mail,
   Globe,
   RotateCcw,
@@ -53,16 +51,6 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [formData, setFormData] = useState({
-    // Store info
-    site_name: "",
-    site_description: "",
-    logo_url: "",
-    favicon_url: "",
-    footer_text: "",
-    // Colors
-    primary_color: "",
-    secondary_color: "",
-    accent_color: "",
     // Contact
     contact_email: "",
     contact_phone: "",
@@ -92,14 +80,6 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     if (settings) {
       setFormData({
-        site_name: settings.site_name || "",
-        site_description: settings.site_description || "",
-        logo_url: settings.logo_url || "",
-        favicon_url: settings.favicon_url || "",
-        footer_text: settings.footer_text || "",
-        primary_color: settings.primary_color || "#7c3aed",
-        secondary_color: settings.secondary_color || "#a78bfa",
-        accent_color: settings.accent_color || "#f59e0b",
         contact_email: settings.contact_email || "",
         contact_phone: settings.contact_phone || "",
         currency: settings.currency || "INR",
@@ -134,16 +114,6 @@ export default function AdminSettingsPage() {
     setIsSaving(true);
     try {
       const settingsToSave = [
-        // Store info
-        { id: "site_name", value: formData.site_name },
-        { id: "site_description", value: formData.site_description },
-        { id: "logo_url", value: formData.logo_url },
-        { id: "favicon_url", value: formData.favicon_url },
-        { id: "footer_text", value: formData.footer_text },
-        // Colors
-        { id: "primary_color", value: formData.primary_color },
-        { id: "secondary_color", value: formData.secondary_color },
-        { id: "accent_color", value: formData.accent_color },
         // Contact
         { id: "contact_email", value: formData.contact_email },
         { id: "contact_phone", value: formData.contact_phone },
@@ -195,14 +165,6 @@ export default function AdminSettingsPage() {
     setIsResetting(true);
     try {
       const settingsToSave = [
-        { id: "site_name", value: defaultSettings.site_name },
-        { id: "site_description", value: defaultSettings.site_description },
-        { id: "logo_url", value: defaultSettings.logo_url },
-        { id: "favicon_url", value: defaultSettings.favicon_url },
-        { id: "primary_color", value: defaultSettings.primary_color },
-        { id: "secondary_color", value: defaultSettings.secondary_color },
-        { id: "accent_color", value: defaultSettings.accent_color },
-        { id: "footer_text", value: defaultSettings.footer_text },
         { id: "contact_email", value: defaultSettings.contact_email },
         { id: "contact_phone", value: defaultSettings.contact_phone },
         { id: "currency", value: defaultSettings.currency },
@@ -236,14 +198,6 @@ export default function AdminSettingsPage() {
         });
       }
       setFormData({
-        site_name: defaultSettings.site_name || "",
-        site_description: defaultSettings.site_description || "",
-        logo_url: defaultSettings.logo_url || "",
-        favicon_url: defaultSettings.favicon_url || "",
-        footer_text: defaultSettings.footer_text || "",
-        primary_color: defaultSettings.primary_color || "#7c3aed",
-        secondary_color: defaultSettings.secondary_color || "#a78bfa",
-        accent_color: defaultSettings.accent_color || "#f59e0b",
         contact_email: defaultSettings.contact_email || "",
         contact_phone: defaultSettings.contact_phone || "",
         currency: defaultSettings.currency || "INR",
@@ -296,68 +250,6 @@ export default function AdminSettingsPage() {
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Store Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Store className="h-5 w-5" /> Store Information
-              </CardTitle>
-              <CardDescription>Basic store details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="site_name">Store Name</Label>
-                <Input
-                  id="site_name"
-                  name="site_name"
-                  value={formData.site_name}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div>
-                <Label htmlFor="site_description">Description</Label>
-                <Textarea
-                  id="site_description"
-                  name="site_description"
-                  value={formData.site_description}
-                  onChange={handleInputChange}
-                  rows={2}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="logo_url">Logo URL</Label>
-                  <Input
-                    id="logo_url"
-                    name="logo_url"
-                    value={formData.logo_url}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="favicon_url">Favicon URL</Label>
-                  <Input
-                    id="favicon_url"
-                    name="favicon_url"
-                    value={formData.favicon_url}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="footer_text">Footer Text</Label>
-                <Input
-                  id="footer_text"
-                  name="footer_text"
-                  value={formData.footer_text}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Business Details for Invoice */}
           <Card>
             <CardHeader>
@@ -490,57 +382,6 @@ export default function AdminSettingsPage() {
                     placeholder="billing@yourstore.com"
                   />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Branding */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Palette className="h-5 w-5" /> Branding Colors
-              </CardTitle>
-              <CardDescription>Customize your store colors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {["primary_color", "secondary_color", "accent_color"].map(
-                  (color) => (
-                    <div key={color}>
-                      <Label htmlFor={color}>
-                        {color
-                          .replace("_", " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id={color}
-                          name={color}
-                          type="color"
-                          value={formData[color as keyof typeof formData]}
-                          onChange={handleInputChange}
-                          className="w-12 h-10 p-1"
-                        />
-                        <Input
-                          value={formData[color as keyof typeof formData]}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              [color]: e.target.value,
-                            }))
-                          }
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-                  ),
-                )}
-              </div>
-              <div
-                className="mt-4 p-4 rounded-lg"
-                style={{ backgroundColor: formData.primary_color }}
-              >
-                <p className="text-white text-center">Primary Color Preview</p>
               </div>
             </CardContent>
           </Card>
@@ -684,7 +525,7 @@ export default function AdminSettingsPage() {
             <Button
               type="submit"
               disabled={isSaving || isResetting}
-              style={{ backgroundColor: settings.primary_color }}
+              className="bg-primary"
             >
               {isSaving ? (
                 <>

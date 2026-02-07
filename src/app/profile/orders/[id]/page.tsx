@@ -32,40 +32,10 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import Invoice from "@/components/orders/Invoice";
 
-interface OrderItem {
-  product_id: string;
-  product_name: string;
-  product_image?: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
-
-interface Order {
-  id: string;
-  order_number: string;
-  user_id: string;
-  user_email?: string;
-  status: string;
-  payment_status: string;
-  payment_method?: string;
-  subtotal: number;
-  shipping: number;
-  discount: number;
-  coupon_code?: string | null;
-  gst_number?: string | null;
-  total: number;
-  shipping_address: {
-    full_name: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-  };
-  items: OrderItem[];
-  created_at: { toDate: () => Date } | Date;
+import type { Order as OrderType } from "@/types/database.types";
+interface Order extends Omit<OrderType, 'created_at' | 'updated_at'> {
+  created_at: string | { toDate: () => Date } | Date;
+  updated_at?: string | { toDate: () => Date } | Date;
 }
 
 const statusSteps = [
@@ -145,7 +115,16 @@ export default function OrderDetailPage() {
     return `${settings.currency_symbol}${price.toLocaleString("en-IN")}`;
   };
 
-  const formatDate = (date: { toDate: () => Date } | Date) => {
+  const formatDate = (date: string | { toDate: () => Date } | Date) => {
+    if (typeof date === "string") {
+      return new Date(date).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
     const d = "toDate" in date ? date.toDate() : date;
     return d.toLocaleDateString("en-IN", {
       year: "numeric",
@@ -326,7 +305,7 @@ export default function OrderDetailPage() {
                   {order.shipping_address.full_name}
                 </p>
                 <p>{order.shipping_address.phone}</p>
-                <p>{order.shipping_address.address}</p>
+                <p>{order.shipping_address?.street}</p>
                 <p>
                   {order.shipping_address.city}, {order.shipping_address.state}{" "}
                   {order.shipping_address.postal_code}

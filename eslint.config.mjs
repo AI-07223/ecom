@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Firebase DataConnect auto-generated files (use CommonJS require)
+    "src/dataconnect-generated/**",
+    "src/dataconnect-admin-generated/**",
   ]),
   {
     rules: {

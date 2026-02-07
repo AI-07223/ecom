@@ -32,7 +32,7 @@ export default function ItemRequestPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (!isLoading && (!user || !isWholeseller)) {

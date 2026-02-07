@@ -138,8 +138,10 @@ Manual testing should be done through:
 **Firestore Rules** (`firestore.rules`):
 - Authentication required for all write operations
 - Users can only access their own profile, cart, and wishlist
-- Admins (checked via `profiles/{uid}.is_admin`) can manage products, categories, coupons, and orders
+- Admins (checked via `profiles/{uid}.role == "admin"`) can manage products, categories, coupons, and orders
+- Wholesellers (checked via `profiles/{uid}.role == "wholeseller"`) can create item requests
 - Orders are readable only by the owner or admins
+- Role field is the single source of truth for user permissions (not boolean flags)
 
 **Storage Rules** (`storage.rules`):
 - Public read access for all files
@@ -168,13 +170,32 @@ All Firebase config variables are public (client-side) and start with `NEXT_PUBL
 - Postal codes validated with 6-digit regex (`/^\d{6}$/`)
 - GST numbers validated with standard format
 
-## Database Schema
+## Type System & Database Schema
+
+### Type Architecture
+
+All TypeScript types are centralized in `src/types/database.types.ts`. Key architectural decisions:
+
+1. **Single Source of Truth**: All types defined in `database.types.ts` and imported across the application
+2. **No Local Type Redefinitions**: Components and server actions must import from centralized types
+3. **Timestamp Handling**: Firestore Timestamps are converted to ISO strings at the provider level
+4. **Role-Based Access Control**: Uses `role` enum field ("customer" | "wholeseller" | "admin") instead of boolean flags
+
+### Helper Functions
+
+**Timestamp Conversion** (`src/lib/firebase/utils.ts`):
+```typescript
+import { timestampToString } from "@/lib/firebase/utils";
+
+// Converts Firestore Timestamp to ISO string
+const dateString = timestampToString(timestamp);
+```
 
 ### Collections
 
 | Collection | Description | Access |
 |------------|-------------|--------|
-| `profiles` | User profiles with admin flag | User: own, Admin: all |
+| `profiles` | User profiles with role field (customer/wholeseller/admin) | User: own, Admin: all |
 | `products` | Product catalog | Public read, Admin write |
 | `categories` | Product categories | Public read, Admin write |
 | `users/{uid}/cart` | User cart items | User only |
@@ -185,6 +206,79 @@ All Firebase config variables are public (client-side) and start with `NEXT_PUBL
 
 ### Key Types
 See `src/types/database.types.ts` for complete TypeScript definitions of all database entities.
+
+### Recent Schema Changes (2026-02-06)
+
+#### 1. Profile Role Field Consolidation
+- **Before**: `is_admin: boolean` + `is_wholeseller: boolean` + `role: UserRole`
+- **After**: `role: UserRole` only ("customer" | "wholeseller" | "admin")
+- **Impact**: Single source of truth for user permissions
+
+#### 2. Order Field Names Aligned
+- **Before**: `discount_amount`, `shipping_amount`, `coupon_id`
+- **After**: `discount`, `shipping`, `coupon_code`
+- **Impact**: Matches actual server action implementation
+
+#### 3. Address Structure Updated
+- **Before**: `address: string` (shipping address field)
+- **After**: `street: string` (consistent with `Address` interface)
+- **Impact**: Better type alignment between `Address` and `ShippingAddress`
+
+#### 4. WishlistItem Timestamps
+- **Added**: `updated_at` field for consistency with `CartItem`
+
+#### 5. SiteSettings Interface Cleanup
+- **Removed**: Unused `SiteSetting` (singular) interface
+- **Kept**: `SiteSettings` (plural) as the single interface
+
+#### 6. Firestore Rules Updated
+- Role-based checks: `get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == "admin"`
+- Added `isValidOrder()` function for order validation
+- Profile validation now uses `role` enum only
+
+#### 7. Admin Settings Page Simplification (2026-02-06)
+- **Removed**: "Store Information" section (site_name, site_description, logo_url, favicon_url, footer_text)
+- **Removed**: "Branding Colors" section (primary_color, secondary_color, accent_color)
+- **Kept**: Business Details, Contact Information, Social Links
+- **Reason**: Site identity is now fixed; only invoice and contact details need configuration
+
+#### 8. Mobile UI Fixes (2026-02-06)
+- **Fixed**: Button overflow on product cards (delete icon no longer cut off)
+- **Fixed**: User card badge overflow (role badges fit within cards)
+- **Fixed**: Stat card sizing consistency on admin dashboard
+- **Fixed**: Quick Actions section responsive spacing
+- **Improved**: Responsive padding and text sizing across admin pages
+- **Improved**: Touch-friendly button sizes while optimizing layout
+
+#### 9. Code Quality (2026-02-06)
+- **Fixed**: All ESLint warnings (42 warnings resolved)
+- **Removed**: Unused imports across 20+ files
+- **Fixed**: React hooks exhaustive-deps warnings
+- **Result**: 0 errors, 0 warnings
+
+#### 10. Security Fix - Admin Creation (2026-02-06)
+- **Before**: Any logged-in user could make themselves admin
+- **After**: 
+  - First admin is hardcoded: `z41d.706@gmail.com` (only this email can be first admin)
+  - Subsequent users require secret key: `NEXT_PUBLIC_ADMIN_SECRET_KEY`
+  - Default key: `royal-admin-2024` (customizable in `.env.local`)
+- **Files changed**: `src/app/seed/page.tsx`, `.env.local`
+
+#### 11. Security Fix - Order Creation Authentication (2026-02-06)
+- **Issue**: Server action accepted `user_id` from client without verifying the requesting user
+- **Risk**: Users could create orders for other users
+- **Fix**: 
+  - Added session cookie verification using Firebase Admin Auth
+  - Verify authenticated UID matches the `user_id` in request
+  - Return error if not authenticated or user IDs don't match
+- **Files changed**: `src/app/actions/order.ts`, `src/lib/firebase/admin.ts`
+
+#### 12. Security Fix - Image Upload Validation (2026-02-06)
+- **Issue**: File type validation only checked MIME type (can be spoofed)
+- **Fix**: Added file extension validation
+  - Allowed extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`
+  - Two-layer validation: MIME type + file extension
+- **Files changed**: `src/components/admin/ImageUpload.tsx`, `src/components/admin/SingleImageUpload.tsx`
 
 ## Deployment
 
