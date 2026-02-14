@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Package, ChevronRight, Eye, ImageIcon, Calendar } from 'lucide-react'
+import { Package, ChevronRight, Eye, ImageIcon, Calendar, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/AuthProvider'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
+import { PullToRefresh } from '@/components/ui/PullToRefresh'
 
 interface OrderItem {
     product_id: string
@@ -48,6 +49,7 @@ export default function OrdersPage() {
     const { settings } = useSiteSettings()
     const [orders, setOrders] = useState<Order[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -55,37 +57,54 @@ export default function OrdersPage() {
         }
     }, [user, authLoading, router])
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            if (!user) return
+    const fetchOrders = async () => {
+        if (!user) return
 
+        setIsLoading(true)
+        try {
+            const ordersQuery = query(
+                collection(db, 'orders'),
+                where('user_id', '==', user.uid),
+                orderBy('created_at', 'desc')
+            )
+            const ordersSnap = await getDocs(ordersQuery)
+            const ordersList = ordersSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Order[]
+            setOrders(ordersList)
+        } catch (error) {
+            console.error('Error fetching orders:', error)
+            // Fallback: fetch without orderBy and sort client-side
             try {
-                const ordersQuery = query(
+                const fallbackQuery = query(
                     collection(db, 'orders'),
                     where('user_id', '==', user.uid)
                 )
-                const ordersSnap = await getDocs(ordersQuery)
-                const ordersList = ordersSnap.docs.map(doc => ({
+                const fallbackSnap = await getDocs(fallbackQuery)
+                const ordersList = fallbackSnap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 })) as Order[]
-                // Sort client-side to avoid requiring composite index
+                // Sort client-side
                 ordersList.sort((a, b) => {
                     const dateA = 'toDate' in a.created_at ? a.created_at.toDate() : a.created_at
                     const dateB = 'toDate' in b.created_at ? b.created_at.toDate() : b.created_at
                     return dateB.getTime() - dateA.getTime()
                 })
                 setOrders(ordersList)
-            } catch (error) {
-                console.error('Error fetching orders:', error)
+            } catch (fallbackError) {
+                console.error('Fallback fetch also failed:', fallbackError)
             }
-            setIsLoading(false)
         }
+        setIsLoading(false)
+    }
 
+    useEffect(() => {
         if (user) {
             fetchOrders()
         }
-    }, [user])
+    }, [user, refreshTrigger])
 
     const formatPrice = (price: number) => {
         return `${settings.currency_symbol}${price.toLocaleString('en-IN')}`
@@ -136,6 +155,10 @@ export default function OrdersPage() {
             </div>
 
             <div className="container mx-auto px-4 py-6">
+                <PullToRefresh 
+                    onRefresh={async () => setRefreshTrigger(prev => prev + 1)}
+                    className="min-h-[400px]"
+                >
                 {orders.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E0DA]">
                         <Package className="h-16 w-16 mx-auto text-[#9CA3AF] mb-4" />
@@ -245,6 +268,7 @@ export default function OrdersPage() {
                         ))}
                     </div>
                 )}
+                </PullToRefresh>
             </div>
         </div>
     )

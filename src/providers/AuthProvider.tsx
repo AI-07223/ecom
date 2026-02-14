@@ -17,10 +17,14 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import { Profile, UserRole } from "@/types/database.types";
+
+// Admin email — auto-promoted to admin role on login/signup
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "z41d.706@gmail.com";
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +33,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isWholeseller: boolean;
   role: UserRole;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  isEmailVerified: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; emailNotVerified?: boolean }>;
   signUp: (
     email: string,
     password: string,
@@ -39,6 +44,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithGithub: () => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
+  sendVerificationEmail: () => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,7 +54,7 @@ function convertToProfile(data: Record<string, unknown>, id: string): Profile {
   // Handle timestamp conversion
   const createdAt = data.created_at;
   const updatedAt = data.updated_at;
-  
+
   return {
     id: id,
     email: data.email as string,
@@ -59,7 +65,7 @@ function convertToProfile(data: Record<string, unknown>, id: string): Profile {
     saved_addresses: (data.saved_addresses as Profile['saved_addresses']) ?? [],
     gst_number: (data.gst_number as string | null) ?? null,
     role: (data.role as UserRole) ?? "customer",
-    created_at: typeof createdAt === 'object' && createdAt && 'toDate' in createdAt 
+    created_at: typeof createdAt === 'object' && createdAt && 'toDate' in createdAt
       ? (createdAt as { toDate: () => Date }).toDate().toISOString()
       : (createdAt as string) ?? new Date().toISOString(),
     updated_at: typeof updatedAt === 'object' && updatedAt && 'toDate' in updatedAt
@@ -83,12 +89,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const profileRef = doc(db, "profiles", userId);
         const profileSnap = await getDoc(profileRef);
+        const isDesignatedAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
         if (profileSnap.exists()) {
-          return convertToProfile(profileSnap.data() as Record<string, unknown>, userId);
+          const profileData = convertToProfile(profileSnap.data() as Record<string, unknown>, userId);
+
+          // Auto-promote designated admin email if not already admin
+          if (isDesignatedAdmin && profileData.role !== "admin") {
+            await updateDoc(profileRef, {
+              role: "admin",
+              updated_at: serverTimestamp(),
+            });
+            return { ...profileData, role: "admin" as UserRole };
+          }
+
+          return profileData;
         } else {
           // Create profile for new user
           const now = new Date().toISOString();
+          const newRole: UserRole = isDesignatedAdmin ? "admin" : "customer";
           const newProfile: Profile = {
             id: userId,
             email: email,
@@ -98,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             address: null,
             saved_addresses: [],
             gst_number: null,
-            role: "customer",
+            role: newRole,
             created_at: now,
             updated_at: now,
           };
@@ -153,10 +172,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      return { error: null };
+      const { user: signedInUser } = await signInWithEmailAndPassword(auth, email, password);
+
+      // Check email verification status but don't block signin
+      const emailNotVerified = !signedInUser.emailVerified;
+
+      return { error: null, emailNotVerified };
     } catch (error) {
-      return { error: error as Error };
+      return { error: error as Error, emailNotVerified: false };
     }
   };
 
@@ -172,6 +195,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await updateProfile(newUser, { displayName: fullName });
       }
 
+      // Send email verification
+      await sendEmailVerification(newUser);
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const sendVerificationEmail = async () => {
+    try {
+      if (user && !user.emailVerified) {
+        await sendEmailVerification(user);
+      }
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -208,6 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const role: UserRole = profile?.role ?? "customer";
   const isAdmin = role === "admin";
   const isWholeseller = role === "wholeseller";
+  const isEmailVerified = user?.emailVerified ?? false;
 
   return (
     <AuthContext.Provider
@@ -218,12 +256,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAdmin,
         isWholeseller,
         role,
+        isEmailVerified,
         signIn,
         signUp,
         signOut,
         signInWithGoogle,
         signInWithGithub,
         refreshProfile,
+        sendVerificationEmail,
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import {
     collection,
     doc,
@@ -17,6 +17,7 @@ import { WishlistItem, Product } from '@/types/database.types'
 import { timestampToString } from '@/lib/firebase/utils'
 import { useAuth } from './AuthProvider'
 import { toast } from 'sonner'
+import { Undo2, RotateCcw } from 'lucide-react'
 
 interface WishlistContextType {
     items: (WishlistItem & { product: Product })[]
@@ -82,6 +83,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<(WishlistItem & { product: Product })[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const { user } = useAuth()
+    
+    // Keep track of removed items for undo
+    const removedItemsRef = useRef<Map<string, Product>>(new Map());
 
     const fetchWishlist = useCallback(async () => {
         if (!user) {
@@ -154,30 +158,114 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
                 updated_at: serverTimestamp(),
             })
 
-            toast.success('Added to wishlist')
+            toast.success('Added to wishlist', {
+                action: {
+                    label: 'View',
+                    onClick: () => {
+                        window.location.href = '/wishlist'
+                    },
+                },
+                duration: 3000,
+            })
             await fetchWishlist()
         } catch (error) {
-            toast.error('Failed to add to wishlist')
+            toast.error('Failed to add to wishlist', {
+                action: {
+                    label: (
+                        <span className="flex items-center gap-1">
+                            <RotateCcw className="w-3 h-3" />
+                            Retry
+                        </span>
+                    ) as unknown as string,
+                    onClick: () => addToWishlist(productId),
+                },
+            })
             console.error('Error adding to wishlist:', error)
         }
     }
 
-    const removeFromWishlist = async (productId: string) => {
+    const removeFromWishlist = async (productId: string, showUndo = true) => {
         if (!user) return
 
         try {
+            // Find the item before removing it
+            const itemToRemove = items.find(item => item.product_id === productId);
+            
+            if (itemToRemove) {
+                // Store for potential undo
+                removedItemsRef.current.set(productId, itemToRemove.product);
+            }
+            
             await deleteDoc(doc(db, 'users', user.uid, 'wishlist', productId))
-            toast.success('Removed from wishlist')
             await fetchWishlist()
+            
+            if (showUndo) {
+                // Show toast with undo action
+                toast.success('Removed from wishlist', {
+                    action: {
+                        label: (
+                            <span className="flex items-center gap-1">
+                                <Undo2 className="w-3 h-3" />
+                                Undo
+                            </span>
+                        ) as unknown as string,
+                        onClick: () => handleUndoRemove(productId),
+                    },
+                    duration: 5000,
+                });
+            } else {
+                toast.success('Removed from wishlist');
+            }
         } catch (error) {
-            toast.error('Failed to remove from wishlist')
+            toast.error('Failed to remove from wishlist', {
+                action: {
+                    label: (
+                        <span className="flex items-center gap-1">
+                            <RotateCcw className="w-3 h-3" />
+                            Retry
+                        </span>
+                    ) as unknown as string,
+                    onClick: () => removeFromWishlist(productId, showUndo),
+                },
+            })
             console.error('Error removing from wishlist:', error)
         }
     }
+    
+    const handleUndoRemove = async (productId: string) => {
+        if (!user) return;
+        
+        const removedProduct = removedItemsRef.current.get(productId);
+        if (!removedProduct) {
+            toast.error('Cannot undo - item data not found');
+            return;
+        }
+        
+        try {
+            // Restore the item
+            await setDoc(
+                doc(db, 'users', user.uid, 'wishlist', productId),
+                {
+                    product_id: productId,
+                    created_at: serverTimestamp(),
+                    updated_at: serverTimestamp(),
+                }
+            );
+            
+            await fetchWishlist();
+            toast.success('Restored to wishlist');
+            
+            // Clean up
+            removedItemsRef.current.delete(productId);
+        } catch (error) {
+            toast.error('Failed to restore item');
+            console.error('Error restoring item to wishlist:', error);
+        }
+    };
 
     const toggleWishlist = async (productId: string) => {
         if (isInWishlist(productId)) {
-            await removeFromWishlist(productId)
+            await removeFromWishlist(productId, true)
         } else {
             await addToWishlist(productId)
         }

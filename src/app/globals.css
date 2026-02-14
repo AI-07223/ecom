@@ -187,7 +187,7 @@
 
     /* Spacing utilities for mobile layouts */
     .pb-nav-mobile {
-        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     }
 
     .pb-checkout {
@@ -358,6 +358,18 @@
         animation: scaleIn 0.2s ease-out;
     }
 
+    .animate-bounce-in {
+        animation: bounce-in 0.4s ease-out;
+    }
+
+    .animate-slide-up-fade {
+        animation: slide-up-fade 0.3s ease-out;
+    }
+
+    .animate-press {
+        animation: press-down 0.2s ease-out;
+    }
+
     /* Ring primary utility */
     .ring-primary\/20 {
         --tw-ring-color: rgb(45 90 39 / 0.2);
@@ -368,6 +380,65 @@
         --tw-ring-color: rgb(45 90 39 / 0.2);
         box-shadow: 0 0 0 2px var(--tw-ring-color);
     }
+}
+
+/* Page Transition Animations */
+@keyframes pageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pageExit {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Page transition styles */
+.page-transition-enter {
+    animation: pageEnter 0.3s ease-out forwards;
+}
+
+.page-transition-exit {
+    animation: pageExit 0.2s ease-in forwards;
+}
+
+/* Main content animation */
+main {
+    animation: pageEnter 0.3s ease-out;
 }
 
 /* Animations */
@@ -396,7 +467,7 @@
 @keyframes scaleIn {
     from {
         opacity: 0;
-        transform: scale(0.95);
+        transform: scale(0.8);
     }
 
     to {
@@ -412,6 +483,46 @@
 
     100% {
         box-shadow: 0 0 0 8px rgba(45, 90, 39, 0);
+    }
+}
+
+@keyframes bounce-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slide-up-fade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes press-down {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
     }
 }
 
@@ -437,6 +548,7 @@
     
     body {
         /* Allow scrolling but prevent pull-to-refresh on main content */
+        overscroll-behavior-x: none;
         overscroll-behavior-y: auto;
         -webkit-overflow-scrolling: touch;
     }
@@ -450,19 +562,22 @@
         -webkit-backface-visibility: hidden;
     }
 
-    /* Larger touch targets on mobile */
+    /* Larger touch targets on mobile - Minimum 44x44px */
     button,
     a,
     [role="button"] {
         min-height: 44px;
+        min-width: 44px;
     }
 
-    /* Input styling for mobile - Using radius-md */
+    /* Input styling for mobile - Prevent zoom on iOS */
     input,
     textarea,
     select {
         font-size: 16px !important;
         border-radius: var(--radius-md);
+        /* Prevent auto-zoom on focus */
+        touch-action: manipulation;
     }
 
     /* Card border radius for mobile - Using radius-lg */
@@ -486,12 +601,131 @@
     label {
         font-size: 0.875rem;
     }
+
+    /* Tap highlight color - transparent for native feel */
+    .tap-highlight-transparent {
+        -webkit-tap-highlight-color: transparent;
+        tap-highlight-color: transparent;
+    }
+
+    /* Active state transforms */
+    .active-scale {
+        transition: transform 0.1s ease;
+    }
+
+    .active-scale:active {
+        transform: scale(0.96);
+    }
+
+    /* Bottom nav specific styles */
+    .bottom-nav-item {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 64px;
+        padding: 0.5rem;
+    }
+
+    /* Floating action button styles */
+    .fab {
+        position: fixed;
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        right: 1rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(45, 90, 39, 0.4);
+        z-index: 50;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .fab:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 8px rgba(45, 90, 39, 0.3);
+    }
+
+    /* Improved momentum scrolling for scrollable areas */
+    .scrollable {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Touch action manipulation for better responsiveness */
+    .touch-manipulation {
+        touch-action: manipulation;
+    }
+
+    /* Prevent text selection on interactive elements */
+    .no-select {
+        -webkit-user-select: none;
+        user-select: none;
+    }
 }
 
 /* Selection color - Using primary with opacity */
 ::selection {
     background: rgba(45, 90, 39, 0.2);
     color: var(--foreground);
+}
+
+/* Reduced motion support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-bounce-in,
+    .animate-slide-up,
+    .animate-slide-up-fade,
+    .animate-press {
+        animation: none !important;
+    }
+}
+
+/* Focus visible enhancements for mobile navigation */
+nav [role="button"]:focus-visible,
+nav a:focus-visible,
+nav button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+    border-radius: 12px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    nav {
+        border-top-width: 2px;
+    }
+
+    .bottom-nav-item[aria-current="page"] {
+        outline: 2px solid currentColor;
+        outline-offset: -4px;
+    }
 }
 
 /* Scrollbar styling */

@@ -362,15 +362,13 @@ export default function AdminOrdersPage() {
 
           {/* Clear Filters */}
           {activeFiltersCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={clearFilters}
-              className="h-9 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+              className="inline-flex items-center justify-center h-9 px-3 text-xs rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               <X className="h-3.5 w-3.5 mr-1" />
               Clear ({activeFiltersCount})
-            </Button>
+            </button>
           )}
         </div>
 

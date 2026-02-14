@@ -196,37 +196,6 @@ export default function SettingsPage() {
         <span className="text-foreground">Settings</span>
       </nav>
 
-            {savedAddresses.length > 0 && (
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle>Saved Addresses</CardTitle>
-                        <CardDescription>Manage your saved shipping addresses</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid sm:grid-cols-2 gap-3">
-                            {savedAddresses.map((addr) => (
-                                <div key={addr.id} className="p-4 rounded border">
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <p className="font-medium">{addr.label} {addr.is_default && <span className="text-xs text-primary">(Default)</span>}</p>
-                                            <p className="text-sm">{addr.full_name}</p>
-                                            <p className="text-xs text-muted-foreground">{addr.street}, {addr.city}</p>
-                                            <p className="text-xs text-muted-foreground">{addr.state} - {addr.postal_code}</p>
-                                            <p className="text-xs text-muted-foreground">{addr.phone}</p>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Button size="sm" variant="ghost" onClick={() => handleEditAddress(addr)}>Edit</Button>
-                                            <Button size="sm" variant="ghost" onClick={() => handleSetDefault(addr.id)}>Set Default</Button>
-                                            <Button size="sm" variant="destructive" onClick={() => handleDeleteAddress(addr.id)}>Delete</Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
       {savedAddresses.length > 0 && (
         <Card className="mb-6">
           <CardHeader>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +35,8 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Category } from "@/types/database.types";
@@ -48,6 +50,7 @@ export default function AdminCategoriesPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -109,6 +112,10 @@ export default function AdminCategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isSaving) return; // Prevent double submission
+
+    setIsSaving(true);
+
     const categoryId = editingCategory?.id || formData.slug;
 
     try {
@@ -131,11 +138,32 @@ export default function AdminCategoriesPage() {
     } catch (error) {
       console.error("Error saving category:", error);
       toast.error("Failed to save category");
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const checkProductsInCategory = async (categoryId: string) => {
+    const q = query(
+      collection(db, "products"),
+      where("category_id", "==", categoryId),
+    );
+    const snap = await getDocs(q);
+    return snap.size;
   };
 
   const handleDelete = async (categoryId: string) => {
     try {
+      // Check if products use this category
+      const productCount = await checkProductsInCategory(categoryId);
+      if (productCount > 0) {
+        toast.error(
+          `Cannot delete: ${productCount} product${productCount > 1 ? "s" : ""} use this category. Please reassign them first.`,
+        );
+        setDeleteConfirm(null);
+        return;
+      }
+
       await deleteDoc(doc(db, "categories", categoryId));
       toast.success("Category deleted");
       setDeleteConfirm(null);
@@ -262,22 +290,18 @@ export default function AdminCategoriesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => openEditDialog(category)}
-                      className="h-10 w-10"
+                      className="inline-flex items-center justify-center h-10 w-10 rounded-md hover:bg-accent transition-colors"
                     >
                       <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 h-10 w-10"
+                    </button>
+                    <button
+                      className="inline-flex items-center justify-center h-10 w-10 rounded-md text-red-500 hover:bg-red-50 transition-colors"
                       onClick={() => setDeleteConfirm(category.id)}
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </CardContent>
@@ -410,6 +434,7 @@ export default function AdminCategoriesPage() {
                 onClick={() => setIsDialogOpen(false)}
                 className="flex-1"
                 size="lg"
+                disabled={isSaving}
               >
                 Cancel
               </Button>
@@ -418,8 +443,16 @@ export default function AdminCategoriesPage() {
                 style={{ backgroundColor: settings.primary_color }}
                 className="flex-1"
                 size="lg"
+                disabled={isSaving}
               >
-                {editingCategory ? "Update" : "Create"}
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {editingCategory ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  <>{editingCategory ? "Update" : "Create"}</>
+                )}
               </Button>
             </DialogFooter>
           </form>

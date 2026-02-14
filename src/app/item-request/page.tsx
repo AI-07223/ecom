@@ -40,6 +40,17 @@ export default function ItemRequestPage() {
     }
   }, [user, isWholeseller, isLoading, router]);
 
+  // Cleanup object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, []);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -82,6 +93,10 @@ export default function ItemRequestPage() {
   };
 
   const removeImage = (index: number) => {
+    const urlToRevoke = imagePreviews[index];
+    if (urlToRevoke && urlToRevoke.startsWith('blob:')) {
+      URL.revokeObjectURL(urlToRevoke);
+    }
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };

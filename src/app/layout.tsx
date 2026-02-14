@@ -10,6 +10,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AdminBottomNav } from "@/components/layout/AdminBottomNav";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,7 +46,9 @@ export default function RootLayout({
               <WishlistProvider>
                 <div className="flex flex-col min-h-screen">
                   <Navbar />
-                  <main className="flex-1 flex flex-col">{children}</main>
+                  <ErrorBoundary>
+                    <main className="flex-1 flex flex-col">{children}</main>
+                  </ErrorBoundary>
                   <Footer />
                 </div>
                 <MobileBottomNav />

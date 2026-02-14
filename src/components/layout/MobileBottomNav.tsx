@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Home, ShoppingBag, Grid3X3, ShoppingCart, User, Heart, Package, LogOut, Settings, Store, FileQuestion } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,211 +30,280 @@ export function MobileBottomNav() {
   const { itemCount } = useCart();
   const { user, profile, isAdmin, signOut } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+
+  const isActive = useCallback((href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }, [pathname]);
 
   // Hide on admin pages
   if (pathname.startsWith("/profile/admin")) return null;
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
+  const handleTabPress = (href: string) => {
+    setActiveTab(href);
+    // Haptic feedback simulation via vibration API (if supported)
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+    setTimeout(() => setActiveTab(null), 150);
   };
 
   return (
     <>
-      {/* Fixed Bottom Navigation - Using CSS custom properties for safe areas */}
+      {/* Fixed Bottom Navigation - Native App Style */}
       <nav
         className={cn(
-          "md:hidden fixed bottom-0 left-0 right-0 z-50",
-          "bg-white border-t border-[#E2E0DA]",
-          "touch-none select-none",
-          "transform-gpu will-change-transform"
+          "md:hidden fixed bottom-0 left-0 right-0 z-[100]",
+          "bg-white/95 backdrop-blur-xl",
+          "border-t border-[#E2E0DA]/80",
+          "select-none",
+          "transform-gpu will-change-transform",
+          "transition-transform duration-300 ease-out"
         )}
         style={{
-          // Total height includes nav height + safe area
           height: "calc(64px + env(safe-area-inset-bottom, 0px))",
-          // Safe area padding at bottom
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          // Subtle shadow for elevation
-          boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.08), 0 -1px 3px rgba(0,0,0,0.04)",
         }}
         aria-label="Mobile navigation"
       >
-        {/* Flexbox container - distributes items evenly */}
-        <div className="flex items-stretch h-full">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex-1 flex flex-col items-center justify-center",
-                "min-h-[44px] tap-active no-underline",
-                "relative"
-              )}
-            >
-              {/* Icon container - 44x44px touch target */}
-              <div
-                className={cn(
-                  "flex items-center justify-center w-11 h-11 rounded-full transition-all",
-                  isActive(item.href) && "bg-[#2D5A27]/10"
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    "w-5 h-5 transition-colors",
-                    isActive(item.href) ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                  )}
-                />
-              </div>
-              {/* Label */}
-              <span
-                className={cn(
-                  "text-[10px] font-medium leading-none mt-0.5",
-                  isActive(item.href) ? "text-[#2D5A27]" : "text-[#9CA3AF]"
-                )}
-              >
-                {item.label}
-              </span>
+        {/* Floating indicator background for active state */}
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#2D5A27]/20 to-transparent" />
 
-              {/* Cart badge */}
-              {item.showBadge && itemCount > 0 && (
-                <Badge
+        <div className="flex items-stretch h-[64px]">
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            const isPressed = activeTab === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => handleTabPress(item.href)}
+                onTouchStart={() => setActiveTab(item.href)}
+                onTouchEnd={() => setTimeout(() => setActiveTab(null), 100)}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center",
+                  "relative overflow-hidden",
+                  "tap-highlight-transparent"
+                )}
+              >
+                {/* Active indicator dot */}
+                {active && (
+                  <span className="absolute top-1.5 w-1 h-1 rounded-full bg-[#2D5A27] animate-fade-in" />
+                )}
+
+                {/* Icon container with floating effect when active */}
+                <div
                   className={cn(
-                    "absolute top-1 right-1/4 -translate-x-1/2",
-                    "h-4.5 min-w-[18px] px-1",
-                    "flex items-center justify-center",
-                    "text-[10px] font-bold",
-                    "bg-[#2D5A27] text-white",
-                    "border-2 border-white rounded-full"
+                    "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200",
+                    active && "bg-[#2D5A27]/10 -translate-y-0.5",
+                    isPressed && "scale-90 bg-[#2D5A27]/20",
+                    !active && !isPressed && "hover:bg-gray-50"
                   )}
                 >
-                  {itemCount > 9 ? "9+" : itemCount}
-                </Badge>
-              )}
-            </Link>
-          ))}
+                  <item.icon
+                    className={cn(
+                      "w-[22px] h-[22px] transition-all duration-200",
+                      active ? "text-[#2D5A27] scale-110" : "text-gray-400",
+                      isPressed && "scale-95"
+                    )}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </div>
+
+                {/* Label */}
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold leading-none mt-0.5 transition-all duration-200",
+                    active ? "text-[#2D5A27]" : "text-gray-400",
+                    isPressed && "scale-95 opacity-70"
+                  )}
+                >
+                  {item.label}
+                </span>
+
+                {/* Cart badge */}
+                {item.showBadge && itemCount > 0 && (
+                  <Badge
+                    className={cn(
+                      "absolute top-0.5 right-[15%]",
+                      "h-5 min-w-[20px] px-1.5",
+                      "flex items-center justify-center",
+                      "text-[10px] font-bold",
+                      "bg-[#2D5A27] text-white",
+                      "border-2 border-white rounded-full",
+                      "shadow-sm",
+                      "animate-scale-in"
+                    )}
+                  >
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </Badge>
+                )}
+              </Link>
+            );
+          })}
 
           {/* Profile Sheet Trigger */}
           <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
             <SheetTrigger asChild>
               <button
+                onClick={() => handleTabPress("profile")}
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center",
-                  "min-h-[44px] tap-active",
-                  "bg-transparent border-none"
+                  "relative overflow-hidden",
+                  "tap-highlight-transparent",
+                  "bg-transparent border-none p-0"
                 )}
               >
-                <div className="flex items-center justify-center w-11 h-11">
+                {/* Avatar container */}
+                <div
+                  className={cn(
+                    "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200",
+                    profileOpen && "bg-[#2D5A27]/10 -translate-y-0.5"
+                  )}
+                >
                   {user ? (
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center ring-2 ring-white">
-                      <span className="text-white text-[10px] font-bold">
+                    <div className="relative">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md transition-transform duration-200",
+                        profileOpen ? "scale-110" : "scale-100",
+                        "bg-gradient-to-br from-[#2D5A27] to-[#4CAF50]"
+                      )}>
                         {(profile?.full_name || user.email || "U").charAt(0).toUpperCase()}
-                      </span>
+                      </div>
+                      {/* Online indicator */}
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
                     </div>
                   ) : (
-                    <User className="w-5 h-5 text-[#9CA3AF]" />
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200",
+                        profileOpen ? "bg-[#2D5A27]/10" : "bg-gray-100"
+                      )}
+                    >
+                      <User className={cn(
+                        "w-5 h-5 transition-colors",
+                        profileOpen ? "text-[#2D5A27]" : "text-gray-400"
+                      )} />
+                    </div>
                   )}
                 </div>
-                <span className="text-[10px] font-medium leading-none mt-0.5 text-[#9CA3AF]">
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold leading-none mt-0.5 transition-colors",
+                    profileOpen ? "text-[#2D5A27]" : "text-gray-400"
+                  )}
+                >
                   Profile
                 </span>
               </button>
             </SheetTrigger>
 
-            {/* Profile Bottom Sheet */}
+            {/* Profile Bottom Sheet - Native Style */}
             <SheetContent
               side="bottom"
-              className="h-auto max-h-[85vh] rounded-t-3xl p-0 bg-white"
+              className="h-auto max-h-[85vh] rounded-t-[28px] p-0 bg-white border-0"
             >
               {/* Pull indicator */}
               <div className="flex justify-center pt-3 pb-2">
-                <div className="w-10 h-1 rounded-full bg-[#E2E0DA]" />
+                <div className="w-10 h-1.5 rounded-full bg-gray-300" />
               </div>
 
               {/* User Header */}
               <SheetHeader className="px-5 pb-4">
                 {user ? (
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center shadow-lg">
-                      <span className="text-white text-xl font-bold">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2D5A27] to-[#4CAF50] flex items-center justify-center shadow-lg shadow-[#2D5A27]/20">
+                      <span className="text-white text-2xl font-bold">
                         {(profile?.full_name || user.email || "?").charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <SheetTitle className="text-lg text-[#1A1A1A] text-left">
+                      <SheetTitle className="text-lg text-[#1A1A1A] text-left font-bold">
                         {profile?.full_name || "Welcome back"}
                       </SheetTitle>
-                      <p className="text-sm text-[#6B7280] truncate">{user.email}</p>
+                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-[#F0EFE8] border border-[#E2E0DA] flex items-center justify-center">
-                      <User className="h-6 w-6 text-[#6B7280]" />
+                    <div className="w-16 h-16 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+                      <User className="h-7 w-7 text-gray-400" />
                     </div>
                     <div>
-                      <SheetTitle className="text-lg text-[#1A1A1A] text-left">Guest</SheetTitle>
-                      <p className="text-sm text-[#6B7280]">Sign in to access your account</p>
+                      <SheetTitle className="text-lg text-[#1A1A1A] text-left font-bold">Guest</SheetTitle>
+                      <p className="text-sm text-gray-500">Sign in to access your account</p>
                     </div>
                   </div>
                 )}
               </SheetHeader>
 
-              {/* Quick Actions */}
+              {/* Quick Actions Grid */}
               <div className="px-5 pb-4">
                 <div className="grid grid-cols-4 gap-3">
                   <Link
                     href="/wishlist"
                     onClick={() => setProfileOpen(false)}
-                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] tap-active"
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 tap-active hover:bg-gray-100 transition-colors"
                   >
-                    <Heart className="h-6 w-6 text-[#2D5A27] mb-2" />
-                    <span className="text-xs font-medium text-[#1A1A1A]">Wishlist</span>
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-2">
+                      <Heart className="h-5 w-5 text-[#2D5A27]" />
+                    </div>
+                    <span className="text-xs font-semibold text-[#1A1A1A]">Wishlist</span>
                   </Link>
                   <Link
                     href="/profile/orders"
                     onClick={() => setProfileOpen(false)}
-                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] tap-active"
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 tap-active hover:bg-gray-100 transition-colors"
                   >
-                    <Package className="h-6 w-6 text-[#2D5A27] mb-2" />
-                    <span className="text-xs font-medium text-[#1A1A1A]">Orders</span>
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-2">
+                      <Package className="h-5 w-5 text-[#2D5A27]" />
+                    </div>
+                    <span className="text-xs font-semibold text-[#1A1A1A]">Orders</span>
                   </Link>
                   <Link
                     href="/cart"
                     onClick={() => setProfileOpen(false)}
-                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] tap-active relative"
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 tap-active hover:bg-gray-100 transition-colors relative"
                   >
-                    <ShoppingCart className="h-6 w-6 text-[#2D5A27] mb-2" />
-                    <span className="text-xs font-medium text-[#1A1A1A]">Cart</span>
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-2">
+                      <ShoppingCart className="h-5 w-5 text-[#2D5A27]" />
+                    </div>
+                    <span className="text-xs font-semibold text-[#1A1A1A]">Cart</span>
                     {itemCount > 0 && (
-                      <Badge className="absolute top-3 right-3 h-5 min-w-[20px] px-1.5 text-[10px] bg-[#2D5A27] text-white">
-                        {itemCount}
+                      <Badge className="absolute top-3 right-3 h-5 min-w-[20px] px-1.5 text-[10px] bg-[#2D5A27] text-white border-2 border-white">
+                        {itemCount > 99 ? "99+" : itemCount}
                       </Badge>
                     )}
                   </Link>
                   <Link
                     href="/profile/settings"
                     onClick={() => setProfileOpen(false)}
-                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#F0EFE8] tap-active"
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 tap-active hover:bg-gray-100 transition-colors"
                   >
-                    <Settings className="h-6 w-6 text-[#2D5A27] mb-2" />
-                    <span className="text-xs font-medium text-[#1A1A1A]">Settings</span>
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-2">
+                      <Settings className="h-5 w-5 text-[#2D5A27]" />
+                    </div>
+                    <span className="text-xs font-semibold text-[#1A1A1A]">Settings</span>
                   </Link>
                 </div>
               </div>
 
               {/* Menu Links */}
-              <div className="px-5 pb-6 max-h-[40vh] overflow-y-auto">
+              <div className="px-5 pb-8 max-h-[40vh] overflow-y-auto no-scrollbar">
                 <div className="space-y-1">
                   {user && (
                     <Link
                       href="/profile"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F0EFE8] tap-active"
+                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 tap-active transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
-                        <User className="h-5 w-5 text-[#6B7280]" />
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                        <User className="h-5 w-5 text-gray-500" />
                       </div>
-                      <span className="text-sm font-medium text-[#1A1A1A]">My Profile</span>
+                      <span className="text-sm font-semibold text-[#1A1A1A]">My Profile</span>
                     </Link>
                   )}
 
@@ -243,22 +312,22 @@ export function MobileBottomNav() {
                       <Link
                         href="/item-request"
                         onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F0EFE8] tap-active"
+                        className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 tap-active transition-colors"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
-                          <Store className="h-5 w-5 text-[#6B7280]" />
+                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                          <Store className="h-5 w-5 text-gray-500" />
                         </div>
-                        <span className="text-sm font-medium text-[#1A1A1A]">Request Item</span>
+                        <span className="text-sm font-semibold text-[#1A1A1A]">Request Item</span>
                       </Link>
                       <Link
                         href="/profile/item-requests"
                         onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#F0EFE8] tap-active"
+                        className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 tap-active transition-colors"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-[#F0EFE8] flex items-center justify-center">
-                          <FileQuestion className="h-5 w-5 text-[#6B7280]" />
+                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                          <FileQuestion className="h-5 w-5 text-gray-500" />
                         </div>
-                        <span className="text-sm font-medium text-[#1A1A1A]">My Requests</span>
+                        <span className="text-sm font-semibold text-[#1A1A1A]">My Requests</span>
                       </Link>
                     </>
                   )}
@@ -267,12 +336,12 @@ export function MobileBottomNav() {
                     <Link
                       href="/profile/admin"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-4 p-4 rounded-2xl bg-[#2D5A27]/10 tap-active"
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-[#2D5A27]/10 tap-active transition-colors"
                     >
-                      <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-[#2D5A27]/20">
+                      <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-[#2D5A27]/20 bg-white">
                         <Image src="/logo.jpeg" alt="" fill className="object-cover" />
                       </div>
-                      <span className="text-sm font-semibold text-[#2D5A27]">Admin Dashboard</span>
+                      <span className="text-sm font-bold text-[#2D5A27]">Admin Dashboard</span>
                     </Link>
                   )}
 
@@ -282,25 +351,25 @@ export function MobileBottomNav() {
                         setProfileOpen(false);
                         signOut();
                       }}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-red-500 mt-2 tap-active"
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-red-500 mt-2 tap-active transition-colors"
                     >
                       <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
                         <LogOut className="h-5 w-5" />
                       </div>
-                      <span className="text-sm font-medium">Sign Out</span>
+                      <span className="text-sm font-semibold">Sign Out</span>
                     </button>
                   ) : (
                     <div className="flex gap-3 mt-4">
                       <Link href="/login" onClick={() => setProfileOpen(false)} className="flex-1">
                         <Button
                           variant="outline"
-                          className="w-full rounded-xl h-12 text-sm border-[#E2E0DA] text-[#6B7280] hover:text-[#1A1A1A] hover:bg-[#F0EFE8] font-medium"
+                          className="w-full rounded-xl h-12 text-sm border-gray-200 text-gray-600 hover:text-[#1A1A1A] hover:bg-gray-50 font-semibold"
                         >
                           Sign In
                         </Button>
                       </Link>
                       <Link href="/signup" onClick={() => setProfileOpen(false)} className="flex-1">
-                        <Button className="w-full rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white h-12 text-sm font-semibold">
+                        <Button className="w-full rounded-xl bg-[#2D5A27] hover:bg-[#3B7D34] text-white h-12 text-sm font-bold shadow-md shadow-[#2D5A27]/20">
                           Sign Up
                         </Button>
                       </Link>
@@ -315,7 +384,7 @@ export function MobileBottomNav() {
 
       {/* Spacer for bottom nav - matches nav height exactly */}
       <div
-        className="md:hidden"
+        className="md:hidden flex-shrink-0"
         style={{
           height: "calc(64px + env(safe-area-inset-bottom, 0px))",
         }}

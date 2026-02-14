@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import {
   collection,
@@ -23,6 +24,8 @@ import { CartItem, Product } from "@/types/database.types";
 import { timestampToString } from "@/lib/firebase/utils";
 import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Undo2, RotateCcw } from "lucide-react";
 
 interface Coupon {
   code: string;
@@ -102,6 +105,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const { user } = useAuth();
+  
+  // Keep track of removed items for undo
+  const removedItemsRef = useRef<Map<string, CartItem & { product: Product }>>(new Map());
 
   const applyCoupon = (coupon: Coupon) => {
     setAppliedCoupon(coupon);
@@ -169,8 +175,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      // Fetch product to check stock
+      const productRef = doc(db, "products", productId);
+      const productSnap = await getDoc(productRef);
+
+      if (!productSnap.exists()) {
+        toast.error("Product not found");
+        return;
+      }
+
+      const productData = productSnap.data();
+      const availableStock = productData.quantity;
+
       const cartItemRef = doc(db, "users", user.uid, "cart", productId);
       const existingItem = await getDoc(cartItemRef);
+      const currentCartQty = existingItem.exists() ? existingItem.data().quantity : 0;
+
+      // Check if adding would exceed stock
+      if (currentCartQty + quantity > availableStock) {
+        if (availableStock === 0) {
+          toast.error("Product is out of stock");
+        } else if (currentCartQty >= availableStock) {
+          toast.error(`You already have the maximum available quantity (${availableStock}) in your cart`);
+        } else {
+          toast.error(`Only ${availableStock - currentCartQty} more items available`);
+        }
+        return;
+      }
 
       if (existingItem.exists()) {
         await setDoc(
@@ -195,21 +226,98 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       await fetchCart();
     } catch (error) {
-      toast.error("Failed to add to cart");
+      toast.error("Failed to add to cart", {
+        action: {
+          label: (
+            <span className="flex items-center gap-1">
+              <RotateCcw className="w-3 h-3" />
+              Retry
+            </span>
+          ) as unknown as string,
+          onClick: () => addToCart(productId, quantity),
+        },
+      });
       console.error("Error adding to cart:", error);
     }
   };
 
-  const removeFromCart = async (productId: string) => {
+  const removeFromCart = async (productId: string, showUndo = true) => {
     if (!user) return;
 
     try {
+      // Find the item before removing it
+      const itemToRemove = items.find(item => item.product_id === productId);
+      
+      if (itemToRemove) {
+        // Store for potential undo
+        removedItemsRef.current.set(productId, itemToRemove);
+      }
+      
       await deleteDoc(doc(db, "users", user.uid, "cart", productId));
-      toast.success("Item removed");
       await fetchCart();
+      
+      if (showUndo && itemToRemove) {
+        // Show toast with undo action
+        toast.success("Item removed from cart", {
+          action: {
+            label: (
+              <span className="flex items-center gap-1">
+                <Undo2 className="w-3 h-3" />
+                Undo
+              </span>
+            ) as unknown as string,
+            onClick: () => handleUndoRemove(productId),
+          },
+          duration: 5000,
+        });
+      } else {
+        toast.success("Item removed");
+      }
     } catch (error) {
-      toast.error("Failed to remove item");
+      toast.error("Failed to remove item", {
+        action: {
+          label: (
+            <span className="flex items-center gap-1">
+              <RotateCcw className="w-3 h-3" />
+              Retry
+            </span>
+          ) as unknown as string,
+          onClick: () => removeFromCart(productId, showUndo),
+        },
+      });
       console.error("Error removing from cart:", error);
+    }
+  };
+  
+  const handleUndoRemove = async (productId: string) => {
+    if (!user) return;
+    
+    const removedItem = removedItemsRef.current.get(productId);
+    if (!removedItem) {
+      toast.error("Cannot undo - item data not found");
+      return;
+    }
+    
+    try {
+      // Restore the item
+      await setDoc(
+        doc(db, "users", user.uid, "cart", productId),
+        {
+          product_id: productId,
+          quantity: removedItem.quantity,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        }
+      );
+      
+      await fetchCart();
+      toast.success("Item restored to cart");
+      
+      // Clean up
+      removedItemsRef.current.delete(productId);
+    } catch (error) {
+      toast.error("Failed to restore item");
+      console.error("Error restoring item to cart:", error);
     }
   };
 
@@ -243,14 +351,61 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const cartRef = collection(db, "users", user.uid, "cart");
       const cartSnap = await getDocs(cartRef);
+      
+      // Store all items for potential undo
+      const clearedItems = items.map(item => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+        product: item.product,
+      }));
 
       const deletePromises = cartSnap.docs.map((doc) => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
 
-      toast.success("Cart cleared");
+      toast.success("Cart cleared", {
+        action: clearedItems.length > 0 ? {
+          label: (
+            <span className="flex items-center gap-1">
+              <Undo2 className="w-3 h-3" />
+              Undo
+            </span>
+          ) as unknown as string,
+          onClick: async () => {
+            try {
+              for (const item of clearedItems) {
+                await setDoc(
+                  doc(db, "users", user.uid, "cart", item.productId),
+                  {
+                    product_id: item.productId,
+                    quantity: item.quantity,
+                    created_at: serverTimestamp(),
+                    updated_at: serverTimestamp(),
+                  }
+                );
+              }
+              await fetchCart();
+              toast.success("Cart restored");
+            } catch (error) {
+              toast.error("Failed to restore cart");
+              console.error("Error restoring cart:", error);
+            }
+          },
+        } : undefined,
+        duration: 5000,
+      });
       setItems([]);
     } catch (error) {
-      toast.error("Failed to clear cart");
+      toast.error("Failed to clear cart", {
+        action: {
+          label: (
+            <span className="flex items-center gap-1">
+              <RotateCcw className="w-3 h-3" />
+              Retry
+            </span>
+          ) as unknown as string,
+          onClick: () => clearCart(),
+        },
+      });
       console.error("Error clearing cart:", error);
     }
   };

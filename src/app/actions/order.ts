@@ -3,6 +3,7 @@
 import { adminDb, adminAuth } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { OrderItem, ShippingAddress } from "@/types/database.types";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 interface CreateOrderInput {
   user_id: string;
@@ -250,8 +251,8 @@ export async function createOrder(
         subtotal,
         shipping,
         discount,
-        tax_amount: 0, // Set default tax amount
-        currency: "INR", // Set default currency
+        tax_amount: 0,
+        currency: "INR",
         coupon_code: validCouponCode,
         gst_number: gst_number?.trim() || null,
         total,
@@ -263,20 +264,46 @@ export async function createOrder(
         created_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
       });
-    });
 
-    // Increment coupon usage outside transaction (after successful order creation)
-    if (validCouponCode && couponRef) {
-      try {
-        const currentUsed = (await couponRef.get()).data()?.used_count || 0;
-        await couponRef.update({
+      // Increment coupon usage INSIDE transaction to prevent race conditions
+      if (validCouponCode && couponRef) {
+        const couponDoc = await transaction.get(couponRef);
+        const currentUsed = couponDoc.data()?.used_count || 0;
+        transaction.update(couponRef, {
           used_count: currentUsed + 1,
           updated_at: FieldValue.serverTimestamp(),
         });
-      } catch (couponError) {
-        // Log but don't fail the order if coupon update fails
-        console.error("Failed to update coupon usage:", couponError);
       }
+    });
+
+    // Send order confirmation email (non-blocking — don't fail order on email error)
+    try {
+      const userEmail = decodedToken.email;
+      if (userEmail) {
+        sendOrderConfirmationEmail({
+          orderId,
+          customerName: shipping_address.full_name,
+          customerEmail: userEmail,
+          items: orderItems.map((item) => ({
+            name: item.product_name,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          subtotal,
+          discount,
+          total,
+          shippingAddress: {
+            full_name: shipping_address.full_name,
+            address_line1: shipping_address.street,
+            city: shipping_address.city,
+            state: shipping_address.state,
+            postal_code: shipping_address.postal_code,
+            phone: shipping_address.phone,
+          },
+        }).catch((err) => console.error("[createOrder] Email send failed:", err));
+      }
+    } catch (emailError) {
+      console.error("[createOrder] Email setup error:", emailError);
     }
 
     return { success: true, order_id: orderId };

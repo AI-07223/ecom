@@ -43,6 +43,66 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Validation functions
+const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+const postalRegex = /^\d{6}$/;
+const phoneRegex = /^[6-9]\d{9}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface ValidationErrors {
+  [key: string]: string;
+}
+
+const validateSettings = (data: {
+  business_email: string;
+  business_phone: string;
+  contact_email: string;
+  contact_phone: string;
+  business_gst_number: string;
+  business_pan_number: string;
+  business_postal_code: string;
+}): ValidationErrors => {
+  const errors: ValidationErrors = {};
+
+  // Business email validation
+  if (data.business_email && !emailRegex.test(data.business_email)) {
+    errors.business_email = "Invalid email format";
+  }
+
+  // Business phone validation
+  if (data.business_phone && !phoneRegex.test(data.business_phone)) {
+    errors.business_phone = "Invalid phone number (10 digits required)";
+  }
+
+  // Contact email validation
+  if (data.contact_email && !emailRegex.test(data.contact_email)) {
+    errors.contact_email = "Invalid email format";
+  }
+
+  // Contact phone validation
+  if (data.contact_phone && !phoneRegex.test(data.contact_phone)) {
+    errors.contact_phone = "Invalid phone number (10 digits required)";
+  }
+
+  // GST number validation
+  if (data.business_gst_number && !gstRegex.test(data.business_gst_number)) {
+    errors.business_gst_number = "Invalid GST format (e.g., 22AAAAA0000A1Z5)";
+  }
+
+  // PAN number validation
+  if (data.business_pan_number && !panRegex.test(data.business_pan_number)) {
+    errors.business_pan_number = "Invalid PAN format (e.g., AAAAA0000A)";
+  }
+
+  // Postal code validation
+  if (data.business_postal_code && !postalRegex.test(data.business_postal_code)) {
+    errors.business_postal_code = "Invalid postal code (6 digits required)";
+  }
+
+  return errors;
+};
+
 export default function AdminSettingsPage() {
   const router = useRouter();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
@@ -50,6 +110,7 @@ export default function AdminSettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [formData, setFormData] = useState({
     // Contact
     contact_email: "",
@@ -107,10 +168,29 @@ export default function AdminSettingsPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate form
+    const validationErrors = validateSettings(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error("Please fix the validation errors");
+      return;
+    }
+
+    setErrors({});
     setIsSaving(true);
     try {
       const settingsToSave = [
@@ -216,6 +296,7 @@ export default function AdminSettingsPage() {
         business_phone: defaultSettings.business_phone || "",
         business_email: defaultSettings.business_email || "",
       });
+      setErrors({});
       await refreshSettings();
       toast.success("Settings reset to default successfully");
     } catch (error) {
@@ -310,7 +391,11 @@ export default function AdminSettingsPage() {
                     name="business_postal_code"
                     value={formData.business_postal_code}
                     onChange={handleInputChange}
+                    className={errors.business_postal_code ? "border-red-500" : ""}
                   />
+                  {errors.business_postal_code && (
+                    <p className="text-sm text-red-500 mt-1">{errors.business_postal_code}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="business_country">Country</Label>
@@ -337,9 +422,12 @@ export default function AdminSettingsPage() {
                     value={formData.business_gst_number}
                     onChange={handleInputChange}
                     placeholder="e.g., 27AABCU9603R1ZX"
-                    className="uppercase"
+                    className={`uppercase ${errors.business_gst_number ? "border-red-500" : ""}`}
                     maxLength={15}
                   />
+                  {errors.business_gst_number && (
+                    <p className="text-sm text-red-500 mt-1">{errors.business_gst_number}</p>
+                  )}
                 </div>
                 <div>
                   <Label
@@ -355,9 +443,12 @@ export default function AdminSettingsPage() {
                     value={formData.business_pan_number}
                     onChange={handleInputChange}
                     placeholder="e.g., AABCU9603R"
-                    className="uppercase"
+                    className={`uppercase ${errors.business_pan_number ? "border-red-500" : ""}`}
                     maxLength={10}
                   />
+                  {errors.business_pan_number && (
+                    <p className="text-sm text-red-500 mt-1">{errors.business_pan_number}</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -369,7 +460,11 @@ export default function AdminSettingsPage() {
                     value={formData.business_phone}
                     onChange={handleInputChange}
                     placeholder="+91 1234567890"
+                    className={errors.business_phone ? "border-red-500" : ""}
                   />
+                  {errors.business_phone && (
+                    <p className="text-sm text-red-500 mt-1">{errors.business_phone}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="business_email">Business Email</Label>
@@ -380,7 +475,11 @@ export default function AdminSettingsPage() {
                     value={formData.business_email}
                     onChange={handleInputChange}
                     placeholder="billing@yourstore.com"
+                    className={errors.business_email ? "border-red-500" : ""}
                   />
+                  {errors.business_email && (
+                    <p className="text-sm text-red-500 mt-1">{errors.business_email}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -403,7 +502,11 @@ export default function AdminSettingsPage() {
                     type="email"
                     value={formData.contact_email}
                     onChange={handleInputChange}
+                    className={errors.contact_email ? "border-red-500" : ""}
                   />
+                  {errors.contact_email && (
+                    <p className="text-sm text-red-500 mt-1">{errors.contact_email}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="contact_phone">Contact Phone</Label>
@@ -412,7 +515,11 @@ export default function AdminSettingsPage() {
                     name="contact_phone"
                     value={formData.contact_phone}
                     onChange={handleInputChange}
+                    className={errors.contact_phone ? "border-red-500" : ""}
                   />
+                  {errors.contact_phone && (
+                    <p className="text-sm text-red-500 mt-1">{errors.contact_phone}</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

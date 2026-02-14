@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -455,12 +457,11 @@ export default function AdminDashboardPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between p-4 tap-active hover:bg-[#F0EFE8] transition-colors ${
-                  index !== arr.length - 1 ? "border-b border-[#E2E0DA]" : ""
-                }`}
+                className={`flex items-center justify-between p-4 tap-active hover:bg-[#F0EFE8] transition-colors ${index !== arr.length - 1 ? "border-b border-[#E2E0DA]" : ""
+                  }`}
               >
                 <div className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center"
                     style={{ backgroundColor: `${item.color}15` }}
                   >

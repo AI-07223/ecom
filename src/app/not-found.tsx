@@ -1,19 +1,13 @@
-'use client'
-
 import Link from 'next/link'
-import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { Button } from '@/components/ui/button'
 import { Home, Search, ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
-    const { settings } = useSiteSettings()
-
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4">
             <div className="text-center max-w-md">
                 <h1
-                    className="text-9xl font-bold mb-4"
-                    style={{ color: settings.primary_color }}
+                    className="text-9xl font-bold mb-4 text-[#2D5A27]"
                 >
                     404
                 </h1>
@@ -25,8 +19,7 @@ export default function NotFound() {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link href="/">
                         <Button
-                            className="w-full sm:w-auto"
-                            style={{ backgroundColor: settings.primary_color }}
+                            className="w-full sm:w-auto bg-[#2D5A27] hover:bg-[#3B7D34]"
                         >
                             <Home className="h-4 w-4 mr-2" />
                             Go Home

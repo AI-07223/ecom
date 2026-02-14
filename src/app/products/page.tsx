@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { SlidersHorizontal, X, Search, Clock, TrendingUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import {
@@ -35,8 +42,15 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Product, Category } from "@/types/database.types";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { cn } from "@/lib/utils";
 
 const PRODUCTS_PER_PAGE = 12;
+const RECENT_SEARCHES_KEY = "recent_searches";
+const MAX_RECENT_SEARCHES = 5;
+
+// Trending search suggestions
+const TRENDING_SEARCHES = ["organic", "spices", "rice", "oil", "dry fruits"];
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -63,13 +77,83 @@ function ProductsContent() {
     searchParams.get("sale") === "true",
   );
 
+  // Search suggestions
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
+  // Load recent searches from localStorage
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    try {
+      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (saved) {
+        setRecentSearches(JSON.parse(saved));
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Save recent search
+  const saveRecentSearch = useCallback((term: string) => {
+    if (!term.trim()) return;
+    try {
+      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+      const searches: string[] = saved ? JSON.parse(saved) : [];
+      const newSearches = [term, ...searches.filter(s => s !== term)].slice(0, MAX_RECENT_SEARCHES);
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(newSearches));
+      setRecentSearches(newSearches);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Handle search submission
+  const handleSearchSubmit = useCallback((term: string) => {
+    setSearch(term);
+    setDebouncedSearch(term);
+    setShowSuggestions(false);
+    saveRecentSearch(term);
+  }, [saveRecentSearch]);
+
+  // Clear recent searches
+  const clearRecentSearches = useCallback(() => {
+    try {
+      localStorage.removeItem(RECENT_SEARCHES_KEY);
+      setRecentSearches([]);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -575,8 +659,8 @@ function ProductsContent() {
     showOnSale,
   ]);
 
-  const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) return;
+  const loadMoreProducts = useCallback(async () => {
+    if (isLoadingMore || !hasMore || !lastDoc) return;
 
     setIsLoadingMore(true);
 
@@ -611,7 +695,17 @@ function ProductsContent() {
     }
 
     setIsLoadingMore(false);
-  };
+  }, [isLoadingMore, hasMore, lastDoc, buildQuery, applyClientFilters]);
+
+  // Infinite scroll hook
+  const lastProductRef = useInfiniteScroll(
+    () => {
+      if (hasMore && !isLoadingMore) {
+        loadMoreProducts();
+      }
+    },
+    hasMore && !isLoading
+  );
 
   const clearFilters = () => {
     setSearch("");
@@ -630,6 +724,11 @@ function ProductsContent() {
     maxPrice ||
     showFeatured ||
     showOnSale;
+
+  // Filter autocomplete suggestions based on current search
+  const filteredTrending = TRENDING_SEARCHES.filter(
+    term => term.toLowerCase().includes(search.toLowerCase()) && term !== search
+  );
 
   const filterContent = (
     <div className="space-y-6">
@@ -671,6 +770,8 @@ function ProductsContent() {
         <div className="flex gap-2 mt-1">
           <Input
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             placeholder="Min"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
@@ -678,6 +779,8 @@ function ProductsContent() {
           />
           <Input
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             placeholder="Max"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
@@ -812,57 +915,132 @@ function ProductsContent() {
               </div>
             </div>
 
-            {/* Products Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="aspect-square rounded-2xl bg-[#E2E0DA]" />
-                    <Skeleton className="h-4 w-3/4 bg-[#E2E0DA]" />
-                    <Skeleton className="h-4 w-1/2 bg-[#E2E0DA]" />
-                  </div>
-                ))}
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-[#E2E0DA]">
-                <p className="text-[#6B7280] mb-4">No products found</p>
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="border-[#2D5A27] text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white"
+            {/* Search with Suggestions */}
+            <div className="mb-6 relative" ref={suggestionsRef}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  inputMode="search"
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearchSubmit(search);
+                    }
+                  }}
+                  className="pl-10 bg-white border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
+                />
+                {search && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setDebouncedSearch("");
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1A1A1A]"
                   >
-                    Clear Filters
-                  </Button>
+                    <X className="h-4 w-4" />
+                  </button>
                 )}
               </div>
-            ) : (
-              <>
-                <ProductGrid products={products} />
 
-                {/* Load More Button */}
-                {hasMore && (
-                  <div className="mt-8 text-center">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={handleLoadMore}
-                      disabled={isLoadingMore}
-                      className="border-[#2D5A27] text-[#2D5A27] hover:bg-[#2D5A27] hover:text-white rounded-full px-8"
-                    >
-                      {isLoadingMore ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        "Load More Products"
+              {/* Search Suggestions Dropdown */}
+              {showSuggestions && (
+                <div className="absolute z-50 w-full mt-1 bg-white rounded-lg border border-[#E2E0DA] shadow-elevated">
+                  <Command className="rounded-lg">
+                    <CommandList className="max-h-[300px] overflow-auto">
+                      {/* Recent Searches */}
+                      {recentSearches.length > 0 && (
+                        <CommandGroup heading="Recent Searches">
+                          {recentSearches.map((term) => (
+                            <CommandItem
+                              key={term}
+                              onSelect={() => handleSearchSubmit(term)}
+                              className="cursor-pointer"
+                            >
+                              <Clock className="mr-2 h-4 w-4 text-[#6B7280]" />
+                              <span>{term}</span>
+                            </CommandItem>
+                          ))}
+                          <CommandItem
+                            onSelect={clearRecentSearches}
+                            className="cursor-pointer text-[#6B7280]"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            <span>Clear recent searches</span>
+                          </CommandItem>
+                        </CommandGroup>
                       )}
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
+
+                      {/* Trending Searches */}
+                      <CommandGroup heading="Trending">
+                        {filteredTrending.map((term) => (
+                          <CommandItem
+                            key={term}
+                            onSelect={() => handleSearchSubmit(term)}
+                            className="cursor-pointer"
+                          >
+                            <TrendingUp className="mr-2 h-4 w-4 text-[#4CAF50]" />
+                            <span>{term}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+
+                      {/* Current Search Option */}
+                      {search && (
+                        <CommandGroup heading="Search">
+                          <CommandItem
+                            onSelect={() => handleSearchSubmit(search)}
+                            className="cursor-pointer"
+                          >
+                            <Search className="mr-2 h-4 w-4 text-[#2D5A27]" />
+                            <span>Search for &quot;{search}&quot;</span>
+                          </CommandItem>
+                        </CommandGroup>
+                      )}
+
+                      {/* Quick Filters */}
+                      <CommandGroup heading="Quick Filters">
+                        <CommandItem
+                          onSelect={() => {
+                            setShowFeatured(true);
+                            setShowSuggestions(false);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <Sparkles className="mr-2 h-4 w-4 text-amber-500" />
+                          <span>Featured Products</span>
+                        </CommandItem>
+                        <CommandItem
+                          onSelect={() => {
+                            setShowOnSale(true);
+                            setShowSuggestions(false);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <TrendingUp className="mr-2 h-4 w-4 text-red-500" />
+                          <span>On Sale</span>
+                        </CommandItem>
+                      </CommandGroup>
+
+                      <CommandEmpty>No suggestions found</CommandEmpty>
+                    </CommandList>
+                  </Command>
+                </div>
+              )}
+            </div>
+
+            {/* Products Grid */}
+            <ProductGrid 
+              products={products} 
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              lastProductRef={lastProductRef}
+              hasMore={hasMore}
+            />
           </div>
         </div>
       </div>

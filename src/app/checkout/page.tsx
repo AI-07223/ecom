@@ -103,6 +103,19 @@ export default function CheckoutPage() {
     }));
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow digits, max 10 characters
+    const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setFormData((prev) => ({
+      ...prev,
+      phone: value,
+    }));
+  };
+
+  const isValidPhone = (phone: string): boolean => {
+    return /^[6-9]\d{9}$/.test(phone);
+  };
+
   const getShippingAddress = () => {
     if (selectedAddressId && !showNewAddressForm) {
       const addr = savedAddresses.find((a) => a.id === selectedAddressId);
@@ -140,6 +153,14 @@ export default function CheckoutPage() {
     if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
+    }
+
+    // Validate phone number before proceeding
+    if (showNewAddressForm || savedAddresses.length === 0) {
+      if (!isValidPhone(formData.phone)) {
+        toast.error("Please enter a valid 10-digit phone number");
+        return;
+      }
     }
 
     const shippingAddress = getShippingAddress();
@@ -426,17 +447,24 @@ export default function CheckoutPage() {
                           className="bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
                         />
                       </div>
-                      <div className="col-span-2 sm:col-span-1">
-                        <Label htmlFor="phone" className="text-[#1A1A1A]">Phone</Label>
+                      <div className="col-span-2 sm:col-span-1 space-y-2">
+                        <Label htmlFor="phone" className="text-[#1A1A1A]">Phone Number *</Label>
                         <Input
                           id="phone"
                           name="phone"
                           type="tel"
+                          inputMode="numeric"
+                          pattern="[6-9]\d{9}"
+                          maxLength={10}
+                          placeholder="Enter 10-digit mobile number"
                           value={formData.phone}
-                          onChange={handleInputChange}
+                          onChange={handlePhoneChange}
                           required
-                          className="bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
+                          className={`bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20 ${formData.phone && !isValidPhone(formData.phone) ? "border-red-500" : ""}`}
                         />
+                        {formData.phone && !isValidPhone(formData.phone) && (
+                          <p className="text-sm text-red-500">Please enter a valid 10-digit mobile number</p>
+                        )}
                       </div>
                     </div>
 

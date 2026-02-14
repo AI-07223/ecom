@@ -1,14 +1,17 @@
 import { Product } from "@/types/database.types";
 import { ProductCard } from "./ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PackageX } from "lucide-react";
+import { PackageX, Loader2 } from "lucide-react";
 
 interface ProductGridProps {
   products: Product[];
   isLoading?: boolean;
+  isLoadingMore?: boolean;
+  lastProductRef?: (node: HTMLElement | null) => void;
+  hasMore?: boolean;
 }
 
-export function ProductGrid({ products, isLoading }: ProductGridProps) {
+export function ProductGrid({ products, isLoading, isLoadingMore, lastProductRef, hasMore }: ProductGridProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -47,10 +50,26 @@ export function ProductGrid({ products, isLoading }: ProductGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {products.map((product, index) => {
+          const isLast = index === products.length - 1;
+          return (
+            <div
+              key={product.id}
+              ref={isLast && lastProductRef ? lastProductRef : undefined}
+            >
+              <ProductCard product={product} />
+            </div>
+          );
+        })}
+      </div>
+      {isLoadingMore && (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-[#2D5A27]" />
+        </div>
+      )}
+    </>
   );
 }
+

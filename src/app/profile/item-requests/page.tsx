@@ -11,6 +11,7 @@ import {
   Plus,
   ArrowLeft,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -263,10 +264,11 @@ export default function MyItemRequestsPage() {
                                 rel="noopener noreferrer"
                                 className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted hover:opacity-80 transition-opacity"
                               >
-                                <img
+                                <Image
                                   src={img}
                                   alt={`Reference ${idx + 1}`}
-                                  className="w-full h-full object-cover"
+                                  fill
+                                  className="object-cover"
                                 />
                               </a>
                             ))}

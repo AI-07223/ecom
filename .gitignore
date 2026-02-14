@@ -133,3 +133,17 @@ temp/
 # Generated files (if any)
 dist/
 build/
+
+# Playwright / Test artifacts
+test-results/
+playwright-report/
+test_*.png
+*.test.png
+
+# AI assistant directories
+.agent/
+.kimi/
+AGENTS.md
+
+# Junk files
+src/nul

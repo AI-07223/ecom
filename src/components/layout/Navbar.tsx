@@ -4,7 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { ShoppingCart, Heart, Search, ChevronLeft, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { Product } from "@/types/database.types";
+import { SearchOverlay } from "@/components/layout/SearchOverlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +37,50 @@ export function Navbar() {
   const { itemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
+  const [desktopResults, setDesktopResults] = useState<Product[]>([]);
+  const [showDesktopDropdown, setShowDesktopDropdown] = useState(false);
+  const desktopSearchRef = useRef<HTMLDivElement>(null);
+
+  // Desktop instant search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setDesktopResults([]);
+      setShowDesktopDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const q = query(
+          collection(db, "products"),
+          where("is_active", "==", true),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Product[];
+        const lower = searchQuery.toLowerCase();
+        const filtered = all
+          .filter((p) => p.name.toLowerCase().includes(lower) || p.description?.toLowerCase().includes(lower))
+          .slice(0, 5);
+        setDesktopResults(filtered);
+        setShowDesktopDropdown(filtered.length > 0);
+      } catch {
+        setShowDesktopDropdown(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close desktop dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (desktopSearchRef.current && !desktopSearchRef.current.contains(e.target as Node)) {
+        setShowDesktopDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const isHomePage = pathname === "/";
   const isAdminPage = pathname.startsWith("/profile/admin");
@@ -75,19 +123,54 @@ export function Navbar() {
               </div>
             </Link>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-xl">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  className="w-full pl-11 pr-4 h-11 bg-[#F0EFE8] border-0 rounded-xl text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:ring-2 focus:ring-[#2D5A27]/20"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </form>
+            {/* Search Bar with Dropdown */}
+            <div ref={desktopSearchRef} className="flex-1 max-w-xl relative">
+              <form onSubmit={handleSearch}>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
+                  <Input
+                    type="search"
+                    placeholder="Search products..."
+                    className="w-full pl-11 pr-4 h-11 bg-[#F0EFE8] border-0 rounded-xl text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:ring-2 focus:ring-[#2D5A27]/20"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => { if (desktopResults.length > 0) setShowDesktopDropdown(true); }}
+                  />
+                </div>
+              </form>
+              {/* Instant search dropdown */}
+              {showDesktopDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-floating border border-[#E2E0DA]/50 overflow-hidden z-50 animate-fade-in">
+                  {desktopResults.map((product) => (
+                    <Link
+                      key={product.id}
+                      href={`/products/${product.slug}`}
+                      onClick={() => { setShowDesktopDropdown(false); setSearchQuery(""); }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[#F0EFE8] transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-[#F0EFE8] overflow-hidden shrink-0 relative">
+                        {(product.thumbnail || product.images?.[0]) ? (
+                          <Image src={product.thumbnail || product.images[0]} alt={product.name} fill className="object-cover" sizes="40px" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><Search className="h-3 w-3 text-[#9CA3AF]" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1A1A1A] truncate">{product.name}</p>
+                        <p className="text-xs font-semibold text-[#2D5A27]">₹{product.price.toLocaleString("en-IN")}</p>
+                      </div>
+                    </Link>
+                  ))}
+                  <Link
+                    href={`/products?search=${encodeURIComponent(searchQuery)}`}
+                    onClick={() => { setShowDesktopDropdown(false); setSearchQuery(""); }}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#2D5A27] bg-[#F0EFE8]/50 hover:bg-[#F0EFE8] transition-colors border-t border-[#E2E0DA]/30"
+                  >
+                    View all results
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
@@ -97,11 +180,10 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
-                      pathname === link.href
-                        ? "text-[#2D5A27] bg-[#2D5A27]/10"
-                        : "text-[#6B7280] hover:text-[#1A1A1A] hover:bg-[#F0EFE8]"
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors ${pathname === link.href
+                      ? "text-[#2D5A27] bg-[#2D5A27]/10"
+                      : "text-[#6B7280] hover:text-[#1A1A1A] hover:bg-[#F0EFE8]"
+                      }`}
                   >
                     {link.label}
                   </Link>
@@ -155,7 +237,7 @@ export function Navbar() {
       </header>
 
       {/* Mobile Navbar - Native App Style with Safe Area */}
-      <header 
+      <header
         className="md:hidden fixed top-0 left-0 right-0 z-50"
         style={{
           paddingTop: "env(safe-area-inset-top, 0px)",
@@ -190,19 +272,14 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
-                <Input
-                  type="search"
-                  placeholder="Search..."
-                  className="w-full pl-9 pr-3 h-10 bg-[#F0EFE8] border-0 rounded-xl text-sm text-[#1A1A1A] placeholder:text-[#9CA3AF] focus:ring-2 focus:ring-[#2D5A27]/20"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </form>
+            {/* Search Bar - Opens fullscreen overlay */}
+            <button
+              onClick={() => setSearchOverlayOpen(true)}
+              className="flex-1 flex items-center gap-2 h-10 px-3 bg-[#F0EFE8] rounded-xl tap-active"
+            >
+              <Search className="h-4 w-4 text-[#9CA3AF] shrink-0" />
+              <span className="text-sm text-[#9CA3AF]">Search...</span>
+            </button>
 
             {/* Cart */}
             <Link href="/cart" className="relative">
@@ -279,11 +356,10 @@ export function Navbar() {
                         <SheetClose key={link.href} asChild>
                           <Link
                             href={link.href}
-                            className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                              pathname === link.href
-                                ? "text-[#2D5A27] bg-[#2D5A27]/10"
-                                : "text-[#1A1A1A] hover:bg-[#F0EFE8]"
-                            }`}
+                            className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${pathname === link.href
+                              ? "text-[#2D5A27] bg-[#2D5A27]/10"
+                              : "text-[#1A1A1A] hover:bg-[#F0EFE8]"
+                              }`}
                           >
                             {link.label}
                           </Link>
@@ -363,12 +439,15 @@ export function Navbar() {
       </header>
 
       {/* Spacer for fixed header - includes safe area height on mobile */}
-      <div 
-        className="md:h-16" 
+      <div
+        className="md:h-16"
         style={{
           height: "calc(56px + env(safe-area-inset-top, 0px))",
         }}
       />
+
+      {/* Mobile Search Overlay */}
+      <SearchOverlay isOpen={searchOverlayOpen} onClose={() => setSearchOverlayOpen(false)} />
     </>
   );
 }

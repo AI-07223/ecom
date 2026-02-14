@@ -1,13 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  limit,
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Category, Product } from "@/types/database.types";
 
@@ -19,6 +29,9 @@ export default function CategoryDetailPage() {
   const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const PRODUCTS_PER_PAGE = 12;
 
   useEffect(() => {
     const fetchCategoryAndProducts = async () => {
@@ -32,7 +45,7 @@ export default function CategoryDetailPage() {
         const categoriesSnap = await getDocs(categoriesQuery);
 
         if (categoriesSnap.empty) {
-          setIsLoading(false);
+          notFound();
           return;
         }
 
@@ -48,6 +61,7 @@ export default function CategoryDetailPage() {
           collection(db, "products"),
           where("category_id", "==", categoryDoc.id),
           where("is_active", "==", true),
+          limit(PRODUCTS_PER_PAGE),
         );
         const productsSnap = await getDocs(productsQuery);
         const productsList = productsSnap.docs.map((doc) => ({
@@ -55,6 +69,16 @@ export default function CategoryDetailPage() {
           ...doc.data(),
         })) as Product[];
         setProducts(productsList);
+        
+        // Track last visible document for pagination
+        if (!productsSnap.empty) {
+          setLastVisible(productsSnap.docs[productsSnap.docs.length - 1]);
+        }
+        
+        // If we got fewer products than the page size, there's no more
+        if (productsSnap.docs.length < PRODUCTS_PER_PAGE) {
+          setHasMore(false);
+        }
       } catch (error) {
         console.error("Error fetching category:", error);
       }
@@ -66,7 +90,42 @@ export default function CategoryDetailPage() {
     }
   }, [slug]);
 
-  if (isLoading) {
+  const loadMore = async () => {
+    if (!hasMore || !category) return;
+
+    setIsLoading(true);
+    try {
+      const productsQuery = query(
+        collection(db, "products"),
+        where("category_id", "==", category.id),
+        where("is_active", "==", true),
+        startAfter(lastVisible),
+        limit(PRODUCTS_PER_PAGE),
+      );
+      const productsSnap = await getDocs(productsQuery);
+
+      if (productsSnap.empty) {
+        setHasMore(false);
+      } else {
+        const newProducts = productsSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Product[];
+        setProducts((prev) => [...prev, ...newProducts]);
+        setLastVisible(productsSnap.docs[productsSnap.docs.length - 1]);
+        
+        // If we got fewer products than the page size, there's no more
+        if (productsSnap.docs.length < PRODUCTS_PER_PAGE) {
+          setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more products:", error);
+    }
+    setIsLoading(false);
+  };
+
+  if (isLoading && products.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Skeleton className="h-4 w-48 mb-4" />
@@ -131,6 +190,20 @@ export default function CategoryDetailPage() {
 
       {/* Products Grid */}
       <ProductGrid products={products} isLoading={false} />
+
+      {/* Load More Button */}
+      {hasMore && products.length >= PRODUCTS_PER_PAGE && (
+        <div className="mt-8 text-center">
+          <Button
+            onClick={loadMore}
+            disabled={isLoading}
+            variant="outline"
+            className="min-w-[200px]"
+          >
+            {isLoading ? "Loading..." : "Load More Products"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
