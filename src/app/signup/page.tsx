@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,7 +15,7 @@ import Image from 'next/image'
 
 export default function SignupPage() {
     const router = useRouter()
-    const { signUp, signInWithGoogle, signInWithGithub, isLoading } = useAuth()
+    const { signUp, signInWithGoogle, sendOtp, verifyOtp, setupRecaptcha, isLoading, user } = useAuth()
 
     const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
@@ -23,6 +23,20 @@ export default function SignupPage() {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
+
+    // Phone OTP state
+    const [showPhoneSignup, setShowPhoneSignup] = useState(false)
+    const [phoneNumber, setPhoneNumber] = useState('')
+    const [otpCode, setOtpCode] = useState('')
+    const [otpSent, setOtpSent] = useState(false)
+    const [phoneLoading, setPhoneLoading] = useState(false)
+
+    // Auto-redirect when user signs in via phone
+    useEffect(() => {
+        if (user && showPhoneSignup) {
+            router.push('/profile')
+        }
+    }, [user, showPhoneSignup, router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -57,17 +71,163 @@ export default function SignupPage() {
         }
     }
 
-    const handleGithubSignIn = async () => {
-        const { error } = await signInWithGithub()
-        if (error) {
-            toast.error(error.message || 'Failed to sign in with GitHub')
+    const handleSendOtp = async () => {
+        const fullNumber = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`
+        if (fullNumber.length < 10) {
+            toast.error('Please enter a valid phone number')
+            return
         }
+
+        setPhoneLoading(true)
+        try {
+            setupRecaptcha('recaptcha-container-signup')
+            const { error } = await sendOtp(fullNumber)
+            if (error) {
+                toast.error(error.message || 'Failed to send OTP')
+            } else {
+                setOtpSent(true)
+                toast.success('OTP sent! Check your phone.')
+            }
+        } catch {
+            toast.error('Failed to send OTP. Please try again.')
+        }
+        setPhoneLoading(false)
+    }
+
+    const handleVerifyOtp = async () => {
+        if (otpCode.length !== 6) {
+            toast.error('Please enter a valid 6-digit OTP')
+            return
+        }
+
+        setPhoneLoading(true)
+        const { error } = await verifyOtp(otpCode)
+        if (error) {
+            toast.error(error.message || 'Invalid OTP. Please try again.')
+        } else {
+            toast.success('Account created successfully!')
+            router.push('/profile')
+        }
+        setPhoneLoading(false)
     }
 
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#FAFAF5]">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5A27]"></div>
+            </div>
+        )
+    }
+
+    // Phone Signup View
+    if (showPhoneSignup) {
+        return (
+            <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-b from-[#FAFAF5] to-white">
+                <Card className="w-full max-w-md border-[#E2E0DA] shadow-soft-lg">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto w-16 h-16 rounded-full bg-[#2D5A27]/10 flex items-center justify-center mb-4">
+                            <Image
+                                src="/logo.jpeg"
+                                alt="Royal Trading"
+                                width={48}
+                                height={48}
+                                className="rounded-full"
+                            />
+                        </div>
+                        <CardTitle className="text-2xl font-bold text-[#2D5A27]">
+                            Phone Sign Up
+                        </CardTitle>
+                        <CardDescription className="text-[#6B7280]">
+                            {otpSent
+                                ? 'Enter the OTP sent to your phone'
+                                : 'Enter your phone number to create an account'}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {!otpSent ? (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="phoneNumber" className="text-[#1A1A1A]">Phone Number</Label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6B7280] font-medium">
+                                            +91
+                                        </span>
+                                        <Input
+                                            id="phoneNumber"
+                                            type="tel"
+                                            placeholder="9876543210"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                                            className="pl-12 bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
+                                            maxLength={10}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={handleSendOtp}
+                                    className="w-full bg-[#2D5A27] hover:bg-[#3B7D34]"
+                                    disabled={phoneLoading || phoneNumber.length < 10}
+                                >
+                                    {phoneLoading ? 'Sending OTP...' : 'Send OTP'}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="otpCode" className="text-[#1A1A1A]">OTP Code</Label>
+                                    <Input
+                                        id="otpCode"
+                                        type="text"
+                                        placeholder="Enter 6-digit OTP"
+                                        value={otpCode}
+                                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                        className="text-center text-lg tracking-widest bg-[#F0EFE8] border-[#E2E0DA] focus:border-[#2D5A27] focus:ring-[#2D5A27]/20"
+                                        maxLength={6}
+                                        required
+                                    />
+                                </div>
+
+                                <Button
+                                    onClick={handleVerifyOtp}
+                                    className="w-full bg-[#2D5A27] hover:bg-[#3B7D34]"
+                                    disabled={phoneLoading || otpCode.length !== 6}
+                                >
+                                    {phoneLoading ? 'Verifying...' : 'Verify OTP'}
+                                </Button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setOtpSent(false)
+                                        setOtpCode('')
+                                    }}
+                                    className="flex items-center justify-center w-full text-sm text-[#6B7280] hover:text-[#2D5A27] transition-colors"
+                                >
+                                    Resend OTP
+                                </button>
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowPhoneSignup(false)
+                                setOtpSent(false)
+                                setPhoneNumber('')
+                                setOtpCode('')
+                            }}
+                            className="flex items-center justify-center w-full text-sm text-[#6B7280] hover:text-[#2D5A27] transition-colors"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-1" />
+                            Back to Sign Up
+                        </button>
+                    </CardContent>
+                </Card>
+
+                {/* Invisible reCAPTCHA container */}
+                <div id="recaptcha-container-signup"></div>
             </div>
         )
     }
@@ -94,7 +254,7 @@ export default function SignupPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Social Login Buttons */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                         <Button
                             variant="outline"
                             onClick={handleGoogleSignIn}
@@ -118,17 +278,15 @@ export default function SignupPage() {
                                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                                 />
                             </svg>
-                            Google
+                            Continue with Google
                         </Button>
                         <Button
                             variant="outline"
-                            onClick={handleGithubSignIn}
+                            onClick={() => setShowPhoneSignup(true)}
                             className="w-full border-[#E2E0DA] hover:bg-[#F0EFE8] hover:border-[#2D5A27]/30"
                         >
-                            <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                            </svg>
-                            GitHub
+                            <Phone className="h-5 w-5 mr-2" />
+                            Continue with Phone
                         </Button>
                     </div>
 

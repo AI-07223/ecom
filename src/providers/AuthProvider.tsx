@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import {
   User,
@@ -15,9 +16,11 @@ import {
   signOut as firebaseSignOut,
   signInWithPopup,
   GoogleAuthProvider,
-  GithubAuthProvider,
   updateProfile,
   sendEmailVerification,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
@@ -42,7 +45,9 @@ interface AuthContextType {
   ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
-  signInWithGithub: () => Promise<{ error: Error | null }>;
+  sendOtp: (phoneNumber: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (code: string) => Promise<{ error: Error | null }>;
+  setupRecaptcha: (elementId: string) => void;
   refreshProfile: () => Promise<void>;
   sendVerificationEmail: () => Promise<{ error: Error | null }>;
 }
@@ -78,6 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const confirmationResultRef = useRef<ConfirmationResult | null>(null);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const fetchProfile = useCallback(
     async (
@@ -85,11 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: string,
       displayName?: string | null,
       photoURL?: string | null,
+      phoneNumber?: string | null,
     ) => {
       try {
         const profileRef = doc(db, "profiles", userId);
         const profileSnap = await getDoc(profileRef);
-        const isDesignatedAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+        const isDesignatedAdmin = email ? email.toLowerCase() === ADMIN_EMAIL.toLowerCase() : false;
 
         if (profileSnap.exists()) {
           const profileData = convertToProfile(profileSnap.data() as Record<string, unknown>, userId);
@@ -110,10 +118,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const newRole: UserRole = isDesignatedAdmin ? "admin" : "customer";
           const newProfile: Profile = {
             id: userId,
-            email: email,
+            email: email || "",
             full_name: displayName || null,
             avatar_url: photoURL || null,
-            phone: null,
+            phone: phoneNumber || null,
             address: null,
             saved_addresses: [],
             gst_number: null,
@@ -143,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user.email || "",
         user.displayName,
         user.photoURL,
+        user.phoneNumber,
       );
       setProfile(profileData);
     }
@@ -158,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           firebaseUser.email || "",
           firebaseUser.displayName,
           firebaseUser.photoURL,
+          firebaseUser.phoneNumber,
         );
         setProfile(profileData);
       } else {
@@ -231,10 +241,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithGithub = async () => {
+  // Phone Auth: setup invisible reCAPTCHA
+  const setupRecaptcha = (elementId: string) => {
+    if (recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current.clear();
+    }
+    recaptchaVerifierRef.current = new RecaptchaVerifier(auth, elementId, {
+      size: "invisible",
+      callback: () => {
+        // reCAPTCHA solved
+      },
+    });
+  };
+
+  // Phone Auth: send OTP
+  const sendOtp = async (phoneNumber: string) => {
     try {
-      const provider = new GithubAuthProvider();
-      await signInWithPopup(auth, provider);
+      if (!recaptchaVerifierRef.current) {
+        return { error: new Error("reCAPTCHA not initialized. Please try again.") };
+      }
+      const result = await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        recaptchaVerifierRef.current,
+      );
+      confirmationResultRef.current = result;
+      return { error: null };
+    } catch (error) {
+      // Reset reCAPTCHA on error so user can retry
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+      return { error: error as Error };
+    }
+  };
+
+  // Phone Auth: verify OTP
+  const verifyOtp = async (code: string) => {
+    try {
+      if (!confirmationResultRef.current) {
+        return { error: new Error("No OTP request found. Please send OTP first.") };
+      }
+      await confirmationResultRef.current.confirm(code);
+      confirmationResultRef.current = null;
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -261,7 +311,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signOut,
         signInWithGoogle,
-        signInWithGithub,
+        sendOtp,
+        verifyOtp,
+        setupRecaptcha,
         refreshProfile,
         sendVerificationEmail,
       }}

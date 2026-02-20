@@ -309,7 +309,7 @@ export default function AdminItemRequestsPage() {
                             {statusLabels[request.status]}
                           </Badge>
                         </div>
-                        
+
                         {/* Customer Info */}
                         <div className="flex flex-wrap items-center gap-3 text-sm text-[#6B7280]">
                           <span className="flex items-center gap-1">
@@ -322,7 +322,7 @@ export default function AdminItemRequestsPage() {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Images */}
                       {request.images && request.images.length > 0 && (
                         <div className="flex gap-2 shrink-0">
