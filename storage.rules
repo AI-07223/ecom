@@ -10,7 +10,7 @@ service firebase.storage {
     // Helper function to check if user is admin
     function isAdmin() {
       return isAuthenticated() &&
-        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+        firestore.get(/databases/(default)/documents/profiles/$(request.auth.uid)).data.role == "admin";
     }
 
     // Helper function to validate image

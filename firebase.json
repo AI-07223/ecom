@@ -13,5 +13,14 @@
   },
   "dataconnect": {
     "source": "dataconnect"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Royal Trading Company",
+        "supportEmail": "z41d.706@gmail.com"
+      }
+    }
   }
 }

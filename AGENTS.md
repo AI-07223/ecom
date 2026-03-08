@@ -1,350 +1,221 @@
-# Royal Store - E-Commerce Platform
+# Royal Trading Company — E-Commerce Platform
 
-## Project Overview
+## Quick Reference
 
-Royal Store is a full-featured e-commerce web application built with Next.js, React, and Firebase. It provides a complete shopping experience with user authentication, product catalog, shopping cart, wishlist, checkout flow, and an admin panel for store management.
+| Item | Value |
+|------|-------|
+| **Framework** | Next.js 16.1.4 (App Router, Turbopack) |
+| **Language** | TypeScript 5 |
+| **Styling** | Tailwind CSS v4 |
+| **Backend** | Firebase (Auth, Firestore, Storage) |
+| **Email** | Resend SDK |
+| **Node** | ≥18 |
 
-The application is designed as a mobile-first, app-like experience with smooth animations, responsive design, and offline-capable features through Firebase.
+## Commands
 
-## Technology Stack
-
-| Category | Technology |
-|----------|------------|
-| Framework | Next.js 16.1.4 (App Router) |
-| UI Library | React 19.2.3 |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS v4 |
-| UI Components | shadcn/ui (New York style) |
-| Backend | Firebase (Firestore, Auth, Storage) |
-| Forms | React Hook Form + Zod |
-| Icons | Lucide React |
-| Notifications | Sonner |
+```bash
+npm run dev          # Start dev server (Turbopack)
+npm run build        # Production build
+npm run lint         # ESLint
+```
 
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── actions/            # Server Actions (order creation)
-│   ├── auth/callback/      # OAuth callback handler
-│   ├── cart/               # Shopping cart page
-│   ├── categories/         # Category listing and detail pages
-│   ├── checkout/           # Checkout flow
-│   ├── login/              # Authentication pages
-│   ├── signup/
-│   ├── products/           # Product listing and detail pages
-│   ├── profile/            # User profile and admin panel
-│   │   ├── admin/          # Admin dashboard and management
-│   │   ├── orders/         # Order history
-│   │   └── settings/       # User settings
-│   ├── seed/               # Database seeding page
-│   ├── wishlist/           # User wishlist
-│   ├── globals.css         # Global styles and Tailwind config
-│   ├── layout.tsx          # Root layout with providers
-│   └── page.tsx            # Homepage
+├── app/                    # Next.js pages (App Router)
+│   ├── layout.tsx          # Root layout: fonts, providers, viewport
+│   ├── page.tsx            # Homepage
+│   ├── globals.css         # Global styles + mobile-first CSS
+│   ├── actions/            # Server Actions
+│   │   └── order.ts        # createOrder (+ email confirmation)
+│   ├── about/              # /about
+│   ├── cart/               # /cart
+│   ├── categories/         # /categories, /categories/[slug]
+│   ├── checkout/           # /checkout
+│   ├── contact/            # /contact
+│   ├── item-request/       # /item-request (wholeseller)
+│   ├── login/              # /login
+│   ├── signup/             # /signup
+│   ├── reset-password/     # /reset-password
+│   ├── products/           # /products, /products/[slug]
+│   ├── profile/            # User profile pages
+│   │   ├── page.tsx        # /profile
+│   │   ├── settings/       # /profile/settings
+│   │   ├── orders/         # /profile/orders, /profile/orders/[id]
+│   │   ├── item-requests/  # /profile/item-requests
+│   │   ├── requests/       # /profile/requests
+│   │   └── admin/          # Admin dashboard
+│   │       ├── page.tsx        # /profile/admin (dashboard)
+│   │       ├── products/       # CRUD products
+│   │       ├── categories/     # CRUD categories
+│   │       ├── orders/         # Manage orders, /orders/[id]
+│   │       ├── coupons/        # Manage coupons
+│   │       ├── users/          # Manage users
+│   │       ├── settings/       # Site settings
+│   │       └── item-requests/  # Wholeseller requests
+│   ├── returns/            # /returns
+│   ├── shipping/           # /shipping
+│   ├── seed/               # /seed (dev data seeder)
+│   └── wishlist/           # /wishlist
 ├── components/
-│   ├── admin/              # Admin-specific components
-│   ├── layout/             # Layout components (Navbar, Footer, etc.)
-│   ├── products/           # Product-related components
-│   └── ui/                 # shadcn/ui components
+│   ├── layout/
+│   │   ├── Navbar.tsx          # Desktop + mobile navbar w/ instant search
+│   │   ├── SearchOverlay.tsx   # Full-screen mobile search
+│   │   ├── MobileBottomNav.tsx # Bottom tab bar (mobile)
+│   │   ├── AdminBottomNav.tsx  # Admin bottom nav
+│   │   ├── Footer.tsx          # Site footer
+│   │   └── NetworkStatus.tsx   # Offline indicator
+│   ├── products/               # ProductCard, ProductGrid
+│   ├── orders/                 # OrderStatusBadge
+│   ├── admin/                  # AdminSidebar, AdminHeader
+│   ├── ui/                     # shadcn/ui components (27 files)
+│   └── ErrorBoundary.tsx       # React error boundary
+├── providers/
+│   ├── AuthProvider.tsx         # Firebase Auth context
+│   ├── CartProvider.tsx         # Cart state (Firestore-synced)
+│   ├── WishlistProvider.tsx     # Wishlist state (Firestore-synced)
+│   └── SiteSettingsProvider.tsx # Site-wide settings
+├── hooks/
+│   ├── useDebounce.ts           # Debounce hook
+│   ├── useInfiniteScroll.ts     # Infinite scroll pagination
+│   ├── useLongPress.ts          # Long press gesture
+│   └── useSwipeGesture.ts       # Swipe gesture
 ├── lib/
 │   ├── firebase/
-│   │   └── config.ts       # Firebase initialization
-│   ├── validations/        # Zod validation schemas
-│   └── utils.ts            # Utility functions (cn helper)
-├── providers/              # React Context providers
-│   ├── AuthProvider.tsx    # Authentication state
-│   ├── CartProvider.tsx    # Shopping cart state
-│   ├── SiteSettingsProvider.tsx  # Site configuration
-│   └── WishlistProvider.tsx # Wishlist state
+│   │   ├── config.ts            # Client Firebase init
+│   │   ├── admin.ts             # Server Firebase Admin init
+│   │   └── utils.ts             # Firestore helpers
+│   ├── email.ts                 # Resend email utility
+│   ├── utils.ts                 # cn() utility
+│   ├── colors.ts                # Brand color definitions
+│   ├── status-colors.ts         # Order status → color mapping
+│   ├── ui-constants.ts          # Shared UI constants
+│   └── validations/
+│       └── checkout.ts          # Zod checkout schema
 └── types/
-    └── database.types.ts   # TypeScript type definitions
+    └── database.types.ts        # All Firestore interfaces
 ```
 
-## Build and Development Commands
+## Route Map
 
-```bash
-# Install dependencies
-npm install
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `/` | No | Homepage with hero, categories, featured products |
+| `/products` | No | Product listing with search, filter, sort |
+| `/products/[slug]` | No | Product detail page |
+| `/categories` | No | Category grid |
+| `/categories/[slug]` | No | Products in a category |
+| `/cart` | No | Shopping cart |
+| `/checkout` | Yes | Checkout with address + coupon |
+| `/wishlist` | Yes | Saved items |
+| `/login` | No | Firebase Auth login |
+| `/signup` | No | Firebase Auth signup |
+| `/reset-password` | No | Password reset |
+| `/profile` | Yes | User profile overview |
+| `/profile/settings` | Yes | Edit profile |
+| `/profile/orders` | Yes | Order history |
+| `/profile/orders/[id]` | Yes | Order detail |
+| `/profile/item-requests` | Yes | Wholeseller's own requests |
+| `/item-request` | Yes | Submit item request (wholeseller) |
+| `/profile/admin` | Admin | Dashboard overview |
+| `/profile/admin/products` | Admin | CRUD products |
+| `/profile/admin/categories` | Admin | CRUD categories |
+| `/profile/admin/orders` | Admin | Manage all orders |
+| `/profile/admin/orders/[id]` | Admin | Order detail |
+| `/profile/admin/coupons` | Admin | Manage coupons |
+| `/profile/admin/users` | Admin | Manage users + roles |
+| `/profile/admin/settings` | Admin | Site settings |
+| `/profile/admin/item-requests` | Admin | Review wholeseller requests |
+| `/about` | No | About page |
+| `/contact` | No | Contact page |
+| `/shipping` | No | Shipping info |
+| `/returns` | No | Return policy |
+| `/seed` | No | Dev data seeder |
 
-# Start development server
-npm run dev
+## Key Data Flow
 
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Run linting
-npm run lint
-
-# Run CI (lint + build)
-npm run ci
+```
+AuthProvider → checks Firebase Auth session
+    └── CartProvider → syncs cart to Firestore (authenticated) / localStorage (guest)
+        └── WishlistProvider → syncs wishlist to Firestore
+            └── SiteSettingsProvider → fetches site_settings/main doc
+                └── Navbar / MobileBottomNav / Footer / Pages
 ```
 
-The development server runs on `http://localhost:3000`.
+## Firestore Collections
 
-## Code Style Guidelines
+| Collection | Key Fields | Notes |
+|------------|-----------|-------|
+| `profiles` | `user_id`, `full_name`, `email`, `phone`, `role`, `addresses[]` | Roles: `customer`, `wholeseller`, `admin` |
+| `products` | `name`, `slug`, `price`, `compare_at_price`, `quantity`, `category_id`, `is_active`, `is_featured`, `images[]`, `thumbnail`, `tags[]` | Server-side filter by category/featured |
+| `orders` | `user_id`, `order_number`, `status`, `items[]`, `shipping_address`, `total`, `discount`, `coupon_code` | Statuses: pending → processing → shipped → delivered/cancelled |
+| `categories` | `name`, `slug`, `image_url`, `is_active`, `sort_order` | Hierarchical via `parent_id` |
+| `coupons` | `code`, `discount_type`, `discount_value`, `usage_limit`, `used_count`, `min_order_amount`, `expires_at` | Types: `percentage`, `fixed` |
+| `site_settings` | `main` doc with `business_name`, `tagline`, `announcement`, etc. | Single doc collection |
+| `item_requests` | `user_id`, `item_name`, `description`, `quantity`, `status` | Wholeseller feature |
 
-### TypeScript
-- Use strict TypeScript with explicit types
-- All components are functional with proper type annotations
-- Type definitions are centralized in `src/types/database.types.ts`
+## Environment Variables
 
-### Component Structure
-- Use `'use client'` directive for client components
-- Server Actions use `'use server'` directive
-- Components use PascalCase naming (e.g., `Navbar.tsx`)
-- Use the `cn()` utility from `@/lib/utils` for conditional class merging
+| Variable | Where | Required |
+|----------|-------|----------|
+| `NEXT_PUBLIC_FIREBASE_*` | Client | Yes |
+| `NEXT_PUBLIC_ADMIN_SECRET_KEY` | Client | Yes (first admin setup) |
+| `FIREBASE_PROJECT_ID` | Server | Yes |
+| `FIREBASE_CLIENT_EMAIL` | Server | Yes |
+| `FIREBASE_PRIVATE_KEY` | Server | Yes |
+| `RESEND_API_KEY` | Server | No (emails skip if empty) |
+| `RESEND_FROM_EMAIL` | Server | No (defaults to onboarding@resend.dev) |
 
-### Styling Conventions
-- Tailwind CSS v4 with CSS-based configuration in `globals.css`
-- Use shadcn/ui component patterns with `class-variance-authority` (CVA)
-- Mobile-first responsive design with `md:` breakpoints
-- Theme colors are accessed via CSS variables
-- Custom site colors come from `SiteSettingsProvider` (primary_color, accent_color, etc.)
+## Search Implementation
 
-### Import Ordering
-1. React/Next.js imports
-2. Third-party library imports
-3. Local component imports (`@/components`)
-4. Provider imports (`@/providers`)
-5. Utility imports (`@/lib`)
-6. Type imports (`@/types`)
+- **Desktop**: Type in Navbar search → instant dropdown with top 5 matching products (debounced 300ms) → click to navigate or Enter for full results page
+- **Mobile**: Tap search bar → opens `SearchOverlay.tsx` (full-screen) → recent searches, trending suggestions, live results as you type
+- **Products Page**: Full filter UI with categories, price range, sale toggle, sort options, infinite scroll
 
-### File Organization
-- One component per file (except small related components)
-- Co-locate related components in feature folders
-- Use barrel exports for clean imports
+## Email Confirmation
 
-## Testing Instructions
+- Uses **Resend** SDK (`src/lib/email.ts`)
+- Triggered non-blocking after order creation in `src/app/actions/order.ts`
+- Branded HTML template with order details, item table, shipping address
+- Gracefully skips if `RESEND_API_KEY` is not set
 
-Currently, the project does not have automated tests configured. The test script returns a placeholder message:
+## Mobile-First Design
 
-```bash
-npm test  # Outputs: "No tests configured yet"
-```
+- `globals.css` has extensive mobile-specific CSS under `@media (max-width: 768px)`
+- Safe area insets for notch/bottom bar devices
+- `MobileBottomNav` with haptic feedback, floating active indicators
+- Bottom sheet profile panel with quick action grid
+- Touch-optimized: `tap-active` class, `touch-action: manipulation`
+- Custom scrollbar hiding, overscroll behavior control
+- `overflow-x: hidden` on html/body to prevent horizontal scroll
 
-Manual testing should be done through:
-1. Development server (`npm run dev`)
-2. Build verification (`npm run build`)
-3. Lint checking (`npm run lint`)
+## How to Add a New Feature (AI Agents)
 
-## Security Considerations
+### New Page
+1. Create `src/app/[route]/page.tsx`
+2. Add route to this AGENTS.md route table
+3. If auth required, use `useAuth()` and redirect if `!user`
 
-### Firebase Security Rules
+### New Firestore Collection
+1. Add interface to `src/types/database.types.ts`
+2. Use `adminDb` (server) or `db` (client) from `src/lib/firebase/`
+3. Add Firestore rules in `firestore.rules`
+4. Add to collection table above
 
-**Firestore Rules** (`firestore.rules`):
-- Authentication required for all write operations
-- Users can only access their own profile, cart, and wishlist
-- Admins (checked via `profiles/{uid}.role == "admin"`) can manage products, categories, coupons, and orders
-- Wholesellers (checked via `profiles/{uid}.role == "wholeseller"`) can create item requests
-- Orders are readable only by the owner or admins
-- Role field is the single source of truth for user permissions (not boolean flags)
+### New Component
+1. For UI primitives, use shadcn/ui (`src/components/ui/`)
+2. For layout, add to `src/components/layout/`
+3. For feature-specific, add to `src/components/[feature]/`
 
-**Storage Rules** (`storage.rules`):
-- Public read access for all files
-- Write access requires authentication
-- Image uploads limited to 5MB
-- Separate folders for products, categories, and site assets
+### After Making Changes
+1. Run `npm run build` to verify no type/build errors
+2. Test visually in browser at `http://localhost:3000`
+3. Update this file's route map / collection table if routes or schema changed
 
-### Environment Variables
-Required environment variables (defined in `.env.local`):
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
-```
+## Known Issues / Tech Debt
 
-All Firebase config variables are public (client-side) and start with `NEXT_PUBLIC_`.
-
-### Data Validation
-- All forms use Zod schemas for validation
-- Server Actions validate input before database operations
-- Phone numbers validated with Indian format regex (`/^[6-9]\d{9}$/`)
-- Postal codes validated with 6-digit regex (`/^\d{6}$/`)
-- GST numbers validated with standard format
-
-## Type System & Database Schema
-
-### Type Architecture
-
-All TypeScript types are centralized in `src/types/database.types.ts`. Key architectural decisions:
-
-1. **Single Source of Truth**: All types defined in `database.types.ts` and imported across the application
-2. **No Local Type Redefinitions**: Components and server actions must import from centralized types
-3. **Timestamp Handling**: Firestore Timestamps are converted to ISO strings at the provider level
-4. **Role-Based Access Control**: Uses `role` enum field ("customer" | "wholeseller" | "admin") instead of boolean flags
-
-### Helper Functions
-
-**Timestamp Conversion** (`src/lib/firebase/utils.ts`):
-```typescript
-import { timestampToString } from "@/lib/firebase/utils";
-
-// Converts Firestore Timestamp to ISO string
-const dateString = timestampToString(timestamp);
-```
-
-### Collections
-
-| Collection | Description | Access |
-|------------|-------------|--------|
-| `profiles` | User profiles with role field (customer/wholeseller/admin) | User: own, Admin: all |
-| `products` | Product catalog | Public read, Admin write |
-| `categories` | Product categories | Public read, Admin write |
-| `users/{uid}/cart` | User cart items | User only |
-| `users/{uid}/wishlist` | User wishlist items | User only |
-| `orders` | Order records | User: own, Admin: all |
-| `coupons` | Discount coupons | Public read, Admin write |
-| `site_settings` | Site configuration | Public read, Admin write |
-
-### Key Types
-See `src/types/database.types.ts` for complete TypeScript definitions of all database entities.
-
-### Recent Schema Changes (2026-02-06)
-
-#### 1. Profile Role Field Consolidation
-- **Before**: `is_admin: boolean` + `is_wholeseller: boolean` + `role: UserRole`
-- **After**: `role: UserRole` only ("customer" | "wholeseller" | "admin")
-- **Impact**: Single source of truth for user permissions
-
-#### 2. Order Field Names Aligned
-- **Before**: `discount_amount`, `shipping_amount`, `coupon_id`
-- **After**: `discount`, `shipping`, `coupon_code`
-- **Impact**: Matches actual server action implementation
-
-#### 3. Address Structure Updated
-- **Before**: `address: string` (shipping address field)
-- **After**: `street: string` (consistent with `Address` interface)
-- **Impact**: Better type alignment between `Address` and `ShippingAddress`
-
-#### 4. WishlistItem Timestamps
-- **Added**: `updated_at` field for consistency with `CartItem`
-
-#### 5. SiteSettings Interface Cleanup
-- **Removed**: Unused `SiteSetting` (singular) interface
-- **Kept**: `SiteSettings` (plural) as the single interface
-
-#### 6. Firestore Rules Updated
-- Role-based checks: `get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == "admin"`
-- Added `isValidOrder()` function for order validation
-- Profile validation now uses `role` enum only
-
-#### 7. Admin Settings Page Simplification (2026-02-06)
-- **Removed**: "Store Information" section (site_name, site_description, logo_url, favicon_url, footer_text)
-- **Removed**: "Branding Colors" section (primary_color, secondary_color, accent_color)
-- **Kept**: Business Details, Contact Information, Social Links
-- **Reason**: Site identity is now fixed; only invoice and contact details need configuration
-
-#### 8. Mobile UI Fixes (2026-02-06)
-- **Fixed**: Button overflow on product cards (delete icon no longer cut off)
-- **Fixed**: User card badge overflow (role badges fit within cards)
-- **Fixed**: Stat card sizing consistency on admin dashboard
-- **Fixed**: Quick Actions section responsive spacing
-- **Improved**: Responsive padding and text sizing across admin pages
-- **Improved**: Touch-friendly button sizes while optimizing layout
-
-#### 9. Code Quality (2026-02-06)
-- **Fixed**: All ESLint warnings (42 warnings resolved)
-- **Removed**: Unused imports across 20+ files
-- **Fixed**: React hooks exhaustive-deps warnings
-- **Result**: 0 errors, 0 warnings
-
-#### 10. Security Fix - Admin Creation (2026-02-06)
-- **Before**: Any logged-in user could make themselves admin
-- **After**: 
-  - First admin is hardcoded: `z41d.706@gmail.com` (only this email can be first admin)
-  - Subsequent users require secret key: `NEXT_PUBLIC_ADMIN_SECRET_KEY`
-  - Default key: `royal-admin-2024` (customizable in `.env.local`)
-- **Files changed**: `src/app/seed/page.tsx`, `.env.local`
-
-#### 11. Security Fix - Order Creation Authentication (2026-02-06)
-- **Issue**: Server action accepted `user_id` from client without verifying the requesting user
-- **Risk**: Users could create orders for other users
-- **Fix**: 
-  - Added session cookie verification using Firebase Admin Auth
-  - Verify authenticated UID matches the `user_id` in request
-  - Return error if not authenticated or user IDs don't match
-- **Files changed**: `src/app/actions/order.ts`, `src/lib/firebase/admin.ts`
-
-#### 12. Security Fix - Image Upload Validation (2026-02-06)
-- **Issue**: File type validation only checked MIME type (can be spoofed)
-- **Fix**: Added file extension validation
-  - Allowed extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`
-  - Two-layer validation: MIME type + file extension
-- **Files changed**: `src/components/admin/ImageUpload.tsx`, `src/components/admin/SingleImageUpload.tsx`
-
-## Deployment
-
-### CI/CD Pipeline
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs on pushes/PRs to `main` or `master`:
-1. Checkout code
-2. Setup Node.js 20
-3. Install dependencies (`npm ci`)
-4. Run linting
-5. Build application
-
-### Deployment Platform
-The application is designed for deployment on Vercel:
-- Next.js optimization enabled
-- Static export not configured (uses SSR)
-- React Compiler enabled in `next.config.ts`
-
-### Image Domains
-Configured remote image domains in `next.config.ts`:
-- `images.unsplash.com` - For sample/product images
-- `firebasestorage.googleapis.com` - Firebase Storage
-- `*.firebasestorage.app` - Firebase Storage (new format)
-
-## Mobile App-Like Features
-
-The application includes mobile-specific optimizations:
-- Bottom navigation bar for mobile (`MobileBottomNav`)
-- Admin bottom navigation (`AdminBottomNav`)
-- Safe area padding for notched devices
-- Touch-optimized button sizes
-- Pull-to-refresh prevention
-- Tap highlight color removal
-- Overscroll behavior control
-- Custom mobile animations (fade-in, slide-up, bounce-in)
-
-## Admin Features
-
-Admin users (determined by `profile.is_admin`) have access to:
-- Dashboard with analytics overview
-- Product management (CRUD operations)
-- Category management
-- Order management and status updates
-- Coupon management
-- User management
-- Site settings configuration
-
-Admin panel is accessible at `/profile/admin`.
-
-## External Dependencies Notes
-
-### shadcn/ui Components
-Components are installed via shadcn CLI and located in `src/components/ui/`. They use:
-- Radix UI primitives for accessibility
-- Tailwind CSS for styling
-- CVA for variant management
-- Lucide icons
-
-### Firebase
-The app uses Firebase JavaScript SDK v12:
-- Modular API (v9+ style imports)
-- Firestore for database
-- Authentication for user management
-- Storage for image uploads
-
-### Next.js Configuration
-- React Compiler enabled for performance
-- TypeScript strict mode
-- Path alias `@/*` maps to `src/*`
-- Static optimization for images disabled (using Firebase Storage)
+- Firestore composite indexes may be missing — fallback logic in products page fetches client-side
+- No automated test suite yet (user requested visual browser testing only)
+- `RESEND_API_KEY` needs to be configured for email to work
+- Search is client-side filtering; for large catalogs, consider Algolia or Firestore full-text search
