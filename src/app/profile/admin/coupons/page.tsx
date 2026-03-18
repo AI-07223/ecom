@@ -4,12 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Ticket, Tag, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -18,13 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import {
@@ -40,6 +30,7 @@ import {
 import { db } from "@/lib/firebase/config";
 import { toast } from "sonner";
 import type { Coupon } from "@/types/database.types";
+import { CouponForm } from "@/components/admin/CouponForm";
 
 export default function AdminCouponsPage() {
   const router = useRouter();
@@ -324,153 +315,17 @@ export default function AdminCouponsPage() {
       </div>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingCoupon ? "Edit Coupon" : "Create Coupon"}
-            </DialogTitle>
-            <DialogDescription>
-              Configure your discount coupon
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="code">Coupon Code</Label>
-              <Input
-                id="code"
-                name="code"
-                value={formData.code}
-                onChange={handleInputChange}
-                placeholder="SAVE20"
-                className="uppercase"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Optional description"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Discount Type</Label>
-                <Select
-                  value={formData.discount_type}
-                  onValueChange={(v: "percentage" | "fixed") =>
-                    setFormData((prev) => ({ ...prev, discount_type: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="discount_value">Discount Value</Label>
-                <Input
-                  id="discount_value"
-                  name="discount_value"
-                  type="number"
-                  value={formData.discount_value}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="min_order_amount">Min Order Amount</Label>
-                <Input
-                  id="min_order_amount"
-                  name="min_order_amount"
-                  type="number"
-                  value={formData.min_order_amount}
-                  onChange={handleInputChange}
-                  placeholder="Optional"
-                />
-              </div>
-              <div>
-                <Label htmlFor="usage_limit">Usage Limit</Label>
-                <Input
-                  id="usage_limit"
-                  name="usage_limit"
-                  type="number"
-                  value={formData.usage_limit}
-                  onChange={handleInputChange}
-                  placeholder="Unlimited"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="starts_at">Starts At</Label>
-                <Input
-                  id="starts_at"
-                  name="starts_at"
-                  type="date"
-                  value={formData.starts_at}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div>
-                <Label htmlFor="expires_at">Expires At</Label>
-                <Input
-                  id="expires_at"
-                  name="expires_at"
-                  type="date"
-                  value={formData.expires_at}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="max_discount_amount">Max Discount Amount</Label>
-              <Input
-                id="max_discount_amount"
-                name="max_discount_amount"
-                type="number"
-                value={formData.max_discount_amount}
-                onChange={handleInputChange}
-                placeholder="Optional (for percentage discounts)"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({ ...prev, is_active: checked }))
-                }
-              />
-              <Label>Active</Label>
-            </div>
-            <DialogFooter className="gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                style={{ backgroundColor: settings.primary_color }}
-              >
-                {editingCoupon ? "Update" : "Create"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <CouponForm
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        editingCoupon={editingCoupon}
+        formData={formData}
+        setFormData={setFormData}
+        isSaving={false}
+        primaryColor={settings.primary_color}
+        onSubmit={handleSubmit}
+        onInputChange={handleInputChange}
+      />
 
       {/* Delete Confirmation */}
       <Dialog

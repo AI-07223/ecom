@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /d/projects/ecom/src/app -name route.ts -o -name *.server.ts)",
+      "Bash(gh auth:*)",
+      "mcp__0f52e3d0-d355-4398-a7c8-82c5cb026124__list_teams",
+      "Bash(npx firebase:*)",
+      "Bash(cd /d D:projectsecom)",
+      "Bash(npm run:*)",
+      "mcp__plugin_firebase_firebase__firebase_get_environment",
+      "Bash(find . -name .env* -type f)",
+      "Bash(xargs wc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(ls -la /d/projects/ecom/.eslintrc* /d/projects/ecom/eslint.config.*)",
+      "mcp__0f52e3d0-d355-4398-a7c8-82c5cb026124__get_project",
+      "mcp__plugin_firebase_firebase__firebase_validate_security_rules",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -rn \"no-unused-vars\\\\|argsIgnorePattern\\\\|varsIgnorePattern\" D:/projects/ecom/.eslintrc* D:/projects/ecom/eslint.config* D:/projects/ecom/next.config*)"
+    ]
+  }
+}

@@ -9,7 +9,6 @@ import {
   Pencil,
   Trash2,
   Search,
-  ArrowLeft,
   ImageIcon,
   Package,
 } from "lucide-react";
@@ -18,9 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -29,14 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ImageUpload } from "@/components/admin/ImageUpload";
+import { ProductForm } from "@/components/admin/ProductForm";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import {
@@ -245,7 +234,7 @@ function ProductsContent() {
     }
 
     setIsSaving(true);
-    const productId = editingProduct?.id || `prod-${Date.now()}`;
+    const productId = editingProduct?.id || `prod-${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
     try {
       await setDoc(doc(db, "products", productId), {
         name: formData.name,
@@ -326,295 +315,22 @@ function ProductsContent() {
 
   if (showForm) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <div className="bg-white border-b sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4">
-            <button
-              onClick={() => {
-                setShowForm(false);
-                resetForm();
-                router.push("/profile/admin/products");
-              }}
-              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md hover:bg-accent transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back
-            </button>
-          </div>
-        </div>
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          <h1 className="text-xl font-bold mb-6">
-            {editingProduct ? "Edit Product" : "Add New Product"}
-          </h1>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Product Name *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="slug">URL Slug *</Label>
-                  <Input
-                    id="slug"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="short_description">Short Description</Label>
-                  <Input
-                    id="short_description"
-                    name="short_description"
-                    value={formData.short_description}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Full Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Images</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ImageUpload
-                  value={formData.images}
-                  onChange={(urls) =>
-                    setFormData((prev) => ({ ...prev, images: urls }))
-                  }
-                  maxImages={5}
-                  folder="products"
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="price">
-                      Price ({settings.currency_symbol}) *
-                    </Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="compare_at_price">Compare at Price</Label>
-                    <Input
-                      id="compare_at_price"
-                      name="compare_at_price"
-                      type="number"
-                      step="0.01"
-                      value={formData.compare_at_price}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="wholeseller_price">Wholeseller Price</Label>
-                  <Input
-                    id="wholeseller_price"
-                    name="wholeseller_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.wholeseller_price}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventory</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="quantity">Stock Quantity *</Label>
-                    <Input
-                      id="quantity"
-                      name="quantity"
-                      type="number"
-                      value={formData.quantity}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sku">SKU</Label>
-                    <Input
-                      id="sku"
-                      name="sku"
-                      value={formData.sku}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-3 min-w-[140px]">
-                    <Switch
-                      checked={formData.track_inventory}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          track_inventory: checked,
-                        }))
-                      }
-                      className="data-[state=checked]:bg-[#2D5A27]"
-                    />
-                    <Label className="text-sm cursor-pointer">Track inventory</Label>
-                  </div>
-                  <div className="flex items-center gap-3 min-w-[140px]">
-                    <Switch
-                      checked={formData.allow_backorder}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          allow_backorder: checked,
-                        }))
-                      }
-                      className="data-[state=checked]:bg-[#2D5A27]"
-                    />
-                    <Label className="text-sm cursor-pointer">Allow backorders</Label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Organization</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Category</Label>
-                  <Select
-                    value={formData.category_id || "none"}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        category_id: value === "none" ? "" : value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No category</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleInputChange}
-                    placeholder="wireless, audio"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-3 min-w-[120px]">
-                    <Switch
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({ ...prev, is_active: checked }))
-                      }
-                      className="data-[state=checked]:bg-[#2D5A27]"
-                    />
-                    <Label className="text-sm cursor-pointer">Active</Label>
-                  </div>
-                  <div className="flex items-center gap-3 min-w-[120px]">
-                    <Switch
-                      checked={formData.is_featured}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          is_featured: checked,
-                        }))
-                      }
-                      className="data-[state=checked]:bg-[#2D5A27]"
-                    />
-                    <Label className="text-sm cursor-pointer">Featured</Label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowForm(false);
-                  resetForm();
-                  router.push("/profile/admin/products");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSaving}
-                style={{ backgroundColor: settings.primary_color }}
-              >
-                {isSaving
-                  ? "Saving..."
-                  : editingProduct
-                    ? "Update Product"
-                    : "Create Product"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
+      <ProductForm
+        formData={formData}
+        setFormData={setFormData}
+        editingProduct={editingProduct}
+        categories={categories}
+        isSaving={isSaving}
+        currencySymbol={settings.currency_symbol}
+        primaryColor={settings.primary_color}
+        onSubmit={handleSubmit}
+        onCancel={() => {
+          setShowForm(false);
+          resetForm();
+          router.push("/profile/admin/products");
+        }}
+        onInputChange={handleInputChange}
+      />
     );
   }
 

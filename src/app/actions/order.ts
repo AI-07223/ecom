@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { adminDb, adminAuth } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { OrderItem, ShippingAddress } from "@/types/database.types";
@@ -13,6 +14,7 @@ interface CreateOrderInput {
   coupon_code?: string | null;
   gst_number?: string | null;
   payment_method?: "cod" | "online";
+  idempotency_key?: string | null;
 }
 
 interface CreateOrderResult {
@@ -47,7 +49,22 @@ export async function createOrder(
       coupon_code,
       gst_number,
       payment_method,
+      idempotency_key,
     } = input;
+
+    // Idempotency check: return existing order if this key was already processed
+    if (idempotency_key) {
+      const existing = await adminDb
+        .collection("orders")
+        .where("user_id", "==", user_id)
+        .where("metadata.idempotency_key", "==", idempotency_key)
+        .limit(1)
+        .get();
+      if (!existing.empty) {
+        console.log("[createOrder] Idempotent request - returning existing order", existing.docs[0].id);
+        return { success: true, order_id: existing.docs[0].id };
+      }
+    }
 
     // Verify authentication using the ID token from client
     let decodedToken;
@@ -224,8 +241,8 @@ export async function createOrder(
     // Calculate final total
     const total = subtotal - discount + shipping;
 
-    // Generate order ID
-    const orderId = `ORD-${Date.now()}`;
+    // Generate order ID using random UUID (collision-free, no timestamp guessability)
+    const orderId = `ORD-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
 
     console.log("[createOrder] Starting transaction...");
     // Use transaction to create order and update stock atomically
@@ -259,7 +276,7 @@ export async function createOrder(
         shipping_address,
         billing_address: null,
         notes: null,
-        metadata: {},
+        metadata: { idempotency_key: idempotency_key || null },
         items: orderItems,
         created_at: FieldValue.serverTimestamp(),
         updated_at: FieldValue.serverTimestamp(),
