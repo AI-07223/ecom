@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 
+export const dynamic = "force-dynamic";
+
 /**
  * POST: Set session cookie after login
  * Verifies Firebase ID token, reads user role, sets HttpOnly cookie
