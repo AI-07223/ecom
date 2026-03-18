@@ -5,13 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Dev server with Turbopack (http://localhost:3000)
-npm run build    # Production build (use to verify no type/build errors)
-npm run lint     # ESLint
-npm run ci       # lint + build (used in CI)
+npm run dev           # Dev server with Turbopack (http://localhost:3000)
+npm run build         # Production build (use to verify no type/build errors)
+npm run lint          # ESLint
+npm run test:run      # Run all unit tests (Vitest)
+npm run test:coverage # Run tests with coverage report
+npm run test:rules    # Run Firestore rules tests (requires emulator: firebase emulators:start --only firestore)
+npm run ci            # lint + test:run + build (used in CI)
 ```
-
-No test suite is configured. Verification is done via `npm run build` and visual browser testing.
 
 ## Architecture
 

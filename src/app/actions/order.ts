@@ -5,6 +5,7 @@ import { adminDb, adminAuth } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { OrderItem, ShippingAddress } from "@/types/database.types";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 interface CreateOrderInput {
   user_id: string;
@@ -37,10 +38,7 @@ interface ProductData {
 export async function createOrder(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult> {
-  console.log(
-    "[createOrder] Starting with input:",
-    JSON.stringify(input, null, 2),
-  );
+  logger.info("[createOrder] Starting", { user_id: input.user_id, item_count: input.items?.length });
   try {
     const {
       user_id,
@@ -61,7 +59,7 @@ export async function createOrder(
         .limit(1)
         .get();
       if (!existing.empty) {
-        console.log("[createOrder] Idempotent request - returning existing order", existing.docs[0].id);
+        logger.info("[createOrder] Idempotent request - returning existing order", { order_id: existing.docs[0].id });
         return { success: true, order_id: existing.docs[0].id };
       }
     }
@@ -71,24 +69,26 @@ export async function createOrder(
     try {
       decodedToken = await adminAuth.verifyIdToken(input.id_token);
     } catch (error) {
-      console.log("[createOrder] Authentication failed: invalid ID token", error);
+      logger.warn("[createOrder] Authentication failed: invalid ID token", error);
       return { success: false, error: "Not authenticated" };
     }
 
     const authenticatedUserId = decodedToken.uid;
 
+    // Require email verification before placing orders
+    if (!decodedToken.email_verified) {
+      return { success: false, error: "Please verify your email address before placing an order" };
+    }
+
     // Verify the user is creating an order for themselves
     if (authenticatedUserId !== user_id) {
-      console.log(
-        "[createOrder] Authorization failed: user mismatch",
-        { authenticatedUserId, requestedUserId: user_id },
-      );
+      logger.warn("[createOrder] Authorization failed: user mismatch", { authenticatedUserId, requestedUserId: user_id });
       return { success: false, error: "Cannot create order for another user" };
     }
 
     // Validate input
     if (!user_id || !items || items.length === 0) {
-      console.log("[createOrder] Validation failed: invalid order data");
+      logger.warn("[createOrder] Validation failed: invalid order data");
       return { success: false, error: "Invalid order data" };
     }
 
@@ -100,14 +100,13 @@ export async function createOrder(
       !shipping_address.state ||
       !shipping_address.postal_code
     ) {
-      console.log("[createOrder] Validation failed: missing address fields");
+      logger.warn("[createOrder] Validation failed: missing address fields");
       return { success: false, error: "Please fill in all address fields" };
     }
 
-    console.log("[createOrder] Fetching product details...");
+    logger.info("[createOrder] Fetching product details", { count: items.length });
     // Fetch all product details from database (source of truth for prices)
     const productPromises = items.map(async (item): Promise<ProductData> => {
-      console.log(`[createOrder] Fetching product ${item.product_id}`);
       const productDoc = await adminDb
         .collection("products")
         .doc(item.product_id)
@@ -244,7 +243,7 @@ export async function createOrder(
     // Generate order ID using random UUID (collision-free, no timestamp guessability)
     const orderId = `ORD-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
 
-    console.log("[createOrder] Starting transaction...");
+    logger.info("[createOrder] Starting transaction", { order_id: orderId, total });
     // Use transaction to create order and update stock atomically
     await adminDb.runTransaction(async (transaction) => {
       // Decrement stock for each product
@@ -317,20 +316,20 @@ export async function createOrder(
             postal_code: shipping_address.postal_code,
             phone: shipping_address.phone,
           },
-        }).catch((err) => console.error("[createOrder] Email send failed:", err));
+        }).catch((err) => logger.error("[createOrder] Email send failed", err));
       }
     } catch (emailError) {
-      console.error("[createOrder] Email setup error:", emailError);
+      logger.error("[createOrder] Email setup error", emailError);
     }
 
+    logger.info("[createOrder] Order created successfully", { order_id: orderId });
     return { success: true, order_id: orderId };
   } catch (error: unknown) {
-    console.error("[createOrder] Error creating order:", error);
+    logger.error("[createOrder] Error creating order", error);
     let errorMessage = "Failed to create order. Please try again.";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    console.error("[createOrder] Error message:", errorMessage);
     return {
       success: false,
       error: errorMessage,
