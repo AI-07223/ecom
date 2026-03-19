@@ -47,6 +47,25 @@ function getAdminApp(): App {
   return adminApp;
 }
 
-export const adminDb = getFirestore(getAdminApp());
-export const adminAuth = getAuth(getAdminApp());
-export default getAdminApp();
+// Lazy proxy — defers getAdminApp() until the first method/property is accessed.
+// This prevents the module from throwing during Next.js build-time static analysis,
+// where env vars are not available.
+function makeLazyProxy<T extends object>(factory: () => T): T {
+  let instance: T | undefined;
+  return new Proxy({} as T, {
+    get(_, prop, receiver) {
+      if (!instance) instance = factory();
+      const value = Reflect.get(instance, prop, instance);
+      if (typeof value === "function") return value.bind(instance);
+      return value;
+    },
+    set(_, prop, value) {
+      if (!instance) instance = factory();
+      return Reflect.set(instance, prop, value, instance);
+    },
+  });
+}
+
+export const adminDb = makeLazyProxy(() => getFirestore(getAdminApp()));
+export const adminAuth = makeLazyProxy(() => getAuth(getAdminApp()));
+export default getAdminApp;
