@@ -17,22 +17,34 @@ import {
     CheckCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { sendContactEmail } from '@/app/actions/contact'
 
 export default function ContactPage() {
     const { settings } = useSiteSettings()
     const [submitted, setSubmitted] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [subject, setSubject] = useState('')
+    const [message, setMessage] = useState('')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
-        // Simulate form submission
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const result = await sendContactEmail({ name, email, subject, message })
 
-        setSubmitted(true)
+        if (result.success) {
+            setSubmitted(true)
+            toast.success('Message sent successfully!')
+            setName('')
+            setEmail('')
+            setSubject('')
+            setMessage('')
+        } else {
+            toast.error(result.error || 'Failed to send message')
+        }
         setLoading(false)
-        toast.success('Message sent successfully!')
     }
 
     return (
@@ -159,7 +171,7 @@ export default function ContactPage() {
                                             <div className="grid sm:grid-cols-2 gap-4">
                                                 <div className="space-y-2">
                                                     <Label htmlFor="name">Your Name</Label>
-                                                    <Input id="name" placeholder="John Doe" required />
+                                                    <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="email">Email Address</Label>
@@ -168,13 +180,15 @@ export default function ContactPage() {
                                                         type="email"
                                                         placeholder="john@example.com"
                                                         required
+                                                        value={email}
+                                                        onChange={(e) => setEmail(e.target.value)}
                                                     />
                                                 </div>
                                             </div>
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="subject">Subject</Label>
-                                                <Input id="subject" placeholder="How can we help?" required />
+                                                <Input id="subject" placeholder="How can we help?" required value={subject} onChange={(e) => setSubject(e.target.value)} />
                                             </div>
 
                                             <div className="space-y-2">
@@ -184,6 +198,8 @@ export default function ContactPage() {
                                                     placeholder="Tell us more about your query..."
                                                     rows={5}
                                                     required
+                                                    value={message}
+                                                    onChange={(e) => setMessage(e.target.value)}
                                                 />
                                             </div>
 

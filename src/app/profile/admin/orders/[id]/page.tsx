@@ -33,9 +33,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/AuthProvider";
 import { useSiteSettings } from "@/providers/SiteSettingsProvider";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { toast } from "sonner";
+import { updateOrderStatus, updatePaymentStatus, updateOrderItems } from "@/app/actions/admin-order";
 import {
   Select,
   SelectContent,
@@ -157,16 +158,18 @@ export default function AdminOrderDetailPage() {
   };
 
   const handleUpdateStatus = async () => {
-    if (!order) return;
+    if (!order || !user) return;
     setIsUpdating(true);
     try {
-      await updateDoc(doc(db, "orders", order.id), {
-        status: newStatus,
-        updated_at: serverTimestamp(),
-      });
-      toast.success("Order status updated");
-      setOrder({ ...order, status: newStatus });
-      setShowStatusDialog(false);
+      const idToken = await user.getIdToken();
+      const result = await updateOrderStatus({ order_id: order.id, id_token: idToken, new_status: newStatus });
+      if (result.success) {
+        toast.success("Order status updated — customer notified by email");
+        setOrder({ ...order, status: newStatus });
+        setShowStatusDialog(false);
+      } else {
+        toast.error(result.error || "Failed to update order");
+      }
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Failed to update order");
@@ -175,14 +178,16 @@ export default function AdminOrderDetailPage() {
   };
 
   const handleUpdatePaymentStatus = async (newPaymentStatus: PaymentStatus) => {
-    if (!order) return;
+    if (!order || !user) return;
     try {
-      await updateDoc(doc(db, "orders", order.id), {
-        payment_status: newPaymentStatus,
-        updated_at: serverTimestamp(),
-      });
-      toast.success("Payment status updated");
-      setOrder({ ...order, payment_status: newPaymentStatus });
+      const idToken = await user.getIdToken();
+      const result = await updatePaymentStatus({ order_id: order.id, id_token: idToken, new_payment_status: newPaymentStatus });
+      if (result.success) {
+        toast.success("Payment status updated");
+        setOrder({ ...order, payment_status: newPaymentStatus });
+      } else {
+        toast.error(result.error || "Failed to update payment status");
+      }
     } catch (error) {
       console.error("Error updating payment status:", error);
       toast.error("Failed to update payment status");
@@ -190,31 +195,29 @@ export default function AdminOrderDetailPage() {
   };
 
   const handleSaveItems = async () => {
-    if (!order) return;
-    
-    // Recalculate totals
-    const newSubtotal = editedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const newShipping = newSubtotal >= 999 ? 0 : 99;
-    const newTotal = newSubtotal - order.discount + newShipping;
+    if (!order || !user) return;
 
     setIsUpdating(true);
     try {
-      await updateDoc(doc(db, "orders", order.id), {
-        items: editedItems,
-        subtotal: newSubtotal,
-        shipping: newShipping,
-        total: newTotal,
-        updated_at: serverTimestamp(),
-      });
-      toast.success("Order items updated");
-      setOrder({ 
-        ...order, 
-        items: editedItems,
-        subtotal: newSubtotal,
-        shipping: newShipping,
-        total: newTotal,
-      });
-      setEditingItems(false);
+      const idToken = await user.getIdToken();
+      const result = await updateOrderItems({ order_id: order.id, id_token: idToken, items: editedItems });
+      if (result.success) {
+        // Recalculate locally for immediate UI update
+        const newSubtotal = editedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const newShipping = newSubtotal >= 999 ? 0 : 99;
+        const newTotal = newSubtotal - order.discount + newShipping;
+        toast.success("Order items updated");
+        setOrder({
+          ...order,
+          items: editedItems,
+          subtotal: newSubtotal,
+          shipping: newShipping,
+          total: newTotal,
+        });
+        setEditingItems(false);
+      } else {
+        toast.error(result.error || "Failed to update items");
+      }
     } catch (error) {
       console.error("Error updating items:", error);
       toast.error("Failed to update items");

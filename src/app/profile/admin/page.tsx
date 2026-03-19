@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers/AuthProvider";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, getCountFromServer, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { Order, Product } from "@/types/database.types";
 
@@ -64,65 +64,66 @@ export default function AdminDashboardPage() {
       if (!isAdmin) return;
 
       try {
-        // Fetch products
-        const productsSnap = await getDocs(collection(db, "products"));
-        const products = productsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Product[];
+        // Use count queries instead of fetching all documents
+        const [productsCount, ordersCount, usersCount] = await Promise.all([
+          getCountFromServer(collection(db, "products")),
+          getCountFromServer(collection(db, "orders")),
+          getCountFromServer(collection(db, "profiles")),
+        ]);
 
-        // Fetch orders
-        const ordersSnap = await getDocs(collection(db, "orders"));
-        const orders = ordersSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Order[];
+        // Fetch targeted subsets in parallel
+        const [
+          pendingCount,
+          processingCount,
+          deliveredCount,
+          paidOrdersSnap,
+          recentOrdersSnap,
+          lowStockSnap,
+        ] = await Promise.all([
+          getCountFromServer(query(collection(db, "orders"), where("status", "==", "pending"))),
+          getCountFromServer(query(collection(db, "orders"), where("status", "==", "processing"))),
+          getCountFromServer(query(collection(db, "orders"), where("status", "==", "delivered"))),
+          // Revenue: fetch paid orders (limited to 500 for safety)
+          getDocs(query(collection(db, "orders"), where("payment_status", "==", "paid"), limit(500))),
+          // Recent orders: only 5 most recent
+          getDocs(query(collection(db, "orders"), orderBy("created_at", "desc"), limit(5))),
+          // Low stock: only active products with quantity <= 5
+          getDocs(query(collection(db, "products"), where("quantity", "<=", 5), limit(10))),
+        ]);
 
-        // Fetch users
-        const usersSnap = await getDocs(collection(db, "profiles"));
+        const totalRevenue = paidOrdersSnap.docs.reduce(
+          (sum, doc) => sum + ((doc.data().total as number) || 0),
+          0,
+        );
 
-        // Calculate stats
-        const paidOrders = orders.filter((o) => o.payment_status === "paid");
-        const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-
-        // Get today's orders
+        // Today's orders count
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const todayOrders = orders.filter((o) => {
-          const orderDate = o.created_at ? new Date(o.created_at as any) : null;
-          return orderDate && orderDate >= today;
-        }).length;
+        const todayOrdersCount = await getCountFromServer(
+          query(collection(db, "orders"), where("created_at", ">=", today)),
+        );
 
-        // Low stock items
-        const lowStock = products
-          .filter((p) => p.is_active && p.quantity <= 5)
+        const lowStock = lowStockSnap.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() } as Product))
+          .filter((p) => p.is_active)
           .slice(0, 5);
 
-        // Recent orders
-        const sortedOrders = [...orders]
-          .sort((a, b) => {
-            const aTime = (a.created_at as any)?.seconds
-              ? (a.created_at as any).seconds * 1000
-              : 0;
-            const bTime = (b.created_at as any)?.seconds
-              ? (b.created_at as any).seconds * 1000
-              : 0;
-            return bTime - aTime;
-          })
-          .slice(0, 5);
+        const recentOrders = recentOrdersSnap.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Order),
+        );
 
         setStats({
-          totalProducts: products.length,
-          totalOrders: orders.length,
-          totalUsers: usersSnap.size,
+          totalProducts: productsCount.data().count,
+          totalOrders: ordersCount.data().count,
+          totalUsers: usersCount.data().count,
           totalRevenue,
-          pendingOrders: orders.filter((o) => o.status === "pending").length,
-          processingOrders: orders.filter((o) => o.status === "processing").length,
+          pendingOrders: pendingCount.data().count,
+          processingOrders: processingCount.data().count,
           lowStockProducts: lowStock.length,
-          todayOrders,
-          deliveredOrders: orders.filter((o) => o.status === "delivered").length,
+          todayOrders: todayOrdersCount.data().count,
+          deliveredOrders: deliveredCount.data().count,
         });
-        setRecentOrders(sortedOrders);
+        setRecentOrders(recentOrders);
         setLowStockItems(lowStock);
       } catch (error) {
         console.error("Error fetching stats:", error);

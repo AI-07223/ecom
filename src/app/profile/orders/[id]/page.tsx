@@ -31,6 +31,19 @@ import { useSiteSettings } from "@/providers/SiteSettingsProvider";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import Invoice from "@/components/orders/Invoice";
+import { cancelOrder } from "@/app/actions/cancel-order";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 import type { Order as OrderType } from "@/types/database.types";
 interface Order extends Omit<OrderType, 'created_at' | 'updated_at'> {
@@ -73,6 +86,25 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelOrder = async () => {
+    if (!user || !order) return;
+    setIsCancelling(true);
+    try {
+      const idToken = await user.getIdToken();
+      const result = await cancelOrder({ order_id: order.id, id_token: idToken });
+      if (result.success) {
+        setOrder({ ...order, status: "cancelled" });
+        toast.success("Order cancelled successfully. Stock has been restored.");
+      } else {
+        toast.error(result.error || "Failed to cancel order");
+      }
+    } catch {
+      toast.error("Failed to cancel order. Please try again.");
+    }
+    setIsCancelling(false);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -184,6 +216,34 @@ export default function OrderDetailPage() {
           <Badge className={statusColors[order.status] || "bg-gray-100"}>
             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
           </Badge>
+          {/* Cancel Button (only for pending orders) */}
+          {order.status === "pending" && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={isCancelling}>
+                  <XCircle className="h-4 w-4 mr-1" />
+                  {isCancelling ? "Cancelling..." : "Cancel Order"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to cancel this order? This action cannot be undone. Product stock will be restored.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleCancelOrder}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Yes, Cancel Order
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           {/* Invoice Button */}
           <Dialog open={showInvoice} onOpenChange={setShowInvoice}>
             <DialogTrigger asChild>

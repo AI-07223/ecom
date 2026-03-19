@@ -58,20 +58,15 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
 
       // Users can create their own profile with valid data
-      // Designated admin email can create with admin role
+      // Users can only create profiles with "customer" role
+      // Admin bootstrapping is done server-side via Admin SDK (bypasses rules)
       allow create: if isOwner(userId) &&
                        isValidProfile(request.resource.data) &&
-                       (request.resource.data.role == "customer" ||
-                        (request.auth.token.email == "z41d.706@gmail.com" && request.resource.data.role == "admin"));
+                       request.resource.data.role == "customer";
 
       // Users can update their own profile (except role field)
       allow update: if isOwner(userId) &&
                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
-
-      // Designated admin email can update their own role to admin
-      allow update: if isOwner(userId) &&
-                       request.auth.token.email == "z41d.706@gmail.com" &&
-                       request.resource.data.role == "admin";
 
       // Admins can update any profile (for changing roles)
       allow update: if isAdmin();
@@ -115,6 +110,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
                        request.resource.data.user_id == request.auth.uid &&
                        isValidOrder(request.resource.data);
+
+      // Customers can cancel their own pending orders (defense-in-depth; server action uses Admin SDK)
+      allow update: if isAuthenticated() &&
+                       resource.data.user_id == request.auth.uid &&
+                       resource.data.status == "pending" &&
+                       request.resource.data.status == "cancelled" &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated_at']);
 
       // Admins can update/delete orders
       allow update, delete: if isAdmin();

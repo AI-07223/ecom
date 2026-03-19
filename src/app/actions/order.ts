@@ -285,6 +285,14 @@ export async function createOrder(
       if (validCouponCode && couponRef) {
         const couponDoc = await transaction.get(couponRef);
         const currentUsed = couponDoc.data()?.used_count || 0;
+
+        // Re-validate usage limit inside transaction (prevents two concurrent orders
+        // from both passing the pre-transaction check and both succeeding)
+        const freshMaxUses = couponDoc.data()?.usage_limit;
+        if (freshMaxUses && currentUsed >= freshMaxUses) {
+          throw new Error("Coupon has reached its maximum usage limit");
+        }
+
         transaction.update(couponRef, {
           used_count: currentUsed + 1,
           updated_at: FieldValue.serverTimestamp(),

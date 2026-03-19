@@ -30,6 +30,66 @@ import { useAuth } from "./AuthProvider";
 import { toast } from "sonner";
 import { Undo2, RotateCcw } from "lucide-react";
 
+// --- Guest cart localStorage helpers ---
+
+const GUEST_CART_KEY = "guest_cart";
+
+type GuestCartEntry = { product_id: string; quantity: number };
+
+function getGuestCart(): GuestCartEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(GUEST_CART_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function setGuestCart(entries: GuestCartEntry[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(entries));
+  } catch {
+    // localStorage full or unavailable — ignore silently
+  }
+}
+
+function clearGuestCartStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(GUEST_CART_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// --- Batch product fetcher (shared by guest and authenticated paths) ---
+
+async function batchFetchProducts(productIds: string[]): Promise<Map<string, Product>> {
+  const productMap = new Map<string, Product>();
+  if (productIds.length === 0) return productMap;
+
+  // Firestore 'in' queries support up to 30 values, chunk if needed
+  for (let i = 0; i < productIds.length; i += 30) {
+    const chunk = productIds.slice(i, i + 30);
+    const productsSnap = await getDocs(
+      query(collection(db, "products"), where(documentId(), "in", chunk)),
+    );
+    for (const productDoc of productsSnap.docs) {
+      productMap.set(
+        productDoc.id,
+        convertProductData(productDoc.id, productDoc.data() as Record<string, unknown>),
+      );
+    }
+  }
+  return productMap;
+}
+
+// --- Types ---
+
 interface Coupon {
   code: string;
   discount_type: "percentage" | "fixed";
@@ -72,12 +132,32 @@ function convertCartItemData(
   };
 }
 
+// Helper to build a cart item from a guest entry + product
+function guestEntryToCartItem(
+  entry: GuestCartEntry,
+  product: Product,
+): CartItem & { product: Product } {
+  const now = new Date().toISOString();
+  return {
+    id: entry.product_id,
+    user_id: "guest",
+    product_id: entry.product_id,
+    quantity: entry.quantity,
+    created_at: now,
+    updated_at: now,
+    product,
+  };
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<(CartItem & { product: Product })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const { user } = useAuth();
-  
+
+  // Track previous user for detecting login transitions (guest → authenticated)
+  const prevUserRef = useRef<typeof user>(undefined);
+
   // Keep track of removed items for undo
   const removedItemsRef = useRef<Map<string, CartItem & { product: Product }>>(new Map());
 
@@ -97,13 +177,46 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return appliedCoupon.discount_value;
   };
 
+  // --- Fetch cart (guest or authenticated) ---
+
   const fetchCart = useCallback(async () => {
     if (!user) {
-      setItems([]);
+      // Guest: read from localStorage, fetch product details from Firestore
+      const guestEntries = getGuestCart();
+      if (guestEntries.length === 0) {
+        setItems([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const productIds = guestEntries.map((e) => e.product_id);
+        const productMap = await batchFetchProducts(productIds);
+
+        const cartItems: (CartItem & { product: Product })[] = [];
+        for (const entry of guestEntries) {
+          const product = productMap.get(entry.product_id);
+          if (product) {
+            cartItems.push(guestEntryToCartItem(entry, product));
+          }
+        }
+
+        // Clean up entries for products that no longer exist
+        if (cartItems.length < guestEntries.length) {
+          const validIds = new Set(cartItems.map((i) => i.product_id));
+          setGuestCart(guestEntries.filter((e) => validIds.has(e.product_id)));
+        }
+
+        setItems(cartItems);
+      } catch (error) {
+        console.error("Error fetching guest cart products:", error);
+        setItems([]);
+      }
       setIsLoading(false);
       return;
     }
 
+    // Authenticated: read from Firestore subcollection
     try {
       const cartRef = collection(db, "users", user.uid, "cart");
       const cartSnap = await getDocs(
@@ -116,23 +229,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Batch-fetch all products instead of N+1 individual queries
-      const productIds = cartSnap.docs.map(d => d.data().product_id as string);
-      const productMap = new Map<string, Product>();
-
-      // Firestore 'in' queries support up to 30 values, chunk if needed
-      for (let i = 0; i < productIds.length; i += 30) {
-        const chunk = productIds.slice(i, i + 30);
-        const productsSnap = await getDocs(
-          query(collection(db, "products"), where(documentId(), "in", chunk)),
-        );
-        for (const productDoc of productsSnap.docs) {
-          productMap.set(
-            productDoc.id,
-            convertProductData(productDoc.id, productDoc.data() as Record<string, unknown>),
-          );
-        }
-      }
+      const productIds = cartSnap.docs.map((d) => d.data().product_id as string);
+      const productMap = await batchFetchProducts(productIds);
 
       const cartItems: (CartItem & { product: Product })[] = [];
       for (const cartDoc of cartSnap.docs) {
@@ -157,14 +255,61 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     fetchCart();
   }, [fetchCart]);
 
-  const addToCart = async (productId: string, quantity: number = 1) => {
-    if (!user) {
-      toast.error("Please sign in to add items to cart");
-      return;
-    }
+  // --- Merge guest cart into Firestore on login ---
 
+  useEffect(() => {
+    const prevUser = prevUserRef.current;
+    prevUserRef.current = user;
+
+    // Detect login transition: previous user was null/undefined, current user exists
+    if (user && !prevUser) {
+      const guestEntries = getGuestCart();
+      if (guestEntries.length === 0) return;
+
+      (async () => {
+        try {
+          for (const entry of guestEntries) {
+            const cartItemRef = doc(db, "users", user.uid, "cart", entry.product_id);
+            const existing = await getDoc(cartItemRef);
+
+            if (existing.exists()) {
+              // Merge: increment quantity, capped at available stock
+              const productSnap = await getDoc(doc(db, "products", entry.product_id));
+              if (!productSnap.exists()) continue;
+              const maxStock = productSnap.data().quantity as number;
+              const currentQty = existing.data().quantity as number;
+              const newQty = Math.min(currentQty + entry.quantity, maxStock);
+              if (newQty > currentQty) {
+                await setDoc(cartItemRef, { quantity: newQty, updated_at: serverTimestamp() }, { merge: true });
+              }
+            } else {
+              // New item: add to Firestore cart
+              await setDoc(cartItemRef, {
+                product_id: entry.product_id,
+                quantity: entry.quantity,
+                created_at: serverTimestamp(),
+                updated_at: serverTimestamp(),
+              });
+            }
+          }
+
+          clearGuestCartStorage();
+          await fetchCart();
+          if (guestEntries.length > 0) {
+            toast.success(`${guestEntries.length} item${guestEntries.length > 1 ? "s" : ""} from your guest cart merged`);
+          }
+        } catch (error) {
+          console.error("Error merging guest cart:", error);
+        }
+      })();
+    }
+  }, [user, fetchCart]);
+
+  // --- Add to cart (guest or authenticated) ---
+
+  const addToCart = async (productId: string, quantity: number = 1) => {
     try {
-      // Fetch product to check stock
+      // Fetch product to check stock (required for both guest and authenticated)
       const productRef = doc(db, "products", productId);
       const productSnap = await getDoc(productRef);
 
@@ -174,13 +319,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
 
       const productData = productSnap.data();
-      const availableStock = productData.quantity;
+      const availableStock = productData.quantity as number;
 
+      if (!user) {
+        // Guest cart: localStorage
+        const guestEntries = getGuestCart();
+        const existing = guestEntries.find((e) => e.product_id === productId);
+        const currentQty = existing ? existing.quantity : 0;
+
+        if (currentQty + quantity > availableStock) {
+          if (availableStock === 0) {
+            toast.error("Product is out of stock");
+          } else if (currentQty >= availableStock) {
+            toast.error(`You already have the maximum available quantity (${availableStock}) in your cart`);
+          } else {
+            toast.error(`Only ${availableStock - currentQty} more items available`);
+          }
+          return;
+        }
+
+        if (existing) {
+          existing.quantity += quantity;
+        } else {
+          guestEntries.push({ product_id: productId, quantity });
+        }
+        setGuestCart(guestEntries);
+        await fetchCart();
+        toast.success(existing ? "Cart updated" : "Added to cart");
+        return;
+      }
+
+      // Authenticated cart: Firestore subcollection
       const cartItemRef = doc(db, "users", user.uid, "cart", productId);
       const existingItem = await getDoc(cartItemRef);
       const currentCartQty = existingItem.exists() ? existingItem.data().quantity : 0;
 
-      // Check if adding would exceed stock
       if (currentCartQty + quantity > availableStock) {
         if (availableStock === 0) {
           toast.error("Product is out of stock");
@@ -193,7 +366,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (existingItem.exists()) {
-        // Use increment() for atomic update - prevents race condition with rapid clicks
         await setDoc(
           cartItemRef,
           {
@@ -231,23 +403,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const removeFromCart = async (productId: string, showUndo = true) => {
-    if (!user) return;
+  // --- Remove from cart ---
 
+  const removeFromCart = async (productId: string, showUndo = true) => {
     try {
-      // Find the item before removing it
-      const itemToRemove = items.find(item => item.product_id === productId);
-      
+      const itemToRemove = items.find((item) => item.product_id === productId);
       if (itemToRemove) {
-        // Store for potential undo
         removedItemsRef.current.set(productId, itemToRemove);
       }
-      
-      await deleteDoc(doc(db, "users", user.uid, "cart", productId));
-      await fetchCart();
-      
+
+      if (!user) {
+        // Guest: remove from localStorage
+        const guestEntries = getGuestCart();
+        setGuestCart(guestEntries.filter((e) => e.product_id !== productId));
+        await fetchCart();
+      } else {
+        // Authenticated: remove from Firestore
+        await deleteDoc(doc(db, "users", user.uid, "cart", productId));
+        await fetchCart();
+      }
+
       if (showUndo && itemToRemove) {
-        // Show toast with undo action
         toast.success("Item removed from cart", {
           action: {
             label: (
@@ -278,32 +454,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.error("Error removing from cart:", error);
     }
   };
-  
+
   const handleUndoRemove = async (productId: string) => {
-    if (!user) return;
-    
     const removedItem = removedItemsRef.current.get(productId);
     if (!removedItem) {
       toast.error("Cannot undo - item data not found");
       return;
     }
-    
+
     try {
-      // Restore the item
-      await setDoc(
-        doc(db, "users", user.uid, "cart", productId),
-        {
-          product_id: productId,
-          quantity: removedItem.quantity,
-          created_at: serverTimestamp(),
-          updated_at: serverTimestamp(),
-        }
-      );
-      
+      if (!user) {
+        // Guest: re-add to localStorage
+        const guestEntries = getGuestCart();
+        guestEntries.push({ product_id: productId, quantity: removedItem.quantity });
+        setGuestCart(guestEntries);
+      } else {
+        // Authenticated: re-add to Firestore
+        await setDoc(
+          doc(db, "users", user.uid, "cart", productId),
+          {
+            product_id: productId,
+            quantity: removedItem.quantity,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+          },
+        );
+      }
+
       await fetchCart();
       toast.success("Item restored to cart");
-      
-      // Clean up
       removedItemsRef.current.delete(productId);
     } catch (error) {
       toast.error("Failed to restore item");
@@ -311,46 +490,64 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateQuantity = async (productId: string, quantity: number) => {
-    if (!user) return;
+  // --- Update quantity ---
 
+  const updateQuantity = async (productId: string, quantity: number) => {
     if (quantity <= 0) {
       await removeFromCart(productId);
       return;
     }
 
     try {
-      await setDoc(
-        doc(db, "users", user.uid, "cart", productId),
-        {
-          quantity,
-          updated_at: serverTimestamp(),
-        },
-        { merge: true },
-      );
-      await fetchCart();
+      if (!user) {
+        // Guest: update localStorage
+        const guestEntries = getGuestCart();
+        const entry = guestEntries.find((e) => e.product_id === productId);
+        if (entry) {
+          entry.quantity = quantity;
+          setGuestCart(guestEntries);
+        }
+        await fetchCart();
+      } else {
+        // Authenticated: update Firestore
+        await setDoc(
+          doc(db, "users", user.uid, "cart", productId),
+          {
+            quantity,
+            updated_at: serverTimestamp(),
+          },
+          { merge: true },
+        );
+        await fetchCart();
+      }
     } catch (error) {
       toast.error("Failed to update quantity");
       console.error("Error updating quantity:", error);
     }
   };
 
-  const clearCart = async () => {
-    if (!user) return;
+  // --- Clear cart ---
 
+  const clearCart = async () => {
     try {
-      const cartRef = collection(db, "users", user.uid, "cart");
-      const cartSnap = await getDocs(cartRef);
-      
-      // Store all items for potential undo
-      const clearedItems = items.map(item => ({
+      const clearedItems = items.map((item) => ({
         productId: item.product_id,
         quantity: item.quantity,
         product: item.product,
       }));
 
-      const deletePromises = cartSnap.docs.map((doc) => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
+      if (!user) {
+        // Guest: clear localStorage
+        clearGuestCartStorage();
+        setItems([]);
+      } else {
+        // Authenticated: delete all Firestore docs
+        const cartRef = collection(db, "users", user.uid, "cart");
+        const cartSnap = await getDocs(cartRef);
+        const deletePromises = cartSnap.docs.map((d) => deleteDoc(d.ref));
+        await Promise.all(deletePromises);
+        setItems([]);
+      }
 
       toast.success("Cart cleared", {
         action: clearedItems.length > 0 ? {
@@ -362,16 +559,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           ) as unknown as string,
           onClick: async () => {
             try {
-              for (const item of clearedItems) {
-                await setDoc(
-                  doc(db, "users", user.uid, "cart", item.productId),
-                  {
-                    product_id: item.productId,
-                    quantity: item.quantity,
-                    created_at: serverTimestamp(),
-                    updated_at: serverTimestamp(),
-                  }
-                );
+              if (!user) {
+                // Guest: restore to localStorage
+                setGuestCart(clearedItems.map((i) => ({ product_id: i.productId, quantity: i.quantity })));
+              } else {
+                // Authenticated: restore to Firestore
+                for (const item of clearedItems) {
+                  await setDoc(
+                    doc(db, "users", user.uid, "cart", item.productId),
+                    {
+                      product_id: item.productId,
+                      quantity: item.quantity,
+                      created_at: serverTimestamp(),
+                      updated_at: serverTimestamp(),
+                    },
+                  );
+                }
               }
               await fetchCart();
               toast.success("Cart restored");
@@ -383,7 +586,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         } : undefined,
         duration: 5000,
       });
-      setItems([]);
     } catch (error) {
       toast.error("Failed to clear cart", {
         action: {
