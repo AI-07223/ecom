@@ -77,7 +77,7 @@ export default async function ShippingPage() {
       </h1>
 
       <form action={setShippingMethodAction} className="mt-8 space-y-3">
-        {options.map((opt) => {
+        {(options as any[]).map((opt: any) => {
           const price = Number(opt.amount ?? opt.calculated_price?.calculated_amount ?? 0)
           return (
             <label
