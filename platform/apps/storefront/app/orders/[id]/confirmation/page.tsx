@@ -53,7 +53,7 @@ export default async function ConfirmationPage({ params }: PageProps) {
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wide opacity-70">Items</h2>
         <ul className="mt-2 divide-y divide-black/10">
-          {order.items?.map((item) => (
+          {(order.items ?? []).map((item: any) => (
             <li key={item.id} className="flex justify-between py-3 text-sm">
               <span>
                 {item.product_title ?? item.title} × {item.quantity}

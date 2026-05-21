@@ -45,7 +45,7 @@ export default async function ReviewPage() {
       <section className="mt-8 space-y-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide opacity-70">Items</h2>
         <ul className="divide-y divide-black/10">
-          {cart.items?.map((item) => (
+          {(cart.items ?? []).map((item: any) => (
             <li key={item.id} className="flex justify-between py-3 text-sm">
               <span>
                 {item.product_title ?? item.title} × {item.quantity}

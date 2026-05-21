@@ -57,7 +57,7 @@ export default async function CartPage() {
       </h1>
 
       <ul className="mt-8 divide-y divide-black/10">
-        {cart.items?.map((item) => (
+        {(cart.items ?? []).map((item: any) => (
           <li key={item.id} className="flex gap-4 py-6">
             {item.thumbnail ? (
               // eslint-disable-next-line @next/next/no-img-element
