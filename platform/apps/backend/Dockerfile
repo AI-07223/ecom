@@ -1,11 +1,15 @@
 # syntax=docker/dockerfile:1.7
 #
-# Medusa v2 backend image.
+# Medusa v2 backend image — production-ready.
 #
-# Build context is the platform/ workspace root (set in compose.yml) so this
-# Dockerfile can see the root package.json + lockfile and the apps/backend
-# workspace package together. That's what npm needs to resolve workspaces.
+# Builds the Medusa app at image-build time, then on container start runs
+# pending migrations and boots `medusa start` (the production server).
 #
+# For local development, run `npm run backend:dev` on the host instead of
+# using this image — that uses `medusa develop` with file-watch + hot reload
+# against the Postgres/Redis from `docker compose up postgres redis`.
+#
+
 FROM node:24-alpine
 
 RUN apk add --no-cache python3 make g++ libc6-compat
@@ -23,15 +27,17 @@ RUN npm install --workspace=@platform/backend --include-workspace-root --no-audi
 # --- Copy backend source ------------------------------------------------------
 COPY apps/backend/ ./apps/backend/
 
+# --- Build (compile TS + admin bundle) ---------------------------------------
 WORKDIR /app/apps/backend
+RUN node /app/node_modules/.bin/medusa build
 
 EXPOSE 9000
 
-# Disable Medusa's telemetry (we don't need it and it forks a subprocess
-# that occasionally interferes with startup logging on slow filesystems).
+ENV NODE_ENV=production
 ENV MEDUSA_DISABLE_TELEMETRY=true
 
-# Call the Medusa binary directly via node — `npx` defers to npm package
-# resolution which has been observed to stall under Docker Desktop on
-# Windows. Direct invocation avoids that entirely.
-CMD ["node", "/app/node_modules/.bin/medusa", "develop"]
+# Run pending migrations once on each container start (idempotent — Medusa
+# tracks applied migrations in mikro_orm_migrations) and then start the
+# production server. On Linux hosts (including Coolify) the migrate phase
+# completes in ~30s; the unhealthy-window during first boot is expected.
+CMD ["sh", "-c", "node /app/node_modules/.bin/medusa db:migrate && exec node /app/node_modules/.bin/medusa start"]

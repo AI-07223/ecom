@@ -7,10 +7,11 @@ import { NextResponse, type NextRequest } from "next/server"
 import { normalizeHost, tenantCache } from "@platform/tenancy"
 
 export const config = {
-  // Skip Next.js internals, static assets, and favicons. Everything else
-  // (including data routes) is tenant-scoped.
+  // Skip Next.js internals, static assets, favicons, and the public
+  // /api/health endpoint (Coolify hits it without a tenant hostname).
+  // Everything else (including data routes) is tenant-scoped.
   matcher: [
-    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml).*)",
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|api/health).*)",
   ],
 }
 
