@@ -36,8 +36,12 @@ EXPOSE 9000
 ENV NODE_ENV=production
 ENV MEDUSA_DISABLE_TELEMETRY=true
 
-# Run pending migrations once on each container start (idempotent — Medusa
-# tracks applied migrations in mikro_orm_migrations) and then start the
-# production server. On Linux hosts (including Coolify) the migrate phase
-# completes in ~30s; the unhealthy-window during first boot is expected.
-CMD ["sh", "-c", "node /app/node_modules/.bin/medusa db:migrate && exec node /app/node_modules/.bin/medusa start"]
+# On each container start:
+#   1. Run pending Medusa migrations (idempotent — tracked in mikro_orm_migrations)
+#   2. Create the platform admin user if missing (idempotent — `medusa user`
+#      errors on an existing email, we tolerate via `|| true`)
+#   3. Exec into the production server
+#
+# On Linux hosts the migrate phase completes in ~30s; the unhealthy-window
+# during first boot is expected.
+CMD ["sh", "-c", "node /app/node_modules/.bin/medusa db:migrate && (node /app/node_modules/.bin/medusa user -e \"$MEDUSA_ADMIN_EMAIL\" -p \"$MEDUSA_ADMIN_PASSWORD\" || true) && exec node /app/node_modules/.bin/medusa start"]
