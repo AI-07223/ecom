@@ -1,0 +1,42 @@
+{
+  "name": "platform",
+  "private": true,
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "start": "turbo start",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "backend:dev": "turbo dev --filter=@platform/backend",
+    "backend:seed": "turbo seed --filter=@platform/backend",
+    "storefront:dev": "turbo dev --filter=@platform/storefront",
+    "seed": "tsx scripts/seed-tenants.ts",
+    "admin:create": "tsx scripts/admin-create.ts",
+    "test:scripts": "vitest run",
+    "test:e2e": "vitest run scripts/tests/e2e-catalog-isolation.test.ts",
+    "migrate": "npm run migrate:platform && npm run migrate:medusa",
+    "migrate:platform": "tsx scripts/migrate-platform.ts",
+    "migrate:medusa": "npm --workspace=@platform/backend exec -- medusa db:migrate"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.10",
+    "@types/pg": "8.11.10",
+    "dotenv": "16.4.7",
+    "pg": "8.13.1",
+    "tsx": "4.19.2",
+    "turbo": "2.3.3",
+    "prettier": "3.4.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "!apps/backend/.medusa/**"
+  ],
+  "overrides": {
+    "ajv": "^8.0.0"
+  }
+}

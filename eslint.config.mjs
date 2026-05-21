@@ -15,15 +15,17 @@ const eslintConfig = defineConfig([
     // Firebase DataConnect auto-generated files (use CommonJS require)
     "src/dataconnect-generated/**",
     "src/dataconnect-admin-generated/**",
+    // New Medusa + Next.js multi-tenant stack lints itself
+    "platform/**",
+    // Flutter mobile app has its own toolchain
+    "flutter_firebase_app/**",
   ]),
   {
     rules: {
-      // Disable rules that are causing issues with existing codebase
-      // These are pre-existing issues that would require significant refactoring
-      "react-hooks/set-state-in-effect": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@next/next/no-html-link-for-pages": "off",
-      "@next/next/no-img-element": "off",
+      "react-hooks/set-state-in-effect": "warn",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@next/next/no-html-link-for-pages": "warn",
+      "@next/next/no-img-element": "warn",
     },
   },
 ]);

@@ -1,0 +1,89 @@
+# Local development stack for the multi-tenant platform.
+#
+# Boots Postgres, Redis, the Medusa backend, and the Next.js storefront on a
+# single Compose project network. The same file is the base for the Coolify
+# deploy via compose.coolify.yml (override).
+#
+# Quick start:
+#   cp .env.example .env
+#   docker compose up -d
+#
+# Slim test (no app builds needed):
+#   docker compose up -d postgres redis
+#
+
+name: platform
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  medusa:
+    build:
+      # Workspace root context so the Dockerfile can see the root
+      # package.json + lockfile + the apps/backend workspace together.
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${MEDUSA_PORT:-9000}:9000"
+
+  storefront:
+    build:
+      # Workspace root context so the Dockerfile can see the root
+      # package.json + lockfile + workspace packages together.
+      context: .
+      dockerfile: apps/storefront/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      MEDUSA_BACKEND_URL: http://medusa:9000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      medusa:
+        condition: service_started
+    ports:
+      - "${STOREFRONT_PORT:-3000}:3000"
+
+volumes:
+  pgdata:
+  redisdata:

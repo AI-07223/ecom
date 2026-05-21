@@ -148,3 +148,12 @@ AGENTS.md
 # Junk files
 src/nul
 firebase.json
+
+# platform/ (new Medusa + Next.js multi-tenant stack — most of these
+# are already matched globally above, listed explicitly for clarity)
+platform/.env
+platform/**/node_modules
+platform/**/.next
+platform/**/dist
+platform/**/.medusa
+platform/**/medusa-cli-dist

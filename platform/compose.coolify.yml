@@ -1,0 +1,45 @@
+# Coolify production overlay for the multi-tenant platform.
+#
+# Layered on top of compose.yml when deploying via Coolify:
+#   docker compose -f compose.yml -f compose.coolify.yml up -d
+#
+# Coolify itself runs a Traefik proxy in front of the stack and injects host
+# routing labels at deploy time based on the domain you configure in the
+# Coolify project UI. This file therefore only adjusts what Coolify can't
+# infer on its own:
+#
+#   - Removes the local host port bindings on Postgres / Redis so those
+#     services are reachable only on the internal Compose network.
+#   - Pins the storefront's container port (3000) and the Medusa API port
+#     (9000) so Coolify's auto-generated Traefik rules pick the right port.
+#   - Keeps volumes named (Coolify backs them up) — do not bind-mount.
+#
+# This file MUST NOT redefine images, commands, or environment from scratch
+# — those live in compose.yml and are inherited.
+
+name: platform
+
+services:
+  postgres:
+    # Internal only on the Compose network in production.
+    ports: []
+    restart: always
+
+  redis:
+    ports: []
+    restart: always
+
+  medusa:
+    restart: always
+    # Coolify's Traefik proxy reads this port for routing.
+    expose:
+      - "9000"
+
+  storefront:
+    restart: always
+    expose:
+      - "3000"
+    # Multi-tenant routing is by Host header inside the Next.js middleware,
+    # NOT by separate Traefik rules. Configure a wildcard domain pointing at
+    # this service in Coolify (e.g. `*.platform.example.com`) and let the
+    # storefront resolve tenant from the incoming Host header.
