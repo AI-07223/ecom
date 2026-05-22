@@ -26,11 +26,10 @@ COPY apps/backend/ ./apps/backend/
 
 WORKDIR /app/apps/backend
 # Cap V8 heap so the admin-bundle (Vite) build doesn't get OOM-killed on
-# a shared VPS. --backend-only skips the admin SPA build for the first
-# production deploy; the admin can be added back later once the backend
-# is up and we can iterate on resource limits.
+# a shared VPS. medusa build doesn't support --backend-only, so we build
+# the full thing under the heap cap.
 ENV NODE_OPTIONS="--max-old-space-size=1024"
-RUN node /app/node_modules/.bin/medusa build --backend-only
+RUN node /app/node_modules/.bin/medusa build
 
 # ─── Runtime ───────────────────────────────────────────────────────────────
 FROM node:24-alpine AS runtime
