@@ -1,0 +1,1421 @@
+{
+  "restaurant": {
+    "slug": "hotbox",
+    "display_name": "Hotbox",
+    "tagline": "Pure veg comfort food, hot from the box",
+    "phone": "+91 98765 43210",
+    "address": "100 Feet Road, Indiranagar, Bangalore 560038",
+    "latitude": 12.9716,
+    "longitude": 77.6411,
+    "open_time": "09:00",
+    "close_time": "23:00",
+    "timezone": "Asia/Kolkata",
+    "delivery_fee_paise": 3000,
+    "packaging_fee_paise": 1000,
+    "gst_basis_points": 500,
+    "allow_cancel_after_accept": false
+  },
+  "categories": [
+    { "slug": "beverages", "name": "Beverages", "sort_order": 1 },
+    { "slug": "sandwich", "name": "Sandwich", "sort_order": 2 },
+    { "slug": "maggi", "name": "Maggi", "sort_order": 3 },
+    { "slug": "chaap", "name": "Chaap", "sort_order": 4 },
+    { "slug": "wraps", "name": "Wraps", "sort_order": 5 },
+    { "slug": "burger", "name": "Burger", "sort_order": 6 },
+    { "slug": "pizza", "name": "Pizza", "sort_order": 7 },
+    { "slug": "momos", "name": "Momos", "sort_order": 8 },
+    { "slug": "pasta", "name": "Pasta", "sort_order": 9 },
+    { "slug": "snacks", "name": "Snacks", "sort_order": 10 },
+    { "slug": "starters", "name": "Starters", "sort_order": 11 },
+    { "slug": "noodles", "name": "Noodles", "sort_order": 12 },
+    { "slug": "fry-tadka", "name": "Fry & Tadka", "sort_order": 13 },
+    { "slug": "curry", "name": "Curry", "sort_order": 14 },
+    { "slug": "paneer", "name": "Paneer", "sort_order": 15 },
+    { "slug": "vegetable", "name": "Vegetable", "sort_order": 16 },
+    { "slug": "rice", "name": "Rice", "sort_order": 17 },
+    { "slug": "breads", "name": "Breads", "sort_order": 18 },
+    { "slug": "add-on", "name": "Add On", "sort_order": 19 },
+    { "slug": "ice-cream", "name": "Ice Cream", "sort_order": 20 }
+  ],
+  "items": [
+    {
+      "slug": "cold-coffee",
+      "category_slug": "beverages",
+      "title": "Cold Coffee",
+      "description": "Iced coffee blended with milk, sugar, and a hint of chocolate.",
+      "base_price_paise": 8000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 2000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "cold-coffee-with-ice-cream",
+      "category_slug": "beverages",
+      "title": "Cold Coffee With Ice Cream",
+      "description": "Our signature cold coffee crowned with a scoop of vanilla ice cream.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 10
+    },
+    {
+      "slug": "chocolate-shake",
+      "category_slug": "beverages",
+      "title": "Chocolate Shake",
+      "description": "Thick chocolate milkshake whipped to a creamy, frothy finish.",
+      "base_price_paise": 9000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "vanilla-shake",
+      "category_slug": "beverages",
+      "title": "Vanilla Shake",
+      "description": "Classic vanilla milkshake with a smooth, sweet finish.",
+      "base_price_paise": 9000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "oreo-shake",
+      "category_slug": "beverages",
+      "title": "Oreo Shake",
+      "description": "Crushed Oreo cookies blended with vanilla ice cream and milk.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "kitkat-shake",
+      "category_slug": "beverages",
+      "title": "Kitkat Shake",
+      "description": "Crunchy Kitkat blended into a creamy chocolate milkshake.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "strawberry-shake",
+      "category_slug": "beverages",
+      "title": "Strawberry Shake",
+      "description": "Fresh strawberry shake with chilled milk and a fruity finish.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "gulkand-shake",
+      "category_slug": "beverages",
+      "title": "Gulkand Shake",
+      "description": "Rose-petal preserve blended into a cool, fragrant milkshake.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 10,
+      "variants": [
+        { "slug": "small", "name": "Small", "price_delta_paise": 0, "is_default": true },
+        { "slug": "large", "name": "Large", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "raw-sandwich",
+      "category_slug": "sandwich",
+      "title": "Raw Sandwich",
+      "description": "Simple cool sandwich with fresh veggies and chutney, no grill.",
+      "base_price_paise": 5000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "veg-cheese-grilled-sandwich",
+      "category_slug": "sandwich",
+      "title": "Veg Cheese Grilled Sandwich",
+      "description": "Stacked vegetables and melted cheese pressed in a hot grill.",
+      "base_price_paise": 8000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "paneer-tikka-sandwich",
+      "category_slug": "sandwich",
+      "title": "Paneer Tikka Sandwich",
+      "description": "Tandoor-spiced paneer tikka grilled between buttered slices.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "bombay-masala-cheese-sandwich",
+      "category_slug": "sandwich",
+      "title": "Bombay Masala Cheese Sandwich",
+      "description": "Spicy Bombay aloo masala and cheese grilled to a golden crust.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "cheese-corn-capsicum-sandwich",
+      "category_slug": "sandwich",
+      "title": "Cheese Corn Capsicum Sandwich",
+      "description": "Sweet corn, crunchy capsicum and cheese grilled in a buttery sandwich.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "peri-peri-paneer-loaded-sandwich",
+      "category_slug": "sandwich",
+      "title": "Peri Peri Paneer Loaded Sandwich",
+      "description": "Loaded with peri peri paneer, cheese, and crunchy veggies.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 20
+    },
+    {
+      "slug": "hot-box-special-sandwich",
+      "category_slug": "sandwich",
+      "title": "Hot Box Special Sandwich",
+      "description": "Our chef's special triple-decker stuffed with paneer, cheese, and veggies.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "masala-maggi",
+      "category_slug": "maggi",
+      "title": "Masala Maggi",
+      "description": "Classic Maggi tossed with onions, tomatoes and our house masala.",
+      "base_price_paise": 9000,
+      "is_veg": true,
+      "prep_time_minutes": 12
+    },
+    {
+      "slug": "veg-maggi",
+      "category_slug": "maggi",
+      "title": "Veg Maggi",
+      "description": "Maggi loaded with carrot, beans, peas and capsicum.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 12
+    },
+    {
+      "slug": "spicy-schezwan-maggi",
+      "category_slug": "maggi",
+      "title": "Spicy Schezwan Maggi",
+      "description": "Maggi wok-tossed with fiery schezwan sauce and veggies.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "cheese-maggi",
+      "category_slug": "maggi",
+      "title": "Cheese Maggi",
+      "description": "Hot Maggi topped generously with melting cheese.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "cheese-corn-capsicum-maggi",
+      "category_slug": "maggi",
+      "title": "Cheese Corn Capsicum Maggi",
+      "description": "Maggi tossed with cheese, sweet corn and crunchy capsicum.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "masala-chaap",
+      "category_slug": "chaap",
+      "title": "Masala Chaap",
+      "description": "Soya chaap skewered and tossed in a tangy, spicy masala.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "kadhai-chaap",
+      "category_slug": "chaap",
+      "title": "Kadhai Chaap",
+      "description": "Soya chaap simmered in a kadhai gravy with bell peppers and onions.",
+      "base_price_paise": 18000,
+      "is_veg": true,
+      "prep_time_minutes": 25
+    },
+    {
+      "slug": "veg-cheese-wrap",
+      "category_slug": "wraps",
+      "title": "Veg Cheese Wrap",
+      "description": "Tortilla wrap stuffed with veggies and melted cheese.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "veg-cheese-corn-wrap",
+      "category_slug": "wraps",
+      "title": "Veg Cheese Corn Wrap",
+      "description": "Wrap loaded with cheese, sweet corn and fresh vegetables.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "paneer-cheese-wrap",
+      "category_slug": "wraps",
+      "title": "Paneer Cheese Wrap",
+      "description": "Spiced paneer and cheese rolled in a soft tortilla wrap.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "spicy-paneer-peri-peri-wrap",
+      "category_slug": "wraps",
+      "title": "Spicy Paneer Peri Peri Wrap",
+      "description": "Peri peri spiced paneer wrapped with crunchy veggies and mayo.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "aloo-tikki-burger",
+      "category_slug": "burger",
+      "title": "Aloo Tikki Burger",
+      "description": "Crispy potato tikki patty layered with mint chutney and onions.",
+      "base_price_paise": 9900,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "veg-burger",
+      "category_slug": "burger",
+      "title": "Veg Burger",
+      "description": "Classic veg patty burger with lettuce and house sauce.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "veg-cheese-burger",
+      "category_slug": "burger",
+      "title": "Veg Cheese Burger",
+      "description": "Veg patty topped with melting cheese in a soft toasted bun.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "indian-spicy-burger",
+      "category_slug": "burger",
+      "title": "Indian Spicy Burger",
+      "description": "Spiced veg patty with onions, mint chutney and a kick of chilli.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "cheese-paneer-burger",
+      "category_slug": "burger",
+      "title": "Cheese Paneer Burger",
+      "description": "Marinated paneer slab with cheese in a buttered bun.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "spicy-paneer-peri-peri-burger",
+      "category_slug": "burger",
+      "title": "Spicy Paneer Peri Peri Burger",
+      "description": "Peri peri paneer patty with cheese and crunchy veg slaw.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "double-decker-burger",
+      "category_slug": "burger",
+      "title": "Double Decker Burger",
+      "description": "Two stacked patties with cheese, onions and chef's sauce.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 20
+    },
+    {
+      "slug": "margherita-pizza",
+      "category_slug": "pizza",
+      "title": "Margherita Pizza",
+      "description": "Seven-inch base with tangy tomato sauce and mozzarella.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "veg-cheese-pizza",
+      "category_slug": "pizza",
+      "title": "Veg Cheese Pizza",
+      "description": "Mixed vegetables with double cheese on a seven-inch crust.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "cheese-corn-pizza",
+      "category_slug": "pizza",
+      "title": "Cheese Corn Pizza",
+      "description": "Cheesy seven-inch pizza topped with sweet corn kernels.",
+      "base_price_paise": 17000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "cheese-paneer-pizza",
+      "category_slug": "pizza",
+      "title": "Cheese Paneer Pizza",
+      "description": "Marinated paneer cubes and mozzarella on a seven-inch base.",
+      "base_price_paise": 18000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "paneer-tikka-pizza",
+      "category_slug": "pizza",
+      "title": "Paneer Tikka Pizza",
+      "description": "Smoky tandoor paneer tikka with onions and cheese.",
+      "base_price_paise": 19000,
+      "is_veg": true,
+      "prep_time_minutes": 24
+    },
+    {
+      "slug": "peppy-paneer-pizza",
+      "category_slug": "pizza",
+      "title": "Peppy Paneer Pizza",
+      "description": "Paneer with capsicum, red paprika and a peppy tomato sauce.",
+      "base_price_paise": 19000,
+      "is_veg": true,
+      "prep_time_minutes": 24
+    },
+    {
+      "slug": "peri-peri-paneer-pizza",
+      "category_slug": "pizza",
+      "title": "Peri Peri Paneer Pizza",
+      "description": "Peri peri spiced paneer and onions on a cheesy seven-inch base.",
+      "base_price_paise": 20000,
+      "is_veg": true,
+      "prep_time_minutes": 24
+    },
+    {
+      "slug": "cheese-paneer-loaded-pizza",
+      "category_slug": "pizza",
+      "title": "Cheese Paneer Loaded Pizza",
+      "description": "Loaded with extra cheese, paneer and a swirl of mayo.",
+      "base_price_paise": 22000,
+      "is_veg": true,
+      "prep_time_minutes": 24
+    },
+    {
+      "slug": "farmhouse-pizza",
+      "category_slug": "pizza",
+      "title": "Farmhouse Pizza",
+      "description": "Onion, capsicum, tomato, mushroom and cheese on a classic base.",
+      "base_price_paise": 20000,
+      "is_veg": true,
+      "prep_time_minutes": 24
+    },
+    {
+      "slug": "onion-pizza",
+      "category_slug": "pizza",
+      "title": "Onion Pizza",
+      "description": "Simple cheesy seven-inch pizza topped with rings of onion.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "cheese-burst-pizza",
+      "category_slug": "pizza",
+      "title": "Cheese Burst Pizza",
+      "description": "Seven-inch pizza with a stuffed cheese-filled crust.",
+      "base_price_paise": 20000,
+      "is_veg": true,
+      "prep_time_minutes": 25
+    },
+    {
+      "slug": "paneer-burst-pizza",
+      "category_slug": "pizza",
+      "title": "Paneer Burst Pizza",
+      "description": "Stuffed-crust pizza loaded with paneer and mozzarella.",
+      "base_price_paise": 22000,
+      "is_veg": true,
+      "prep_time_minutes": 25
+    },
+    {
+      "slug": "steam-momos",
+      "category_slug": "momos",
+      "title": "Steam Momos",
+      "description": "Soft steamed dumplings stuffed with seasoned vegetables.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 18,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "fry-momos",
+      "category_slug": "momos",
+      "title": "Fry Momos",
+      "description": "Crisp-fried momos with golden shells and a juicy filling.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 18,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "kurkure-momos",
+      "category_slug": "momos",
+      "title": "Kurkure Momos",
+      "description": "Momos coated in crunchy kurkure crumbs and deep fried.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 20,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "gravy-momos",
+      "category_slug": "momos",
+      "title": "Gravy Momos",
+      "description": "Steamed momos drenched in a spicy red house gravy.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 20,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "malai-momos",
+      "category_slug": "momos",
+      "title": "Malai Momos",
+      "description": "Momos tossed in a creamy malai sauce with mild spices.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 3000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "alfredo-white-sauce-pasta",
+      "category_slug": "pasta",
+      "title": "Alfredo White Sauce Pasta",
+      "description": "Penne tossed in a creamy white alfredo sauce with herbs.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 20
+    },
+    {
+      "slug": "arrabbiata-red-sauce-pasta",
+      "category_slug": "pasta",
+      "title": "Arrabbiata Red Sauce Pasta",
+      "description": "Penne in a spicy red tomato arrabbiata sauce with garlic.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 20
+    },
+    {
+      "slug": "brown-sauce-pasta",
+      "category_slug": "pasta",
+      "title": "Brown Sauce Pasta",
+      "description": "Penne tossed in a savoury brown sauce with sauteed veggies.",
+      "base_price_paise": 17000,
+      "is_veg": true,
+      "prep_time_minutes": 20
+    },
+    {
+      "slug": "tandoori-sauce-pasta",
+      "category_slug": "pasta",
+      "title": "Tandoori Sauce Pasta",
+      "description": "Penne in a smoky tandoori-spiced cream sauce.",
+      "base_price_paise": 18000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "french-fries",
+      "category_slug": "snacks",
+      "title": "French Fries",
+      "description": "Golden, crispy potato fries served with ketchup.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 12
+    },
+    {
+      "slug": "peri-peri-fries",
+      "category_slug": "snacks",
+      "title": "Peri Peri Fries",
+      "description": "Crispy fries dusted with our smoky peri peri seasoning.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 12
+    },
+    {
+      "slug": "cheese-chipotle-fries",
+      "category_slug": "snacks",
+      "title": "Cheese Chipotle Fries",
+      "description": "Loaded fries with chipotle sauce and a generous cheese drizzle.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "veg-pakoda",
+      "category_slug": "snacks",
+      "title": "Veg Pakoda",
+      "description": "Mixed vegetable fritters fried golden in a spiced gram flour batter.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "paneer-pakoda",
+      "category_slug": "snacks",
+      "title": "Paneer Pakoda",
+      "description": "Cottage cheese fingers dipped in spiced batter and fried hot.",
+      "base_price_paise": 17000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "peanut-masala",
+      "category_slug": "snacks",
+      "title": "Peanut Masala",
+      "description": "Roasted peanuts tossed with onion, tomato, lemon and chaat masala.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 10
+    },
+    {
+      "slug": "chana-chahat",
+      "category_slug": "snacks",
+      "title": "Chana Chahat",
+      "description": "Tangy chickpea chaat with onion, tomato, mint and crunchy sev.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 12
+    },
+    {
+      "slug": "veg-manchurian",
+      "category_slug": "starters",
+      "title": "Veg Manchurian",
+      "description": "Vegetable balls tossed in a tangy Indo-Chinese manchurian sauce.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-chilli",
+      "category_slug": "starters",
+      "title": "Paneer Chilli",
+      "description": "Crispy paneer cubes tossed with peppers in a chilli soya glaze.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "chinese-bhel",
+      "category_slug": "starters",
+      "title": "Chinese Bhel",
+      "description": "Crispy fried noodles tossed with veggies and tangy schezwan sauce.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 18,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "chilli-potato",
+      "category_slug": "starters",
+      "title": "Chilli Potato",
+      "description": "Crispy potato fingers tossed in a hot chilli garlic sauce.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 20,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "honey-chilli-potato",
+      "category_slug": "starters",
+      "title": "Honey Chilli Potato",
+      "description": "Crispy potatoes glazed with honey, chilli and toasted sesame.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 20,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "mushroom-chilli",
+      "category_slug": "starters",
+      "title": "Mushroom Chilli",
+      "description": "Mushrooms wok-tossed with peppers in a spicy chilli sauce.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "dry", "name": "Dry", "price_delta_paise": 0, "is_default": true },
+        { "slug": "gravy", "name": "Gravy", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "veg-chowmein",
+      "category_slug": "noodles",
+      "title": "Veg Chowmein",
+      "description": "Stir-fried noodles tossed with mixed vegetables and soya sauce.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "hakka-noodles",
+      "category_slug": "noodles",
+      "title": "Hakka Noodles",
+      "description": "Classic Indo-Chinese hakka noodles with crunchy vegetables.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "chilli-garlic-noodles",
+      "category_slug": "noodles",
+      "title": "Chilli Garlic Noodles",
+      "description": "Noodles tossed in a fragrant chilli garlic sauce.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "burnt-garlic-noodles",
+      "category_slug": "noodles",
+      "title": "Burnt Garlic Noodles",
+      "description": "Noodles tossed with deeply toasted garlic and stir-fried veggies.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "schezwan-noodles",
+      "category_slug": "noodles",
+      "title": "Schezwan Noodles",
+      "description": "Noodles wok-tossed in a fiery schezwan sauce.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "dal-fry",
+      "category_slug": "fry-tadka",
+      "title": "Dal Fry",
+      "description": "Yellow lentils simmered with onion, tomato and a ghee tadka.",
+      "base_price_paise": 9000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "dal-tadka",
+      "category_slug": "fry-tadka",
+      "title": "Dal Tadka",
+      "description": "Comforting yellow dal finished with a smoky cumin and chilli tadka.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "daal-makhani",
+      "category_slug": "fry-tadka",
+      "title": "Daal Makhani",
+      "description": "Slow-cooked black lentils in a rich tomato and butter gravy.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 30,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "dahi-tadka",
+      "category_slug": "fry-tadka",
+      "title": "Dahi Tadka",
+      "description": "Whisked yoghurt simmered with mustard, curry leaves and chilli tadka.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "sev-tamatar",
+      "category_slug": "curry",
+      "title": "Sev Tamatar",
+      "description": "Tangy tomato gravy topped with crunchy sev, a Rajasthani favourite.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "malai-sev",
+      "category_slug": "curry",
+      "title": "Malai Sev",
+      "description": "Sev simmered in a creamy malai gravy with mild spices.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "malai-pyaz",
+      "category_slug": "curry",
+      "title": "Malai Pyaz",
+      "description": "Onion petals cooked in a rich malai cashew gravy.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "malai-kofta",
+      "category_slug": "curry",
+      "title": "Malai Kofta",
+      "description": "Paneer and potato koftas in a creamy cashew tomato gravy.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 30,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "malai-methi-matar",
+      "category_slug": "curry",
+      "title": "Malai Methi Matar",
+      "description": "Green peas and fenugreek in a sweet, creamy malai gravy.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "kaju-curry",
+      "category_slug": "curry",
+      "title": "Kaju Curry",
+      "description": "Whole cashews simmered in a luxurious tomato cream gravy.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "mushroom-masala",
+      "category_slug": "curry",
+      "title": "Mushroom Masala",
+      "description": "Button mushrooms in a spicy onion-tomato masala gravy.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "chana-masala",
+      "category_slug": "curry",
+      "title": "Chana Masala",
+      "description": "Chickpeas simmered in a punchy tomato and onion masala.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "jeera-aloo",
+      "category_slug": "curry",
+      "title": "Jeera Aloo",
+      "description": "Baby potatoes sauteed with cumin, turmeric and fresh coriander.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "aloo-matar",
+      "category_slug": "curry",
+      "title": "Aloo Matar",
+      "description": "Potatoes and green peas simmered in a homestyle tomato gravy.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "aloo-pyaj-rajasthani",
+      "category_slug": "curry",
+      "title": "Aloo Pyaj Rajasthani",
+      "description": "Rajasthani-style aloo pyaj in a tangy, spicy gravy.",
+      "base_price_paise": 10000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 4000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "matar-paneer",
+      "category_slug": "paneer",
+      "title": "Matar Paneer",
+      "description": "Paneer and peas simmered in a classic onion-tomato gravy.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-butter-masala",
+      "category_slug": "paneer",
+      "title": "Paneer Butter Masala",
+      "description": "Soft paneer cubes in a velvety tomato and butter gravy.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "kadai-paneer",
+      "category_slug": "paneer",
+      "title": "Kadai Paneer",
+      "description": "Paneer tossed with bell peppers in a smoky kadai masala.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-lababdar",
+      "category_slug": "paneer",
+      "title": "Paneer Lababdar",
+      "description": "Paneer in a rich, creamy gravy of cashew, tomato and butter.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "shahi-paneer",
+      "category_slug": "paneer",
+      "title": "Shahi Paneer",
+      "description": "Royal-style paneer in a saffron, cashew and cream gravy.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-tikka-masala",
+      "category_slug": "paneer",
+      "title": "Paneer Tikka Masala",
+      "description": "Smoky tandoor-cooked paneer simmered in a tomato-onion masala gravy.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 30,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "palak-paneer",
+      "category_slug": "paneer",
+      "title": "Palak Paneer",
+      "description": "Paneer cubes in a spiced spinach gravy with a hint of cream.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-bhurji",
+      "category_slug": "paneer",
+      "title": "Paneer Bhurji",
+      "description": "Scrambled paneer with onions, tomato and a hit of green chilli.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 22,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-tufani",
+      "category_slug": "paneer",
+      "title": "Paneer Tufani",
+      "description": "Paneer simmered in a hot, stormy chilli-tomato gravy.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "handi-paneer",
+      "category_slug": "paneer",
+      "title": "Handi Paneer",
+      "description": "Paneer slow-cooked in a handi with onion, tomato and warm spices.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 30,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "paneer-amritsari",
+      "category_slug": "paneer",
+      "title": "Paneer Amritsari",
+      "description": "Amritsari-style paneer in a tangy spiced gravy with kasuri methi.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 30,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 6000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "kaju-paneer",
+      "category_slug": "paneer",
+      "title": "Kaju Paneer",
+      "description": "Paneer and cashews in a rich, creamy tomato gravy.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 30,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "mix-veg",
+      "category_slug": "vegetable",
+      "title": "Mix Veg",
+      "description": "Mixed seasonal vegetables in a homestyle masala gravy.",
+      "base_price_paise": 11000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "veg-kadai",
+      "category_slug": "vegetable",
+      "title": "Veg Kadai",
+      "description": "Mixed vegetables tossed with peppers in a smoky kadai masala.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 25,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "veg-jaipuri",
+      "category_slug": "vegetable",
+      "title": "Veg Jaipuri",
+      "description": "Royal Jaipuri-style veg curry with onions and warm spices.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "veg-kolhapuri",
+      "category_slug": "vegetable",
+      "title": "Veg Kolhapuri",
+      "description": "Mixed vegetables in a fiery Kolhapuri masala with coconut.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "veg-hyderabadi",
+      "category_slug": "vegetable",
+      "title": "Veg Hyderabadi",
+      "description": "Hyderabadi-style mixed veg in a fragrant, slow-cooked gravy.",
+      "base_price_paise": 13000,
+      "is_veg": true,
+      "prep_time_minutes": 28,
+      "variants": [
+        { "slug": "half", "name": "Half", "price_delta_paise": 0, "is_default": true },
+        { "slug": "full", "name": "Full", "price_delta_paise": 5000, "is_default": false }
+      ]
+    },
+    {
+      "slug": "jeera-rice",
+      "category_slug": "rice",
+      "title": "Jeera Rice",
+      "description": "Long-grain basmati rice tempered with ghee and cumin.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "masala-pulao",
+      "category_slug": "rice",
+      "title": "Masala Pulao",
+      "description": "Aromatic rice tossed with whole spices and a touch of ghee.",
+      "base_price_paise": 12000,
+      "is_veg": true,
+      "prep_time_minutes": 25
+    },
+    {
+      "slug": "veg-pulao",
+      "category_slug": "rice",
+      "title": "Veg Pulao",
+      "description": "Fragrant basmati pulao with mixed vegetables and whole spices.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 25
+    },
+    {
+      "slug": "paneer-pulao",
+      "category_slug": "rice",
+      "title": "Paneer Pulao",
+      "description": "Basmati pulao tossed with paneer cubes and warm spices.",
+      "base_price_paise": 15000,
+      "is_veg": true,
+      "prep_time_minutes": 25
+    },
+    {
+      "slug": "veg-fried-rice",
+      "category_slug": "rice",
+      "title": "Veg Fried Rice",
+      "description": "Stir-fried rice with crunchy vegetables and a touch of soya.",
+      "base_price_paise": 14000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "paneer-fried-rice",
+      "category_slug": "rice",
+      "title": "Paneer Fried Rice",
+      "description": "Stir-fried rice with paneer cubes, peppers and Indo-Chinese spice.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 22
+    },
+    {
+      "slug": "veg-biryani",
+      "category_slug": "rice",
+      "title": "Veg Biryani",
+      "description": "Dum-cooked basmati biryani with vegetables and biryani spices.",
+      "base_price_paise": 16000,
+      "is_veg": true,
+      "prep_time_minutes": 30
+    },
+    {
+      "slug": "hyderabadi-biryani",
+      "category_slug": "rice",
+      "title": "Hyderabadi Biryani",
+      "description": "Hyderabadi-style dum biryani layered with paneer and aromatics.",
+      "base_price_paise": 18000,
+      "is_veg": true,
+      "prep_time_minutes": 32
+    },
+    {
+      "slug": "tawa-chapati-plain",
+      "category_slug": "breads",
+      "title": "Tawa Chapati Plain",
+      "description": "Soft wheat chapati cooked fresh on a hot tawa.",
+      "base_price_paise": 1000,
+      "is_veg": true,
+      "prep_time_minutes": 8
+    },
+    {
+      "slug": "tawa-chapati-butter",
+      "category_slug": "breads",
+      "title": "Tawa Chapati Butter",
+      "description": "Tawa chapati brushed generously with butter.",
+      "base_price_paise": 1500,
+      "is_veg": true,
+      "prep_time_minutes": 8
+    },
+    {
+      "slug": "plain-paratha",
+      "category_slug": "breads",
+      "title": "Plain Paratha",
+      "description": "Flaky layered wheat paratha pan-cooked with a touch of ghee.",
+      "base_price_paise": 2500,
+      "is_veg": true,
+      "prep_time_minutes": 12
+    },
+    {
+      "slug": "lachha-paratha",
+      "category_slug": "breads",
+      "title": "Lachha Paratha",
+      "description": "Multi-layered flaky paratha crisped on the tawa.",
+      "base_price_paise": 3500,
+      "is_veg": true,
+      "prep_time_minutes": 15
+    },
+    {
+      "slug": "aloo-paratha",
+      "category_slug": "breads",
+      "title": "Aloo Paratha",
+      "description": "Paratha stuffed with spiced mashed potatoes, served hot.",
+      "base_price_paise": 6000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "paneer-paratha",
+      "category_slug": "breads",
+      "title": "Paneer Paratha",
+      "description": "Paratha stuffed with seasoned grated paneer.",
+      "base_price_paise": 8000,
+      "is_veg": true,
+      "prep_time_minutes": 18
+    },
+    {
+      "slug": "water-bottle",
+      "category_slug": "add-on",
+      "title": "Water Bottle",
+      "description": "Chilled packaged drinking water.",
+      "base_price_paise": 2000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "buttermilk",
+      "category_slug": "add-on",
+      "title": "Buttermilk",
+      "description": "Spiced chaas with cumin, mint and a pinch of black salt.",
+      "base_price_paise": 2000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "curd",
+      "category_slug": "add-on",
+      "title": "Curd",
+      "description": "A small bowl of fresh, set yoghurt.",
+      "base_price_paise": 6000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "bundi-raita",
+      "category_slug": "add-on",
+      "title": "Bundi Raita",
+      "description": "Whisked yoghurt with crispy bundi and roasted cumin.",
+      "base_price_paise": 8000,
+      "is_veg": true,
+      "prep_time_minutes": 8
+    },
+    {
+      "slug": "veg-raita",
+      "category_slug": "add-on",
+      "title": "Veg Raita",
+      "description": "Yoghurt mixed with onion, tomato, cucumber and herbs.",
+      "base_price_paise": 8000,
+      "is_veg": true,
+      "prep_time_minutes": 8
+    },
+    {
+      "slug": "green-salad",
+      "category_slug": "add-on",
+      "title": "Green Salad",
+      "description": "Fresh slices of cucumber, onion, carrot and tomato with lemon.",
+      "base_price_paise": 6000,
+      "is_veg": true,
+      "prep_time_minutes": 8
+    },
+    {
+      "slug": "onion-salad",
+      "category_slug": "add-on",
+      "title": "Onion Salad",
+      "description": "Sliced onion rings with lemon and a sprinkle of chaat masala.",
+      "base_price_paise": 4000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "cucumber-salad",
+      "category_slug": "add-on",
+      "title": "Cucumber Salad",
+      "description": "Crisp cucumber slices with a squeeze of lemon and salt.",
+      "base_price_paise": 4000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "roasted-papad",
+      "category_slug": "add-on",
+      "title": "Roasted Papad",
+      "description": "Roasted urad papad served crisp and hot.",
+      "base_price_paise": 1500,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "cold-drink",
+      "category_slug": "add-on",
+      "title": "Cold Drink",
+      "description": "Chilled aerated soft drink (250ml).",
+      "base_price_paise": 4000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "vanilla-ice-cream",
+      "category_slug": "ice-cream",
+      "title": "Vanilla Ice Cream",
+      "description": "A classic scoop of creamy vanilla ice cream.",
+      "base_price_paise": 2500,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "chocolate-ice-cream",
+      "category_slug": "ice-cream",
+      "title": "Chocolate Ice Cream",
+      "description": "Rich, smooth chocolate ice cream served chilled.",
+      "base_price_paise": 3000,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    },
+    {
+      "slug": "gulkand-ice-cream",
+      "category_slug": "ice-cream",
+      "title": "Gulkand Ice Cream",
+      "description": "Aromatic rose-petal preserve folded into creamy ice cream.",
+      "base_price_paise": 3500,
+      "is_veg": true,
+      "prep_time_minutes": 5
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+# dependencies
+node_modules
+.pnp
+.pnp.*
+.yarn/*
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+
+# production
+build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# prisma
+prisma/migrations/dev.db*
+
+# downloads served by next public dir (APK artifacts live here at runtime)
+public/downloads/*.apk
+!public/downloads/.gitkeep
