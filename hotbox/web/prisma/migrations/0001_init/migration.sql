@@ -430,14 +430,3 @@ ALTER TABLE "rider_pings_latest" ADD CONSTRAINT "rider_pings_latest_rider_id_fke
 
 -- AddForeignKey
 ALTER TABLE "rider_pings" ADD CONSTRAINT "rider_pings_rider_id_fkey" FOREIGN KEY ("rider_id") REFERENCES "riders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-┌─────────────────────────────────────────────────────────┐
-│  Update available 6.19.3 -> 7.8.0                       │
-│                                                         │
-│  This is a major update - please follow the guide at    │
-│  https://pris.ly/d/major-version-upgrade                │
-│                                                         │
-│  Run the following to update                            │
-│    npm i --save-dev prisma@latest                       │
-│    npm i @prisma/client@latest                          │
-└─────────────────────────────────────────────────────────┘
-
