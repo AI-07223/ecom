@@ -5,6 +5,19 @@ loadEnv(process.env.NODE_ENV || "development", process.cwd())
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    // Constrain per-module pools so 25+ Medusa modules don't exhaust PG's
+    // 100-connection ceiling during migrations. Env var DATABASE_POOL can
+    // override at deploy time.
+    databaseDriverOptions: {
+      pool: {
+        min: 0,
+        max: 5,
+        idleTimeoutMillis: 5000,
+        acquireTimeoutMillis: 120000,
+        createTimeoutMillis: 20000,
+      },
+      idle_in_transaction_session_timeout: 60000,
+    },
     redisUrl: process.env.REDIS_URL,
     http: {
       storeCors: process.env.STORE_CORS!,
