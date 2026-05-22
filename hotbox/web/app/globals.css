@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* ─── Hotbox theme tokens ────────────────────────────────────────────────
+ * Fast-food brand defaults. Refine in the Section 13 polish task once we
+ * extract the real palette from the brand PDF.
+ */
+@theme {
+  --color-brand-50:  oklch(0.97 0.02 30);
+  --color-brand-100: oklch(0.94 0.05 28);
+  --color-brand-200: oklch(0.89 0.10 26);
+  --color-brand-300: oklch(0.82 0.16 24);
+  --color-brand-400: oklch(0.74 0.22 22);
+  --color-brand-500: oklch(0.66 0.26 21);  /* primary — warm red-orange */
+  --color-brand-600: oklch(0.58 0.25 21);
+  --color-brand-700: oklch(0.48 0.22 22);
+  --color-brand-800: oklch(0.38 0.18 23);
+  --color-brand-900: oklch(0.28 0.14 24);
+
+  --color-veg: oklch(0.62 0.18 145);
+
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans:    "Inter", system-ui, -apple-system, sans-serif;
+
+  --radius:       0.75rem;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: #fff;
+  color: #18181b;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Prevent iOS Safari from auto-zooming inputs */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Safe-area insets for sticky bottom bars on iOS */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+}

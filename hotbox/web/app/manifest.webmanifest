@@ -1,0 +1,16 @@
+{
+  "name": "Hotbox",
+  "short_name": "Hotbox",
+  "description": "Vegetarian fast food, hot to your door.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d24a2a",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

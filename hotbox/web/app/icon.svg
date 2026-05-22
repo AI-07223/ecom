@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#d24a2a"/>
+  <path d="M14 22 Q32 8 50 22 V 46 Q32 56 14 46 Z" fill="#ffffff" opacity="0.95"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-weight="900" font-size="22" fill="#d24a2a">HB</text>
+</svg>
