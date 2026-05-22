@@ -3,6 +3,13 @@ import { loadEnv, defineConfig } from "@medusajs/framework/utils"
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
 module.exports = defineConfig({
+  // The bundled admin SPA isn't needed for the multi-tenant platform — the
+  // operator manages tenants via direct DB / future SSO. Disabling here
+  // means `medusa build` skips the Vite/admin step (much faster, lower
+  // memory) and `medusa start` doesn't try to serve admin assets.
+  admin: {
+    disable: true,
+  },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     // Constrain per-module pools so 25+ Medusa modules don't exhaust PG's
