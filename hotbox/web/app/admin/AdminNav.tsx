@@ -7,6 +7,7 @@ const TABS: Array<{ href: string; label: string }> = [
   { href: "/admin", label: "Inbox" },
   { href: "/admin/riders", label: "Riders" },
   { href: "/admin/menu", label: "Menu" },
+  { href: "/admin/rider-app", label: "Rider App" },
   { href: "/admin/settings", label: "Settings" },
 ]
 

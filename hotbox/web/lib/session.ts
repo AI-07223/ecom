@@ -68,6 +68,24 @@ export async function readSessionToken(): Promise<string | null> {
 }
 
 /**
+ * Mobile-friendly token verification — checks Bearer header first, then
+ * the cookie. Used by `getCurrentUser()` so both web cookies and Expo
+ * bearer tokens authenticate via the same code path.
+ */
+async function readBearerToken(): Promise<string | null> {
+  try {
+    const { headers } = await import("next/headers")
+    const h = await headers()
+    const auth = h.get("authorization") || h.get("Authorization")
+    if (!auth) return null
+    const match = auth.match(/^Bearer\s+(.+)$/i)
+    return match?.[1] ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Returns the live user from the DB if a valid session cookie exists.
  * Re-fetches the role on every call so a demoted user can't keep admin
  * access via a stale token.
@@ -78,7 +96,8 @@ export async function getCurrentUser(): Promise<{
   name: string | null
   role: UserRole
 } | null> {
-  const token = await readSessionToken()
+  // Prefer Bearer (Expo/native clients) over cookie (web).
+  const token = (await readBearerToken()) ?? (await readSessionToken())
   if (!token) return null
 
   try {

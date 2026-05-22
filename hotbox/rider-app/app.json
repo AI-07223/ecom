@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Hotbox Rider",
+    "slug": "hotbox-rider",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "hotboxrider",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#cf3a1f"
+    },
+    "android": {
+      "package": "site.networkbase75.hotbox.rider",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#cf3a1f"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Hotbox Rider needs your location to share live delivery tracking with the customer.",
+          "locationAlwaysPermission": "Hotbox Rider needs background location to keep delivery tracking running while your screen is off.",
+          "locationWhenInUsePermission": "Hotbox Rider uses your location to share live delivery tracking with the customer.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#cf3a1f"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_AT_EAS_INIT"
+      }
+    }
+  }
+}

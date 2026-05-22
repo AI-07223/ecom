@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { CartBar } from "@/components/CartBar"
+import { CategoryArt } from "@/components/CategoryArt"
 import { VegBadge } from "@/components/VegBadge"
 import { getMenuItemBySlug } from "@/lib/catalog"
 import { ItemCustomizer } from "./ItemCustomizer"
@@ -31,12 +32,11 @@ export default async function ItemPage({
           </Link>
         </header>
 
-        <div
-          className="mx-5 my-3 h-56 rounded-2xl bg-gradient-to-br from-amber-100 via-rose-100 to-orange-100 flex items-center justify-center text-zinc-400"
-          style={{ borderRadius: "var(--radius)" }}
-        >
-          photo coming
-        </div>
+        <CategoryArt
+          categorySlug={menuItem.category.slug}
+          glyphSize={72}
+          className="mx-5 my-3 h-56 rounded-2xl"
+        />
 
         <section className="px-5 pt-2">
           <div className="flex items-center gap-2 mb-1">

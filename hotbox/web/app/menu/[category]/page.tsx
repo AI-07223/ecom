@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { CartBar } from "@/components/CartBar"
+import { CategoryArt } from "@/components/CategoryArt"
 import { VegBadge } from "@/components/VegBadge"
 import { getCategoryBySlug } from "@/lib/catalog"
 import { formatINR } from "@/lib/pricing"
@@ -72,12 +73,11 @@ export default async function CategoryPage({
                         )}
                       </p>
                     </div>
-                    <div
-                      className="w-20 h-20 rounded-xl bg-gradient-to-br from-amber-100 to-rose-100 shrink-0 flex items-center justify-center text-xs text-zinc-400"
-                      style={{ borderRadius: "var(--radius)" }}
-                    >
-                      photo
-                    </div>
+                    <CategoryArt
+                      categorySlug={cat.slug}
+                      glyphSize={28}
+                      className="w-20 h-20 rounded-xl shrink-0"
+                    />
                   </Link>
                 </li>
               )

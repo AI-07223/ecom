@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Suspense } from "react"
 import { CartBar } from "@/components/CartBar"
+import { CategoryArt } from "@/components/CategoryArt"
 import { VegBadge } from "@/components/VegBadge"
 import { getCategoriesWithCounts, getRestaurant } from "@/lib/catalog"
 
@@ -34,23 +35,22 @@ export default async function HomePage(): Promise<React.ReactElement> {
         <header className="px-5 pt-10 pb-5">
           <div className="flex items-baseline justify-between">
             <h1
-              className="text-4xl font-black tracking-tight"
+              className="font-display text-7xl leading-none"
               style={{
                 color: "var(--color-brand-500)",
-                fontFamily: "var(--font-display)",
               }}
             >
-              Hotbox
+              HOTBOX
             </h1>
             <Link
-              href="/account"
+              href="/account/orders"
               className="text-sm text-zinc-500 underline-offset-4 hover:underline"
             >
-              Account
+              Orders
             </Link>
           </div>
-          <p className="mt-2 text-zinc-600 text-sm">
-            <VegBadge size={12} /> Pure veg &middot; {restaurant.address}
+          <p className="mt-3 text-zinc-700 text-sm flex items-center gap-1.5">
+            <VegBadge size={14} /> Pure veg &middot; hot & fresh
           </p>
           {isPaused && (
             <div className="mt-3 rounded-lg bg-amber-50 text-amber-900 px-3 py-2 text-sm">
@@ -68,12 +68,21 @@ export default async function HomePage(): Promise<React.ReactElement> {
               <li key={c.id}>
                 <Link
                   href={`/menu/${c.slug}`}
-                  className="block rounded-2xl border border-zinc-200 bg-white p-4 hover:border-brand-300 hover:shadow-sm transition-all"
+                  className="block rounded-2xl bg-white overflow-hidden hover:shadow-md transition-shadow border border-zinc-200"
                   style={{ borderRadius: "var(--radius)" }}
                 >
-                  <div className="font-semibold text-zinc-900">{c.name}</div>
-                  <div className="text-xs text-zinc-500 mt-1">
-                    {c.itemCount} items
+                  <CategoryArt
+                    categorySlug={c.slug}
+                    glyphSize={40}
+                    className="w-full h-24"
+                  />
+                  <div className="p-3">
+                    <div className="font-semibold text-zinc-900 leading-tight">
+                      {c.name}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-0.5">
+                      {c.itemCount} items
+                    </div>
                   </div>
                 </Link>
               </li>

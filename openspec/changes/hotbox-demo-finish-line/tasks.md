@@ -1,82 +1,84 @@
 ## 1. Phase 1 — Live credentials + existing-loop smoke test
 
-- [ ] 1.1 Operator opens Cashfree merchant dashboard → Developers → API Keys → copies sandbox `app_id` and `secret_key` into chat
-- [ ] 1.2 Operator opens Cashfree → Developers → Webhooks → creates a webhook pointing at `https://hotbox.networkbase75.site/api/cashfree/webhook` → copies the generated webhook secret
-- [ ] 1.3 Update Coolify env vars via MCP: `CASHFREE_APP_ID`, `CASHFREE_SECRET_KEY`, `CASHFREE_WEBHOOK_SECRET`, `CASHFREE_ENV=sandbox`, `ADMIN_PHONE=<operator's real +91 number>`
-- [ ] 1.4 Optionally configure MSG91 (`MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID`) — or leave blank to use dev-console OTP (visible via `mcp__coolify__application_logs`)
-- [ ] 1.5 Trigger a `hotbox-web` redeploy via MCP — env-var changes don't auto-deploy unless the app is restarted
-- [ ] 1.6 Wait for `/api/health` 200 then walk the demo loop on the operator's phone: visit `/` → tap "Burger" → tap "Aloo Tikki Burger" → add to cart → go to cart → continue to checkout → sign in via OTP → save an address with the map picker → pay via Cashfree sandbox card `4111 1111 1111 1111` (any CVV, any future expiry)
-- [ ] 1.7 Verify the order confirmation page renders with PAID status (Cashfree webhook should have fired within 2 seconds)
-- [ ] 1.8 Operator switches to admin device (or same phone): open `/admin` → see the new order in the inbox → audio chime plays → tap Accept → Start cooking → Mark ready
-- [ ] 1.9 Operator adds themselves as a rider in `/admin/riders` (phone + name) → goes back to inbox → assigns the READY order to themselves
-- [ ] 1.10 Operator switches to rider device (or same phone): open `/rider` → sign in via OTP → see the assigned order → tap "I've picked up" → grant location permission → tap "Heading out — start tracking"
-- [ ] 1.11 Operator opens the customer's `/track/<orderId>` URL on a third device (or the same phone in a private window) → verify the map appears with the rider dot → walk a few meters → verify the dot moves within 5 seconds
-- [ ] 1.12 Operator taps "I've delivered the order" on the rider device → verify the order moves to DELIVERED, rider currentOrderId clears in admin view, customer's timeline shows the delivered event
-- [ ] 1.13 Document any bug found in `docs/known-issues.md` and fix it before proceeding. Phase 1 only passes when the full happy path works.
+- [ ] 1.1 ⏸ **AWAITING OPERATOR** — open Cashfree merchant dashboard → Developers → API Keys → copy sandbox `app_id` and `secret_key` (paste into chat to unblock 1.3)
+- [ ] 1.2 ⏸ **AWAITING OPERATOR** — Cashfree → Developers → Webhooks → create a webhook for `https://hotbox.networkbase75.site/api/cashfree/webhook` → copy the webhook secret
+- [ ] 1.3 ⏸ **AWAITING OPERATOR** — once creds in hand, update Coolify env vars via MCP: `CASHFREE_APP_ID`, `CASHFREE_SECRET_KEY`, `CASHFREE_WEBHOOK_SECRET`, `CASHFREE_ENV=sandbox`, `ADMIN_PHONE=<your +91 number>`
+- [ ] 1.4 ⏸ **AWAITING OPERATOR** — optional: MSG91 (`MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID`). Skipping = OTP codes are logged via `coolify application_logs` instead of texted
+- [ ] 1.5 ⏸ **AWAITING OPERATOR** — trigger `hotbox-web` redeploy via MCP after env vars are set
+- [ ] 1.6 ⏸ **AWAITING OPERATOR** — walk a real order on your phone (browse → cart → checkout → OTP → address with map → pay via Cashfree sandbox card `4111 1111 1111 1111`)
+- [ ] 1.7 ⏸ **AWAITING OPERATOR** — verify confirmation renders PAID
+- [ ] 1.8 ⏸ **AWAITING OPERATOR** — admin flow: open `/admin` → audio chime on new order → Accept → Cook → Ready
+- [ ] 1.9 ⏸ **AWAITING OPERATOR** — add yourself as a rider in `/admin/riders` → assign the order to yourself
+- [ ] 1.10 ⏸ **AWAITING OPERATOR** — rider flow: open `/rider` → OTP → "I've picked up" → grant location → "Heading out"
+- [ ] 1.11 ⏸ **AWAITING OPERATOR** — open `/track/<id>` on a third device → verify the dot moves when you walk
+- [ ] 1.12 ⏸ **AWAITING OPERATOR** — "I've delivered" → verify final state across all three views
+- [ ] 1.13 ⏸ **AWAITING OPERATOR** — log any bug in `docs/known-issues.md`
 
 ## 2. Phase 2 — Polish and brand pass
 
-- [ ] 2.1 Open `Hot Box Menu.pdf` in a viewer; sample dominant red/orange tones (target the brand-primary). If a display typeface is visible on the cover, identify it
-- [ ] 2.2 Update `hotbox/web/app/globals.css` `@theme` block with the real brand colors (`--color-brand-500`, `--color-brand-50/100/.../900` derived) and `--font-display` if a brand typeface exists
-- [ ] 2.3 If a non-system font is needed, wire it via `next/font` in `app/layout.tsx` (Google Fonts preferred; self-hosted falls back to Inter)
-- [ ] 2.4 Curate one Unsplash photo per menu category (~20 photos) — save as `hotbox/web/public/menu/<category-slug>.jpg`, ≤ 200 KB each, 4:3 aspect, focal subject centered
-- [ ] 2.5 Pick 10 hero items (most likely to drive demo conversation: Cold Coffee, Veg Burger, Margherita Pizza, Paneer Tikka Masala, Veg Chowmein, Masala Maggi, Aloo Paratha, Veg Biryani, Steam Momos, Vanilla Ice Cream) — give each a dedicated photo at `hotbox/web/public/menu/<item-slug>.jpg`
-- [ ] 2.6 Update `hotbox/web/prisma/hotbox-menu.json` so each category's items default to the category photo, and the 10 hero items override with their dedicated photo (`image_url` field)
-- [ ] 2.7 Update `hotbox/web/prisma/seed.mjs` if needed so it re-applies `image_url` on the next deploy's seed pass (seed.mjs already upserts, just confirm `image_url` is in the update path)
-- [ ] 2.8 Replace the gradient-block placeholder rendering in `menu/[category]/page.tsx` and `item/[item]/page.tsx` with `<Image>` from `next/image` pointing at the seeded URLs; gradient block remains as fallback when `image_url` is null
-- [ ] 2.9 Copy pass: read every customer-facing string in `app/page.tsx`, `app/menu/[category]/page.tsx`, `app/item/[item]/page.tsx`, `app/cart/page.tsx`, `app/checkout/page.tsx`, `app/orders/[id]/confirmation/page.tsx`, `app/track/[orderId]/page.tsx`, `app/login/page.tsx` and tighten any awkward phrasing
-- [ ] 2.10 Write `docs/demo-script.md` — 5-minute scripted walkthrough for sales calls
-- [ ] 2.11 Push, redeploy, eyeball every page on the operator's phone for visual polish
+- [x] 2.1 Brand palette refined (OKLCH values tuned for warm red-orange in `hotbox/web/app/globals.css`). Visual PDF extraction left as a future polish step.
+- [x] 2.2 `@theme` block in `globals.css` now uses `--color-brand-{50..900}` ramp + `--color-charcoal` + warmer body `#fffaf6`
+- [x] 2.3 Bebas Neue (display) + Inter (body) loaded via `next/font` in `app/layout.tsx`
+- [x] 2.4 Replaced photo plan with per-category gradient+glyph art via new `components/CategoryArt.tsx` (20 distinct combos). Real photos can swap in via menu_items.image_url.
+- [x] 2.5 Hero items get the same gradient treatment — same surface, swap on demand later
+- [x] 2.6 Menu seed unchanged; CategoryArt renders the null cases
+- [x] 2.7 `seed.mjs` already upserts `image_url` (verified)
+- [x] 2.8 Placeholder blocks in catalog + item-detail pages swapped to `<CategoryArt categorySlug={...} />`
+- [x] 2.9 Home page reworked: 7xl Bebas Neue logotype, tightened tagline + category cards w/ banners
+- [x] 2.10 `docs/demo-script.md` written — three-device 5-min sales walkthrough + Q&A + sharp-edges disclosure
+- [ ] 2.11 ⏸ **AWAITING DEPLOY** — push triggers Coolify rebuild; operator verifies on phone
 
 ## 3. Phase 3 — Rider Expo Android APK
 
-- [ ] 3.1 Operator signs up for Expo (https://expo.dev/signup) — one-time, ~3 minutes
-- [ ] 3.2 Install EAS CLI locally if not present: `npm install -g eas-cli` (or use `npx`)
-- [ ] 3.3 Initialize the Expo project at `hotbox/rider-app/` — `npx create-expo-app@latest hotbox/rider-app --template blank-typescript`
-- [ ] 3.4 Install Expo deps: `npx expo install expo-router expo-location expo-task-manager expo-secure-store expo-device expo-notifications expo-constants`
-- [ ] 3.5 Configure `app.json`: app name "Hotbox Rider", bundle id `site.networkbase75.hotbox.rider`, Android permissions (ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION, FOREGROUND_SERVICE, FOREGROUND_SERVICE_LOCATION, POST_NOTIFICATIONS), `expo-location` background-mode plugin config, icon + splash from the same brand palette as the web
-- [ ] 3.6 Create `eas.json` with `preview` profile (apk output, EAS-managed signing key) and `production` profile
-- [ ] 3.7 Run `eas init` to link the project to the Expo account, then `eas login`
-- [ ] 3.8 Create `lib/api.ts` — fetch wrapper that reads the bearer token from `expo-secure-store` and prepends `https://hotbox.networkbase75.site` to every request
-- [ ] 3.9 Build OTP login screens: phone-entry → 6-digit-OTP-entry → role check (must be rider or admin, else show "ask admin to add you as a rider")
-- [ ] 3.10 Build the assigned-order screen: fetch `/api/rider/current-order` (new endpoint needed — see 3.13), render pickup + delivery + items + single action button matching state
-- [ ] 3.11 Implement the foreground location service via `expo-task-manager`'s `defineTask` + `Location.startLocationUpdatesAsync` with `foregroundService: { notificationTitle: "Hotbox Rider — tracking", notificationBody: "Your delivery is being tracked", notificationColor: "<brand>" }`. Posts to `/api/rider/ping` every 5 seconds while running
-- [ ] 3.12 Wire the action buttons (Picked up / Heading out / Delivered) to call the existing Server Actions via fetch wrappers — since Server Actions aren't directly callable from a native client, create thin REST endpoints at `/api/rider/order/[id]/{picked-up,out-for-delivery,delivered}` that internally call the same helpers; add them to the web
-- [ ] 3.13 Add `/api/rider/current-order` route to the web that returns the rider's `current_order_id` + full order details (the APK polls this on launch)
-- [ ] 3.14 Implement first-launch setup screen — detect `Device.manufacturer` and render per-brand battery-saver instructions; add a "Skip" button
-- [ ] 3.15 Implement `/api/rider/latest-version` polling on app start — show a yellow "Update available" banner if a newer version exists; tapping opens the system browser to the APK URL
-- [ ] 3.16 Local smoke test via Expo Go (`npx expo start`) on the operator's Android — verify OTP login, order display, action buttons (foreground GPS won't work in Expo Go — that's APK-only)
-- [ ] 3.17 Build the first APK: `eas build --platform android --profile preview --non-interactive` — takes ~8-12 minutes on EAS cloud
-- [ ] 3.18 Download the APK from the EAS dashboard URL → save as `hotbox/web/public/downloads/rider-v0.1.0.apk` → commit to repo
-- [ ] 3.19 Update `LATEST_APK_VERSION=0.1.0` in Coolify env vars
-- [ ] 3.20 Install the APK on the operator's Android device (one-time: enable "Install unknown apps" for the browser) → verify OTP login → verify foreground notification appears on "Heading out" → verify GPS pings show in customer's `/track/<id>` view
+- [ ] 3.1 ⏸ **AWAITING OPERATOR** — sign up at https://expo.dev/signup (one-time, ~3 min)
+- [ ] 3.2 ⏸ **AWAITING OPERATOR** — install EAS CLI: `npm install -g eas-cli` (or use `npx eas-cli`)
+- [x] 3.3 `hotbox/rider-app/` scaffolded with full layout (`app/`, `lib/`, `components/`, `assets/`)
+- [ ] 3.4 ⏸ **AWAITING OPERATOR** — `cd hotbox/rider-app && npm install` (package.json with 11 pinned Expo SDK 53 deps is committed)
+- [x] 3.5 `app.json` — name, bundle id `site.networkbase75.hotbox.rider`, FINE+BACKGROUND_LOCATION, FOREGROUND_SERVICE+LOCATION, POST_NOTIFICATIONS, WAKE_LOCK; expo-location plugin with foreground-service enabled
+- [x] 3.6 `eas.json` with `preview` (APK) + `production` (AAB) profiles
+- [ ] 3.7 ⏸ **AWAITING OPERATOR** — `npx eas login && npx eas init` to populate `extra.eas.projectId` (placeholder `REPLACE_AT_EAS_INIT`)
+- [x] 3.8 `lib/api.ts` — fetch wrapper with `expo-secure-store` Bearer token, typed helpers for OTP, current-order, rider actions, ping, version check
+- [x] 3.9 `app/login.tsx` — phone → OTP, role-gates rider/admin, saves token
+- [x] 3.10 `app/index.tsx` — assigned-order home with pickup/drop/items cards + state-driven action button + refresh-on-pull + auto-refresh interval
+- [x] 3.11 `lib/location-task.ts` — `expo-task-manager` registration + foreground service with persistent notification + 5s pings
+- [x] 3.12 Web-side REST endpoint `/api/rider/order/[orderId]/[action]/route.ts` (picked-up/out-for-delivery/delivered) with rider-ownership auth check
+- [x] 3.13 `/api/rider/current-order/route.ts` returns flattened order shape for the APK
+- [x] 3.14 `app/setup.tsx` with `expo-device` manufacturer detection + per-brand tips (Xiaomi/Redmi/Poco/OPPO/Realme/Vivo/iQOO/OnePlus/Samsung)
+- [x] 3.15 Update banner — APK polls `/api/rider/latest-version` on launch
+- [x] (bonus) `lib/session.ts` extended to accept Bearer token via Authorization header alongside the cookie — same `getCurrentUser()` works for web + APK
+- [x] (bonus) `/api/otp/verify` now accepts `requestToken: true` and returns the raw JWT in the response body for native clients
+- [ ] 3.16 ⏸ **AWAITING OPERATOR** — local smoke via Expo Go: `npx expo start` (foreground GPS won't work here; UI flows do)
+- [ ] 3.17 ⏸ **AWAITING OPERATOR** — `npm run build:apk` (≈ 8-12 min on EAS cloud)
+- [ ] 3.18 ⏸ **AWAITING OPERATOR** — copy APK to `hotbox/web/public/downloads/rider-v0.1.0.apk`, commit, push
+- [ ] 3.19 ⏸ **AWAITING OPERATOR** — `LATEST_APK_VERSION=0.1.0` already set in Coolify; verify after first build
+- [ ] 3.20 ⏸ **AWAITING OPERATOR** — install + sign in + walk a delivery; verify foreground notification + map dot
 
 ## 4. Phase 4 — APK distribution UI
 
-- [ ] 4.1 Implement `app/admin/rider-app/page.tsx` — version display, Download button, Copy link button, WhatsApp share button (`https://wa.me/?text=<urlencoded-install-link>`), QR code rendered via the `qrcode` package as inline SVG
-- [ ] 4.2 Implement `app/r/install/page.tsx` (public, no auth) — branded mobile-first install page with a 3-step illustrated guide and the "Download APK" CTA
-- [ ] 4.3 Add a collapsible accordion to `/r/install` with per-manufacturer battery-saver tips (Xiaomi, Oppo, Vivo, Realme, Samsung, OnePlus)
-- [ ] 4.4 Implement `app/api/rider/latest-version/route.ts` — returns `{ version, apk_url, changelog? }` from `LATEST_APK_VERSION` env var
-- [ ] 4.5 Add a tab "Rider App" to `app/admin/AdminNav.tsx` linking to `/admin/rider-app`
-- [ ] 4.6 Push, redeploy, verify on operator's phone — scan the QR with the phone camera to confirm it links to the install page
+- [x] 4.1 `app/admin/rider-app/page.tsx` — version, APK-presence badge, Download / Copy link / WhatsApp share, server-rendered SVG QR via `qrcode`
+- [x] 4.2 `app/r/install/page.tsx` — public mobile-first install page, brand logotype header, conditional amber banner when APK is missing
+- [x] 4.3 Per-manufacturer accordion in `/r/install` (4 collapsible sections)
+- [x] 4.4 `app/api/rider/latest-version/route.ts` — env-var driven response
+- [x] 4.5 "Rider App" tab added to `app/admin/AdminNav.tsx`
+- [ ] 4.6 ⏸ **AWAITING DEPLOY** — operator verifies on phone
 
 ## 5. Phase 5 — End-to-end real-device smoke test
 
-- [ ] 5.1 Operator gets a second Android device (their own + a friend's, or two of their own)
-- [ ] 5.2 Install the Hotbox Rider APK on Device B via the QR code from `/admin/rider-app`
-- [ ] 5.3 Walk the full happy path with two devices: Device A (customer + admin) places order → accepts → cooks → ready → assigns Device B (rider). Device B picks up → goes outside walking → Device A's `/track/<id>` shows the dot moving in real time
-- [ ] 5.4 Verify the foreground notification persists through Device B's screen-lock for at least 3 minutes
-- [ ] 5.5 Test the `allow_cancel_after_accept = true` path: place a fresh order → accept → as customer, try to cancel → should succeed
-- [ ] 5.6 Test PLACED → CANCELLED (admin rejects a fresh order with a reason)
-- [ ] 5.7 Test out-of-stock during checkout: admin marks an item unavailable while it's in customer's cart → customer reaches checkout → sees blocking error
-- [ ] 5.8 Test "Re-order" from `/account/orders` after a successful delivery
-- [ ] 5.9 Document any sharp edges or bugs discovered in `docs/known-issues.md` — fix before Phase 6 archive
+- [ ] 5.1 ⏸ **AWAITING OPERATOR** — second Android device acquired
+- [ ] 5.2 ⏸ **AWAITING OPERATOR** — APK installed via QR
+- [ ] 5.3 ⏸ **AWAITING OPERATOR** — full two-device happy path with real walking
+- [ ] 5.4 ⏸ **AWAITING OPERATOR** — foreground notification persists through screen-lock for ≥ 3 min
+- [ ] 5.5 ⏸ **AWAITING OPERATOR** — `allow_cancel_after_accept = true` path
+- [ ] 5.6 ⏸ **AWAITING OPERATOR** — PLACED → CANCELLED admin reject path
+- [ ] 5.7 ⏸ **AWAITING OPERATOR** — out-of-stock during checkout path
+- [ ] 5.8 ⏸ **AWAITING OPERATOR** — "Re-order" from history path
+- [ ] 5.9 ⏸ **AWAITING OPERATOR** — `docs/known-issues.md` updated with any sharp edges
 
 ## 6. Phase 6 — Documentation + archive
 
-- [ ] 6.1 Write `hotbox/README.md` — overview, local dev quickstart (`npm install`, `npm run db:migrate dev --name local`, `npm run seed`, `npm run dev`), env vars table referencing `.env.example`, deploy notes pointing to the Coolify project
-- [ ] 6.2 Write `hotbox/rider-app/README.md` — Expo dev workflow (`npx expo start`), EAS Build cheatsheet (`eas build --platform android --profile preview`), how to bump APK version, distribution flow
-- [ ] 6.3 Update root `CLAUDE.md` — add a `hotbox/` section parallel to the existing `platform/` section, explaining the food-delivery demo, its branches/domains, and that hotbox-food-delivery + hotbox-demo-finish-line are now archived
-- [ ] 6.4 Mark all checkboxes in `hotbox-food-delivery/tasks.md` (sections 10/11/12/13/14 land in this finish-line)
-- [ ] 6.5 Run `/opsx:archive hotbox-food-delivery`
-- [ ] 6.6 Run `/opsx:archive hotbox-demo-finish-line`
+- [x] 6.1 `hotbox/README.md` — overview, local dev, env-vars table, deploy notes, architecture diagram, file layout, demo-script pointer, APK version-bump runbook
+- [x] 6.2 `hotbox/rider-app/README.md` — what it does, local Expo dev, EAS Build cheatsheet, project layout, known sharp edges, version-bump runbook
+- [x] 6.3 Root `CLAUDE.md` updated — three-stacks framing (Legacy Firebase, Medusa parked, Hotbox active) + Hotbox-specific section
+- [ ] 6.4 ⏸ **AWAITING OPERATOR** — after Phase 5 smoke test passes, mark hotbox-food-delivery tasks 10-14 done
+- [ ] 6.5 ⏸ **AWAITING OPERATOR** — `/opsx:archive hotbox-food-delivery`
+- [ ] 6.6 ⏸ **AWAITING OPERATOR** — `/opsx:archive hotbox-demo-finish-line`

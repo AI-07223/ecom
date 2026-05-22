@@ -1,5 +1,19 @@
 import "./globals.css"
 import type { Metadata, Viewport } from "next"
+import { Bebas_Neue, Inter } from "next/font/google"
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans-loaded",
+})
+
+const bebas = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display-loaded",
+})
 
 export const metadata: Metadata = {
   title: "Hotbox — Vegetarian fast food, hot to your door",
@@ -15,7 +29,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#d24a2a",
+  themeColor: "#cf3a1f",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -28,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${bebas.variable}`}>
       <body>{children}</body>
     </html>
   )

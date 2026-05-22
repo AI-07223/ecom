@@ -15,6 +15,10 @@ export const dynamic = "force-dynamic"
 const Body = z.object({
   phone: z.string().min(7).max(20),
   code: z.string().regex(/^\d{6}$/, "OTP must be exactly 6 digits"),
+  /** When true (e.g., from the Expo APK), the response includes the raw
+   *  JWT in `token` so the native client can store it in SecureStore. The
+   *  HttpOnly cookie is still set for web clients that send cookies. */
+  requestToken: z.boolean().optional(),
 })
 
 const CART_COOKIE = "hb_cart"
@@ -75,6 +79,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       ok: true,
       user: { id: user.id, phone: user.phone, role: user.role },
+      // Native clients (Expo) need the raw token to send as a bearer header.
+      ...(parsed.data.requestToken ? { token } : {}),
     })
   } catch (err) {
     if (err instanceof OtpInvalidError) {

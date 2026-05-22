@@ -2,21 +2,54 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Two stacks live here side by side.**
+> **Three stacks live here side by side.**
 >
 > - **Legacy stack** (this CLAUDE.md from "Commands" onward): the Next.js
 >   16 + Firebase ecommerce site under [src/](src/). It serves the current
->   production domain and is unchanged.
-> - **New stack** (the active direction): a self-hostable Medusa v2 +
+>   production domain and is unchanged. Maintenance mode only.
+> - **Medusa multi-tenant platform** (parked): a self-hostable Medusa v2 +
 >   Next.js 16 + Postgres + Redis platform under [platform/](platform/),
->   designed to host multiple branded client storefronts from one Coolify
->   VPS. See [platform/README.md](platform/README.md) and the OpenSpec
->   change at
->   [openspec/changes/scaffold-multitenant-platform](openspec/changes/scaffold-multitenant-platform).
+>   designed to host multiple branded client storefronts. Backend stays
+>   alive at `medusa.networkbase75.site` for potential future use; the
+>   storefront work was paused mid-deploy when the operator pivoted.
+> - **Hotbox food-delivery demo** (active): a single-restaurant
+>   food-delivery demo built on Next.js 16 + Prisma + Postgres + Cashfree
+>   under [hotbox/](hotbox/), plus an Expo Android APK for riders under
+>   [hotbox/rider-app/](hotbox/rider-app/). Live at
+>   `hotbox.networkbase75.site`. See [hotbox/README.md](hotbox/README.md).
 >
-> Treat the new stack as where future ecommerce features land. The legacy
-> stack is in maintenance mode — bug fixes and small changes only — until
-> a separate migration change moves real traffic to the new platform.
+> The Hotbox stack is where current feature work lives. The Medusa stack
+> can resume if a "boutique" template is needed later. The legacy Firebase
+> stack receives only bug fixes.
+
+## The Hotbox food-delivery stack (active)
+
+```
+   hotbox/
+   ├── web/         Next.js 16 — customer storefront, restaurant admin,
+   │                rider web fallback. Deploys to Coolify (uuid
+   │                hdxy12d07otzrv7yzgqz50hl). Schema in Prisma; payments
+   │                via Cashfree.js v3; live tracking via Postgres
+   │                LISTEN/NOTIFY + SSE; map via Leaflet+OSM.
+   └── rider-app/   Expo SDK 53 — Android-only APK for delivery riders.
+                    Foreground location service via expo-task-manager.
+                    Built via EAS Build (cloud, free tier).
+```
+
+OpenSpec history (both archived after the finish-line lands):
+
+- `hotbox-food-delivery` — proposed the architecture + landed the customer
+  loop + admin + rider-web + live-tracking foundations.
+- `hotbox-demo-finish-line` — sequenced finishing sprint:
+  credentials/smoke test (Phase 1, awaiting operator), brand polish
+  (Phase 2), Expo APK (Phase 3), distribution UI (Phase 4), real-device
+  smoke test (Phase 5, operator-only), docs + archive (Phase 6).
+
+See [openspec/changes/hotbox-demo-finish-line/tasks.md](openspec/changes/hotbox-demo-finish-line/tasks.md) for the current finish-line status.
+
+---
+
+## Below: the legacy Firebase stack (maintenance only)
 
 ## Commands
 
