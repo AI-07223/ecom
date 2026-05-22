@@ -14,7 +14,7 @@
 - [x] 1.12 Provision dedicated `hotbox-postgres` Coolify instance (revised from "logical DB on platform-postgres" — see design.md D12 addendum)
 - [x] 1.13 Provision new Coolify application `hotbox-web` for `hotbox.networkbase75.site` with healthcheck on `/api/health`, port 3000, start_period 120s, retries 15
 - [x] 1.14 Add Coolify env vars: `DATABASE_URL`, `CASHFREE_*`, `NEXT_PUBLIC_MAPBOX_TOKEN`, `OTP_PROVIDER`, `MSG91_*`, `ADMIN_PHONE`, `JWT_SECRET`, `PUBLIC_BASE_URL`, `LATEST_APK_VERSION`
-- [ ] 1.15 Deploy and confirm `https://hotbox.networkbase75.site/api/health` returns 200
+- [x] 1.15 Deploy and confirm `https://hotbox.networkbase75.site/api/health` returns 200 — verified live at deploy `dbbfnuurrghj0nqn28849t68`, full catalog browse works end-to-end (home → /menu/burger → /item/cold-coffee all render with seeded data)
 
 ## 2. Food Catalog
 
