@@ -351,11 +351,13 @@ export default async function platform_tenants_seed({
   for (const t of TENANTS) {
     const p = provisioned.find((x) => x.slug === t.slug)!
     await pg.raw(
+      // Knex's .raw() uses ? placeholders, NOT pg-native $N. The pg
+      // connection comes from Medusa's container which is a Knex instance.
       `
       INSERT INTO tenants
         (slug, domain, layout_variant, theme_tokens, feature_flags, status,
          sales_channel_id, publishable_api_key)
-      VALUES ($1, $2, $3, $4::jsonb, '{}'::jsonb, 'active', $5, $6)
+      VALUES (?, ?, ?, ?::jsonb, '{}'::jsonb, 'active', ?, ?)
       ON CONFLICT (slug) DO UPDATE SET
         domain              = EXCLUDED.domain,
         layout_variant      = EXCLUDED.layout_variant,
