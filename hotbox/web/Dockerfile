@@ -45,24 +45,23 @@ ENV NODE_OPTIONS="--max-old-space-size=1024"
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Next.js standalone bundles its own minimal node_modules into .next/standalone.
-# We also need Prisma generated client + the schema for `prisma migrate deploy`.
+# Next.js standalone output, plus full node_modules (the prisma CLI has
+# many transitive deps — `effect`, etc. — that a minimal copy breaks).
+# The runtime image is ~200MB larger this way but never breaks on a
+# missing transitive dependency.
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-# Prisma's `migrate deploy` shells out to npx by default; ship the CLI binary too.
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-# `prisma db push` is idempotent — it only applies schema diffs. We use
-# it instead of `migrate deploy` because v1 has no migration history yet;
-# the schema *is* the source of truth.
-#
-# The `|| true` on `db:seed` tolerates re-runs (the seed is idempotent via
-# upsert, but if the JSON file or seed code ever throws, the container
-# still starts so /api/health serves and we can debug live).
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --skip-generate --accept-data-loss && (node prisma/seed.mjs || echo '[seed] skipped/failed — continuing') && exec node server.js"]
+# Runtime bootstrap (idempotent):
+#   1. `prisma migrate deploy` applies any pending migrations from
+#      prisma/migrations/. Tracked in _prisma_migrations table, so reruns
+#      are safe.
+#   2. `node prisma/seed.mjs` upserts menu data (idempotent via slug).
+#      `|| echo` so a seed glitch doesn't gate /api/health.
+#   3. `exec node server.js` starts Next.js.
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && (node prisma/seed.mjs || echo '[seed] skipped/failed — continuing') && exec node server.js"]
