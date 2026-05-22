@@ -25,7 +25,12 @@ RUN npm install --workspace=@platform/backend --include-workspace-root --no-audi
 COPY apps/backend/ ./apps/backend/
 
 WORKDIR /app/apps/backend
-RUN node /app/node_modules/.bin/medusa build
+# Cap V8 heap so the admin-bundle (Vite) build doesn't get OOM-killed on
+# a shared VPS. --backend-only skips the admin SPA build for the first
+# production deploy; the admin can be added back later once the backend
+# is up and we can iterate on resource limits.
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+RUN node /app/node_modules/.bin/medusa build --backend-only
 
 # ─── Runtime ───────────────────────────────────────────────────────────────
 FROM node:24-alpine AS runtime
@@ -48,6 +53,7 @@ EXPOSE 9000
 
 ENV NODE_ENV=production
 ENV MEDUSA_DISABLE_TELEMETRY=true
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 # On each container start:
 #   1. Run pending Medusa migrations (idempotent — tracked in mikro_orm_migrations)

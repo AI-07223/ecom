@@ -28,9 +28,9 @@ COPY packages/tenancy/ ./packages/tenancy/
 RUN npm run build --workspace=@platform/tenancy
 
 COPY apps/storefront/ ./apps/storefront/
-# Some env defaults so `next build` doesn't complain about missing public
-# env. Real values are set at runtime by Coolify.
+# Cap V8 heap so `next build` doesn't OOM on a shared VPS.
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 RUN npm run build --workspace=@platform/storefront
 
 WORKDIR /app/apps/storefront
