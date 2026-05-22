@@ -55,8 +55,12 @@ ENV MEDUSA_DISABLE_TELEMETRY=true
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 # On each container start:
-#   1. Run pending Medusa migrations (idempotent — tracked in mikro_orm_migrations)
-#   2. Create the platform admin user if missing (`|| true` tolerates the
-#      already-exists case)
-#   3. Exec into the production server
-CMD ["sh", "-c", "node /app/node_modules/.bin/medusa db:migrate && (node /app/node_modules/.bin/medusa user -e \"$MEDUSA_ADMIN_EMAIL\" -p \"$MEDUSA_ADMIN_PASSWORD\" || true) && exec node /app/node_modules/.bin/medusa start"]
+#   1. Ensure admin user (idempotent — `|| true` tolerates already-exists)
+#   2. Exec into the production server (binds port 9000 fast → healthcheck OK)
+#
+# DB migrations are NOT in CMD: `medusa db:migrate` takes 30-45 min just
+# walking the ~25 modules, even when every one is up-to-date — and Coolify's
+# deploy job has a 60-min timeout. Migrations run once via a one-shot
+# (`docker exec <container> node /app/node_modules/.bin/medusa db:migrate`)
+# whenever the schema changes.
+CMD ["sh", "-c", "(node /app/node_modules/.bin/medusa user -e \"$MEDUSA_ADMIN_EMAIL\" -p \"$MEDUSA_ADMIN_PASSWORD\" || true) && exec node /app/node_modules/.bin/medusa start"]
