@@ -4,7 +4,10 @@ import { getCurrentCart } from "@/lib/get-current-cart"
 export async function CartIndicator() {
   const cart = await getCurrentCart()
   const count =
-    cart?.items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ?? 0
+    cart?.items?.reduce(
+      (sum: number, item: any) => sum + (item.quantity ?? 0),
+      0,
+    ) ?? 0
 
   return (
     <Link
