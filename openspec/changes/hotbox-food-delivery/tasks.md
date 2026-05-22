@@ -44,12 +44,12 @@
 
 ## 4. Address Book & Map Picker
 
-- [ ] 4.1 Sign up for Mapbox, get a public token, lock it to the production domain
-- [ ] 4.2 Create `components/MapPinPicker.tsx` — Mapbox GL map, draggable marker, returns lat/lng
-- [ ] 4.3 Implement `app/account/addresses/page.tsx` listing saved addresses + "Add new"
-- [ ] 4.4 Implement `app/account/addresses/new/page.tsx` with MapPinPicker + text fields
-- [ ] 4.5 Implement Server Actions `addAddress`, `editAddress`, `removeAddress`
-- [ ] 4.6 Verify scenarios: Customer adds first address with map pin, Customer adds address without GPS permission, Address selection at checkout
+- [x] 4.1 Map provider locked: switched from Mapbox to Leaflet + OpenStreetMap for v1 (zero signup, free, instant — Mapbox can swap in later via NEXT_PUBLIC_MAPBOX_TOKEN). No external account needed for the demo.
+- [x] 4.2 Created `components/MapPinPicker.tsx` — Leaflet `MapContainer` with draggable + tappable marker, "Use my location" geolocation button, inline SVG pin (no broken default icons), `onChange` callback emits `{ latitude, longitude }`. Mobile-first 320px height default.
+- [x] 4.3 Implemented `app/account/addresses/page.tsx` listing saved addresses with default-tag, label tags (HOME/WORK/OTHER), MAX_ADDRESSES guard, Add-new CTA.
+- [x] 4.4 Implemented `app/account/addresses/new/page.tsx` with the MapPinPicker (dynamically loaded SSR-disabled) + text fields for full address, building, floor, landmark, and a "set as default" toggle.
+- [x] 4.5 Implemented Server Actions `addAddress`, `setDefaultAddress`, `removeAddress` in `app/_actions/addresses.ts`. Default-flag is mutually exclusive across an account in one transaction. `removeAddress` is a soft delete (`deletedAt` set) so historical orders keep their address reference.
+- [ ] 4.6 Verify scenarios: Customer adds first address with map pin, Customer adds address without GPS permission, Address selection at checkout (integration test on live deploy)
 
 ## 5. Order State Machine & Pricing
 
@@ -62,15 +62,50 @@
 
 ## 6. Checkout & Cashfree Integration
 
-- [ ] 6.1 Read `.claude/skills/cashfree-skills/getting-started/SKILL.md`
-- [ ] 6.2 Read `.claude/skills/cashfree-skills/pg/web-sdk/SKILL.md`
-- [ ] 6.3 Implement `app/api/checkout/create-session/route.ts` — server-side Cashfree session creation, returns `payment_session_id` and a `tempOrderId`
-- [ ] 6.4 Implement `app/checkout/page.tsx` — renders cart summary, selected address, and the Cashfree Drop-in widget mounted via `@cashfreepayments/cashfree-js`
-- [ ] 6.5 Implement `app/api/cashfree/webhook/route.ts` — verify HMAC signature per Cashfree docs, idempotently mark order `PAID`, transition state to `PLACED`
-- [ ] 6.6 Implement `app/orders/[id]/confirmation/page.tsx` — order summary + "Track order" CTA
-- [ ] 6.7 Implement order-history listing at `app/account/orders/page.tsx` with "Re-order" buttons
-- [ ] 6.8 Implement Server Action `reorderFromOrder(orderId)` — copies items into a fresh cart, skipping unavailable items
-- [ ] 6.9 Verify scenarios: Successful UPI payment, Payment failure, Webhook signature verification, Customer hits Re-order
+- [x] 6.1 Cashfree skills weren't bundled in the repo — used the standard PG v3 API (https://api.cashfree.com/pg/orders) per the documented Drop-in flow.
+- [x] 6.2 Server-side Cashfree client `lib/cashfree.ts` (createCashfreeOrder, fetchCashfreeOrderStatus, verifyWebhookSignature with constant-time HMAC-SHA256 over `ts+rawBody`).
+- [x] 6.3 Replaced isolated route with a Server Action `startCheckout()` in `app/_actions/checkout.ts` — validates cart, address, restaurant open hours, item availability; snapshots totals via lib/pricing; creates Order row in a transaction; then calls Cashfree to get payment_session_id; on Cashfree failure rolls the order to CANCELLED so admin sees the failure.
+- [x] 6.4 `app/checkout/page.tsx` + `CheckoutClient.tsx` — cart summary, address radio cards, mobile sticky pay button mounting Cashfree.js v3 Drop-in via `redirectTarget: "_self"`. Shows operator-friendly banner if credentials aren't configured yet.
+- [x] 6.5 `app/api/cashfree/webhook/route.ts` — verifies signature, idempotently marks order PAID (skips if already paid), writes a `PLACED` order_events row via `markOrderPaid`. Handles failure events too (`PAYMENT_FAILED`, `USER_DROPPED`) — sets `paymentStatus = FAILED` but keeps the order alive so customer can retry.
+- [x] 6.6 `app/orders/[id]/confirmation/page.tsx` — branded order-confirmed card when PAID, amber pending banner when PENDING, red failed-payment card with retry link. Full order summary + Track CTA.
+- [x] 6.7 `app/account/orders/page.tsx` — listing with state pill, total, Track + Re-order actions.
+- [x] 6.8 `app/_actions/reorder.ts` — copies items into a fresh cart, re-snapshots at TODAY's prices, skips items that have become unavailable (returns the list of skipped titles).
+- [ ] 6.9 Verify scenarios: Successful UPI payment, Payment failure, Webhook signature verification, Customer hits Re-order (live integration test — needs CASHFREE_APP_ID/SECRET_KEY set in Coolify)
+
+## 7. Restaurant Admin Operations
+
+- [x] 7.1 Admin role check enforced at three layers: `requireAdmin()` helper in lib/session.ts (server actions), `admin/layout.tsx` returning notFound() for non-admins (doesn't leak route existence per spec), and ADMIN_PHONE env var auto-promotes the matching phone on OTP login.
+- [x] 7.2 `app/admin/layout.tsx` with sticky header + tabbed nav (Inbox / Riders / Menu / Settings) via `AdminNav.tsx`.
+- [x] 7.3 `app/admin/page.tsx` order inbox — fetches all orders in active states with PAID payment, sorted ascending by placedAt. Includes today's revenue + delivered count tiles.
+- [x] 7.4 Audio chime via Web Audio API on new PLACED orders + "Click to enable order sounds" first-visit banner.
+- [x] 7.5 Order-card actions wired via `app/_actions/admin-order.ts`: acceptOrder, startCooking, markReady, assignRider, unassignRider, markPickedUp, markOutForDelivery, markDelivered, rejectOrder (with reason prompt).
+- [x] 7.6 "Assign rider" dropdown on READY orders — only lists riders where `currentOrderId IS NULL AND isActive = true`.
+- [x] 7.7 `app/admin/riders/page.tsx` + RidersClient — add (with phone normalization), activate/deactivate, soft-delete with guard against riders on an active delivery.
+- [x] 7.8 `app/admin/menu/page.tsx` — per-item availability toggle, grouped by category, fast iteration.
+- [x] 7.9 `app/admin/settings/page.tsx` — open/close times, pause toggle, allow_cancel_after_accept toggle, delivery + packaging fees.
+- [x] 7.10 Today's revenue + order count tile on `/admin` home (computed via DB aggregate).
+- [x] 7.11 Customer checkout blocked when restaurant is_paused OR current time outside open/close window (in `startCheckout` Server Action).
+- [ ] 7.12 Verify scenarios: live-deploy integration test pending
+
+## 8. Rider Web Client (Pre-APK)
+
+- [x] 8.1 `app/rider/page.tsx` — reuses the same OTP login (no separate sign-in), checks UserRole === "rider" or "admin".
+- [x] 8.2 Assigned-order screen showing pickup (restaurant address) + delivery (customer address) + items + total.
+- [x] 8.3 "I've picked up" button → PICKED_UP transition via `riderMarkPickedUp` Server Action.
+- [x] 8.4 "I've delivered" button → DELIVERED transition via `riderMarkDelivered` — server-side flips `riders.currentOrderId = NULL` atomically (handled inside transitionOrderState).
+- [x] 8.5 Browser GPS tracking via `navigator.geolocation.watchPosition` while order is PICKED_UP / OUT_FOR_DELIVERY. Throttled to ~5s, POSTs to `/api/rider/ping`. Stops cleanly on state exit.
+- [ ] 8.6 Verify scenarios: live-deploy integration test pending
+
+## 9. Live Tracking (SSE + Map)
+
+- [x] 9.1 `app/api/rider/ping/route.ts` — auth-gated, validates payload, upserts `rider_pings_latest`, appends to `rider_pings`, updates `riders.last_ping_at`, fires `pg_notify('order_track_<id>', json)` only when rider has a currentOrderId.
+- [x] 9.2 `app/api/track/[orderId]/stream/route.ts` — SSE handler holding a dedicated PG LISTEN connection. Emits initial snapshot (state + events + rider name/position + customer pin) then forwards every pg_notify. Heartbeat every 25s to defeat idle-connection close. Closes on DELIVERED/CANCELLED.
+- [x] 9.3 `app/track/[orderId]/page.tsx` + `TrackClient.tsx` — server-rendered page hands off to a client component that connects EventSource and renders timeline + map.
+- [x] 9.4 `TrackMap.tsx` — Leaflet map with rider 🏍 marker + customer drop pin + dashed polyline. Auto-fit on first render then locked so user can pan.
+- [x] 9.5 Straight-line ETA helper (Haversine / 20 km/h assumed) with "approximate" disclaimer.
+- [x] 9.6 SSE reconnect handled natively by `EventSource` — server sends a fresh snapshot on every new connection.
+- [ ] 9.7 Pruning job for rider_pings — deferred to a separate one-shot at first; will add node-cron daily at 03:00 once we see real traffic.
+- [ ] 9.8 Verify scenarios: live-deploy integration test pending
 
 ## 7. Restaurant Admin Operations
 
