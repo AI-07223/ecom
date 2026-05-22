@@ -1,41 +1,89 @@
 import Link from "next/link"
+import { Suspense } from "react"
+import { CartBar } from "@/components/CartBar"
+import { VegBadge } from "@/components/VegBadge"
+import { getCategoriesWithCounts, getRestaurant } from "@/lib/catalog"
 
-// v1 stub. Section 2 (food-catalog) replaces this with the real category
-// grid driven by the seeded menu. This stub only exists so the first
-// Coolify deploy succeeds before the real catalog routes land.
-export default function HomePage(): React.ReactElement {
-  return (
-    <main className="mx-auto max-w-md min-h-screen flex flex-col">
-      <header className="px-6 pt-12 pb-6">
-        <h1
-          className="text-5xl font-black tracking-tight"
-          style={{ color: "var(--color-brand-500)", fontFamily: "var(--font-display)" }}
-        >
+export const dynamic = "force-dynamic"
+
+export default async function HomePage(): Promise<React.ReactElement> {
+  const [restaurant, categories] = await Promise.all([
+    getRestaurant(),
+    getCategoriesWithCounts(),
+  ])
+
+  if (!restaurant) {
+    return (
+      <main className="px-6 pt-12">
+        <h1 className="text-3xl font-black" style={{ color: "var(--color-brand-500)" }}>
           Hotbox
         </h1>
-        <p className="mt-2 text-zinc-600">Hot food, delivered fast.</p>
-      </header>
-      <section className="px-6 flex-1">
-        <div
-          className="rounded-2xl border border-zinc-200 p-6 bg-zinc-50"
-          style={{ borderRadius: "var(--radius)" }}
-        >
-          <p className="text-zinc-700">
-            We&rsquo;re plating up. Catalog goes live in the next deploy.
-          </p>
-          <p className="text-zinc-500 text-sm mt-3">
-            <Link
-              href="/api/health"
-              className="underline underline-offset-4 hover:opacity-70"
+        <p className="mt-4 text-zinc-600">
+          Menu loading. If you&rsquo;re seeing this for more than a minute, the seed
+          hasn&rsquo;t been run yet.
+        </p>
+      </main>
+    )
+  }
+
+  const isPaused = restaurant.isPaused
+
+  return (
+    <>
+      <main className="mx-auto max-w-md min-h-screen flex flex-col pb-24">
+        <header className="px-5 pt-10 pb-5">
+          <div className="flex items-baseline justify-between">
+            <h1
+              className="text-4xl font-black tracking-tight"
+              style={{
+                color: "var(--color-brand-500)",
+                fontFamily: "var(--font-display)",
+              }}
             >
-              service status
+              Hotbox
+            </h1>
+            <Link
+              href="/account"
+              className="text-sm text-zinc-500 underline-offset-4 hover:underline"
+            >
+              Account
             </Link>
+          </div>
+          <p className="mt-2 text-zinc-600 text-sm">
+            <VegBadge size={12} /> Pure veg &middot; {restaurant.address}
           </p>
-        </div>
-      </section>
-      <footer className="px-6 py-8 text-xs text-zinc-400">
-        Hotbox &middot; Bangalore &middot; Veg only &middot; INR
-      </footer>
-    </main>
+          {isPaused && (
+            <div className="mt-3 rounded-lg bg-amber-50 text-amber-900 px-3 py-2 text-sm">
+              We&rsquo;ve paused orders for the moment. Menu is still browseable.
+            </div>
+          )}
+        </header>
+
+        <section className="px-5 pb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+            Menu
+          </h2>
+          <ul className="grid grid-cols-2 gap-3">
+            {categories.map((c) => (
+              <li key={c.id}>
+                <Link
+                  href={`/menu/${c.slug}`}
+                  className="block rounded-2xl border border-zinc-200 bg-white p-4 hover:border-brand-300 hover:shadow-sm transition-all"
+                  style={{ borderRadius: "var(--radius)" }}
+                >
+                  <div className="font-semibold text-zinc-900">{c.name}</div>
+                  <div className="text-xs text-zinc-500 mt-1">
+                    {c.itemCount} items
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
+      <Suspense fallback={null}>
+        <CartBar />
+      </Suspense>
+    </>
   )
 }

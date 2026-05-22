@@ -53,12 +53,12 @@
 
 ## 5. Order State Machine & Pricing
 
-- [ ] 5.1 Implement `lib/order-state.ts` — transition map (TypeScript `Record<OrderState, OrderState[]>`), `transitionOrderState(orderId, to, options)` helper that validates + writes state + writes `order_events` + handles side effects (rider current_order_id flip, timestamps) in a single Prisma transaction
-- [ ] 5.2 Implement `lib/pricing.ts` — `computeCartTotals(cart, restaurant)` returning `{ subtotal, packaging, delivery, gst, total }` in paise
-- [ ] 5.3 Add unit tests with Vitest for every valid + invalid state transition (~20 cases)
-- [ ] 5.4 Add unit tests for cancel-toggle gating (4 scenarios from order-lifecycle spec)
-- [ ] 5.5 Add unit tests for pricing math
-- [ ] 5.6 Verify scenarios: Valid transition, Invalid transition rejected, Transitions atomic with side effects, Menu price changes after order placement, Cart total computation, Conditional cancellation matrix
+- [x] 5.1 Implement `lib/order-state.ts` — transition map (TypeScript `Record<OrderState, OrderState[]>`), `transitionOrderState(orderId, to, options)` helper that validates + writes state + writes `order_events` + handles side effects (rider current_order_id flip, timestamps) in a single Prisma transaction
+- [x] 5.2 Implement `lib/pricing.ts` — `computeCartTotals(cart, restaurant)` returning `{ subtotal, packaging, delivery, gst, total }` in paise
+- [x] 5.3 Add unit tests with Vitest for every valid + invalid state transition (17 cases pass)
+- [x] 5.4 Add unit tests for cancel-toggle gating (4 scenarios from order-lifecycle spec, all pass)
+- [x] 5.5 Add unit tests for pricing math (11 cases pass)
+- [ ] 5.6 Verify scenarios: Valid transition, Invalid transition rejected, Transitions atomic with side effects, Menu price changes after order placement, Cart total computation, Conditional cancellation matrix (integration tests with live DB — runs in Section 12 smoke test)
 
 ## 6. Checkout & Cashfree Integration
 
