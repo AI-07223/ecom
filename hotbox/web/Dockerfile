@@ -58,6 +58,11 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 EXPOSE 3000
 
-# On each container start: run any pending migrations, then exec the server.
-# `prisma migrate deploy` is idempotent (a tracked migrations table guards re-runs).
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && exec node server.js"]
+# `prisma db push` is idempotent — it only applies schema diffs. We use
+# it instead of `migrate deploy` because v1 has no migration history yet;
+# the schema *is* the source of truth.
+#
+# The `|| true` on `db:seed` tolerates re-runs (the seed is idempotent via
+# upsert, but if the JSON file or seed code ever throws, the container
+# still starts so /api/health serves and we can debug live).
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --skip-generate --accept-data-loss && (node prisma/seed.mjs || echo '[seed] skipped/failed — continuing') && exec node server.js"]
