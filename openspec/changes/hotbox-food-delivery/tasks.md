@@ -18,29 +18,29 @@
 
 ## 2. Food Catalog
 
-- [ ] 2.1 Implement `app/api/categories/route.ts` (or Server Action equivalent) returning categories in `sort_order` with their item counts
-- [ ] 2.2 Implement `app/page.tsx` as the customer home — renders category cards, links to category sections
-- [ ] 2.3 Implement `app/menu/[category]/page.tsx` listing items in that category with `is_available` filter
-- [ ] 2.4 Implement `app/menu/[category]/[item]/page.tsx` (item detail) with variant + add-on selection UI
-- [ ] 2.5 Implement live price recompute (client-side) as customer toggles variants/add-ons
-- [ ] 2.6 Implement placeholder image strategy (CSS-block per-category color, fallback for items lacking `image_url`)
-- [ ] 2.7 Implement veg-square indicator component used across all item cards
-- [ ] 2.8 Verify scenarios: Browse by category, Out-of-stock item disables Add to Cart, Required add-on enforcement
+- [x] 2.1 Implement catalog data access in `lib/catalog.ts` (getRestaurant, getCategoriesWithCounts, getCategoryBySlug, getMenuItemBySlug)
+- [x] 2.2 Implement `app/page.tsx` as the customer home — renders category cards, links to category sections
+- [x] 2.3 Implement `app/menu/[category]/page.tsx` listing items in that category with `is_available` filter
+- [x] 2.4 Implement `app/item/[item]/page.tsx` (item detail) with variant + add-on selection UI
+- [x] 2.5 Implement live price recompute (client-side) as customer toggles variants/add-ons via `ItemCustomizer.tsx`
+- [x] 2.6 Implement placeholder image strategy (gradient block in v1; stock photos in Section 13 polish)
+- [x] 2.7 Implement veg-square indicator component used across all item cards (`components/VegBadge.tsx`)
+- [ ] 2.8 Verify scenarios: Browse by category, Out-of-stock item disables Add to Cart, Required add-on enforcement (integration tests pending live DB seed)
 
 ## 3. Customer Auth & Cart
 
-- [ ] 3.1 Decide between Cashfree OTP API vs MSG91 (Q2) — sign up for chosen provider, store credentials
-- [ ] 3.2 Implement `app/api/otp/send/route.ts` — generate 6-digit OTP, write to `otp_codes` table with 10-min expiry, call provider, return success
-- [ ] 3.3 Implement `app/api/otp/verify/route.ts` — verify OTP, upsert `customers` row, set JWT session cookie
-- [ ] 3.4 Implement rate-limit middleware for `/api/otp/*` (5 sends/10min, 5 wrong attempts → invalidate)
-- [ ] 3.5 Implement `lib/session.ts` — JWT helpers, `getCurrentCustomer()` server-side helper using cookies
-- [ ] 3.6 Implement `app/login/page.tsx` — phone entry → OTP entry flow
-- [ ] 3.7 Implement Server Action `addToCart(itemId, variantId?, addonIds[], qty, notes?)` — creates cart if needed (anonymous via cookie or authenticated), writes snapshot pricing into cart_items
-- [ ] 3.8 Implement Server Action `updateCartItem` and `removeCartItem`
-- [ ] 3.9 Implement `app/cart/page.tsx` — line items with variant/addon labels, quantity steppers, snapshot totals
-- [ ] 3.10 Implement sticky bottom cart bar visible on all menu pages showing item count + total
-- [ ] 3.11 Implement cart-claim on login (anonymous cart's `customer_id` is set in same transaction as OTP verify)
-- [ ] 3.12 Verify scenarios: First-time customer sign-up at checkout, Returning customer login, OTP rate limiting, Cart survives page refresh, Cart survives login
+- [x] 3.1 Decide OTP provider: MSG91 default + DevConsole fallback when credentials absent (locked). Cashfree-OTP also wired as second provider option.
+- [x] 3.2 Implement `app/api/otp/send/route.ts` — generates 6-digit OTP, writes to `otp_codes` table with 10-min expiry, calls provider, returns success
+- [x] 3.3 Implement `app/api/otp/verify/route.ts` — verifies OTP, upserts `users` row (admin role for ADMIN_PHONE), sets JWT session cookie, claims anonymous cart in same flow
+- [x] 3.4 Implement rate-limit in `lib/otp.ts` (5 sends/10min per phone, 5 wrong attempts → invalidate active OTP)
+- [x] 3.5 Implement `lib/session.ts` — jose-signed HS256 JWT in HttpOnly cookie, getCurrentUser() re-fetches role on every call, requireAdmin/requireRider helpers
+- [x] 3.6 Implement `app/login/page.tsx` — phone entry → OTP entry flow, mobile-first, Suspense-wrapped useSearchParams
+- [x] 3.7 Implement Server Action `addToCart(itemSlug, variantSlug?, addonSlugs[], qty, notes?)` — creates cart if needed, writes snapshot pricing into cart_items
+- [x] 3.8 Implement Server Actions `updateCartItemQuantity` and `removeCartItem` and `clearCart`
+- [x] 3.9 Implement `app/cart/page.tsx` — line items with variant/addon labels, quantity steppers, snapshot totals via `lib/pricing.computeTotals`
+- [x] 3.10 Implement sticky bottom cart bar (`components/CartBar.tsx`) visible on customer-facing pages showing item count + total
+- [x] 3.11 Implement cart-claim on login (anonymous cart's `userId` is set in same flow as OTP verify)
+- [ ] 3.12 Verify scenarios: First-time customer sign-up at checkout, Returning customer login, OTP rate limiting, Cart survives page refresh, Cart survives login (integration test on live deploy)
 
 ## 4. Address Book & Map Picker
 
