@@ -30,7 +30,9 @@ RUN node /app/node_modules/.bin/medusa build
 # ─── Runtime ───────────────────────────────────────────────────────────────
 FROM node:24-alpine AS runtime
 
-RUN apk add --no-cache libc6-compat
+# curl is required by Coolify's healthcheck command. libc6-compat is
+# needed by some of Medusa's native deps.
+RUN apk add --no-cache curl libc6-compat
 
 WORKDIR /app
 

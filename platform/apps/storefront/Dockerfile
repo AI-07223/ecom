@@ -11,7 +11,8 @@
 #
 FROM node:24-alpine
 
-RUN apk add --no-cache libc6-compat
+# curl is required by Coolify's healthcheck command.
+RUN apk add --no-cache curl libc6-compat
 
 WORKDIR /app
 
