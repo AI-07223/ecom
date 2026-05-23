@@ -57,13 +57,22 @@ export async function getOrCreateCart(): Promise<{
   let sessionId = jar.get(CART_COOKIE)?.value
   if (!sessionId) {
     sessionId = randomUUID()
-    jar.set(CART_COOKIE, sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: CART_COOKIE_TTL_S,
-    })
+    // Next.js 16 only allows cookie writes from Server Actions / Route
+    // Handlers; if a Server Component renders this we silently skip the
+    // seed (the cookie gets set the first time the user mutates the cart
+    // via a Server Action). The error doesn't break the render — we just
+    // don't want it spamming the logs.
+    try {
+      jar.set(CART_COOKIE, sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: CART_COOKIE_TTL_S,
+      })
+    } catch {
+      // Render-time call — cookie write will happen on first mutation.
+    }
   }
 
   const existing = await db.cart.findUnique({ where: { sessionId } })
