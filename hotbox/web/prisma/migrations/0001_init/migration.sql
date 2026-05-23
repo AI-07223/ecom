@@ -8,7 +8,10 @@ CREATE TYPE "UserRole" AS ENUM ('customer', 'rider', 'admin');
 CREATE TYPE "OrderState" AS ENUM ('PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'ASSIGNED', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'REFUNDED');
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'AWAITING_VERIFICATION', 'COD', 'PAID', 'FAILED', 'REFUNDED');
+
+-- CreateEnum
+CREATE TYPE "PaymentMethod" AS ENUM ('UPI_MANUAL', 'COD', 'ONLINE');
 
 -- CreateEnum
 CREATE TYPE "AddressLabel" AS ENUM ('HOME', 'WORK', 'OTHER');
@@ -31,6 +34,9 @@ CREATE TABLE "restaurants" (
     "gst_basis_points" INTEGER NOT NULL,
     "is_paused" BOOLEAN NOT NULL DEFAULT false,
     "allow_cancel_after_accept" BOOLEAN NOT NULL DEFAULT false,
+    "upi_vpa" TEXT,
+    "upi_display_name" TEXT,
+    "upi_qr_filename" TEXT,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
@@ -102,6 +108,9 @@ CREATE TABLE "item_addons" (
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
+    "email" TEXT,
+    "password_hash" TEXT,
+    "email_verified_at" TIMESTAMPTZ(6),
     "name" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'customer',
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -111,16 +120,15 @@ CREATE TABLE "users" (
 );
 
 -- CreateTable
-CREATE TABLE "otp_codes" (
+CREATE TABLE "password_reset_tokens" (
     "id" TEXT NOT NULL,
-    "phone" TEXT NOT NULL,
-    "code_hash" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "token_hash" TEXT NOT NULL,
     "expires_at" TIMESTAMPTZ(6) NOT NULL,
-    "attempts" INTEGER NOT NULL DEFAULT 0,
     "consumed_at" TIMESTAMPTZ(6),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "otp_codes_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "password_reset_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -181,15 +189,18 @@ CREATE TABLE "orders" (
     "address_id" TEXT NOT NULL,
     "state" "OrderState" NOT NULL DEFAULT 'PLACED',
     "payment_status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
+    "payment_method" "PaymentMethod",
     "subtotal_paise" INTEGER NOT NULL,
     "packaging_fee_paise" INTEGER NOT NULL,
     "delivery_fee_paise" INTEGER NOT NULL,
     "gst_paise" INTEGER NOT NULL,
     "total_paise" INTEGER NOT NULL,
-    "cashfree_order_id" TEXT,
-    "cashfree_payment_session_id" TEXT,
-    "payment_method" TEXT,
-    "payment_reference" TEXT,
+    "payment_proof_utr" TEXT,
+    "payment_proof_filename" TEXT,
+    "payment_proof_submitted_at" TIMESTAMPTZ(6),
+    "payment_verified_at" TIMESTAMPTZ(6),
+    "payment_verified_note" TEXT,
+    "payment_needs_new_proof" BOOLEAN NOT NULL DEFAULT false,
     "paid_at" TIMESTAMPTZ(6),
     "placed_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "accepted_at" TIMESTAMPTZ(6),
@@ -315,10 +326,16 @@ CREATE UNIQUE INDEX "item_addons_item_id_slug_key" ON "item_addons"("item_id", "
 CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
 CREATE INDEX "users_role_idx" ON "users"("role");
 
 -- CreateIndex
-CREATE INDEX "otp_codes_phone_created_at_idx" ON "otp_codes"("phone", "created_at");
+CREATE INDEX "users_email_idx" ON "users"("email");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_user_id_created_at_idx" ON "password_reset_tokens"("user_id", "created_at");
 
 -- CreateIndex
 CREATE INDEX "addresses_user_id_deleted_at_idx" ON "addresses"("user_id", "deleted_at");
@@ -334,9 +351,6 @@ CREATE INDEX "cart_items_cart_id_idx" ON "cart_items"("cart_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "orders_public_code_key" ON "orders"("public_code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "orders_cashfree_order_id_key" ON "orders"("cashfree_order_id");
 
 -- CreateIndex
 CREATE INDEX "orders_state_idx" ON "orders"("state");
@@ -393,6 +407,9 @@ ALTER TABLE "item_variants" ADD CONSTRAINT "item_variants_item_id_fkey" FOREIGN 
 ALTER TABLE "item_addons" ADD CONSTRAINT "item_addons_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "menu_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "addresses" ADD CONSTRAINT "addresses_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -430,3 +447,4 @@ ALTER TABLE "rider_pings_latest" ADD CONSTRAINT "rider_pings_latest_rider_id_fke
 
 -- AddForeignKey
 ALTER TABLE "rider_pings" ADD CONSTRAINT "rider_pings_rider_id_fkey" FOREIGN KEY ("rider_id") REFERENCES "riders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

@@ -64,6 +64,8 @@ export default async function RiderHomePage(): Promise<React.ReactElement> {
           orderId={order.id}
           state={order.state}
           publicCode={order.publicCode}
+          paymentMethod={order.paymentMethod}
+          paymentStatus={order.paymentStatus}
           pickupName={order.restaurant.displayName}
           pickupAddress={order.restaurant.address}
           pickupLat={order.restaurant.latitude}
@@ -74,6 +76,7 @@ export default async function RiderHomePage(): Promise<React.ReactElement> {
           dropLat={order.address.latitude}
           dropLng={order.address.longitude}
           totalText={formatINR(order.totalPaise)}
+          totalRupees={order.totalPaise / 100}
           items={order.items.map((i) => ({
             id: i.id,
             title: i.itemTitle,

@@ -11,6 +11,8 @@ interface Props {
   orderId: string
   state: string
   publicCode: string
+  paymentMethod: "UPI_MANUAL" | "COD" | "ONLINE" | null
+  paymentStatus: string
   pickupName: string
   pickupAddress: string
   pickupLat: number
@@ -21,6 +23,7 @@ interface Props {
   dropLat: number | null
   dropLng: number | null
   totalText: string
+  totalRupees: number
   items: Array<{
     id: string
     title: string
@@ -29,30 +32,29 @@ interface Props {
   }>
 }
 
-/**
- * Rider workflow on the web (no APK yet). When the order is in
- * PICKED_UP/OUT_FOR_DELIVERY we use the browser's `geolocation.watchPosition`
- * to push pings to the server every 5 seconds. This only works while the
- * tab is foregrounded — the APK (later) handles backgrounding.
- */
 export function RiderClient({
   orderId,
   state,
   publicCode,
+  paymentMethod,
+  paymentStatus,
   pickupName,
   pickupAddress,
   dropAddress,
   dropBuilding,
   dropLandmark,
   totalText,
+  totalRupees,
   items,
 }: Props): React.ReactElement {
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [showCodModal, setShowCodModal] = useState(false)
   const watchId = useRef<number | null>(null)
   const lastSendAt = useRef<number>(0)
 
   const shouldTrack = state === "PICKED_UP" || state === "OUT_FOR_DELIVERY"
+  const isCOD = paymentMethod === "COD" && paymentStatus !== "PAID"
 
   useEffect(() => {
     if (!shouldTrack) {
@@ -69,7 +71,7 @@ export function RiderClient({
     watchId.current = navigator.geolocation.watchPosition(
       (g) => {
         const now = Date.now()
-        if (now - lastSendAt.current < 4500) return // throttle to ~5s
+        if (now - lastSendAt.current < 4500) return
         lastSendAt.current = now
         void fetch("/api/rider/ping", {
           method: "POST",
@@ -98,6 +100,25 @@ export function RiderClient({
     }
   }, [shouldTrack])
 
+  function handleDeliveredTap(): void {
+    if (isCOD) {
+      setShowCodModal(true)
+    } else {
+      startTransition(async () => {
+        await riderMarkDelivered(orderId, { cashCollected: false })
+        window.location.reload()
+      })
+    }
+  }
+
+  function confirmCash(yes: boolean): void {
+    setShowCodModal(false)
+    startTransition(async () => {
+      await riderMarkDelivered(orderId, { cashCollected: yes })
+      window.location.reload()
+    })
+  }
+
   const Btn = ({
     onClick,
     children,
@@ -120,6 +141,32 @@ export function RiderClient({
 
   return (
     <>
+      {/* Payment badge — most prominent for COD */}
+      {paymentStatus === "PAID" ? (
+        <div className="mb-3 rounded-xl px-4 py-2.5 bg-emerald-50 text-emerald-900 text-sm font-semibold">
+          ✓ Already paid (online)
+        </div>
+      ) : isCOD ? (
+        <div
+          className="mb-3 rounded-2xl px-5 py-4 text-amber-900"
+          style={{
+            background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+            borderRadius: "var(--radius)",
+          }}
+        >
+          <p className="text-xs font-bold uppercase tracking-wider">
+            ⚠ Collect cash
+          </p>
+          <p className="font-display text-5xl leading-none mt-1">
+            ₹{totalRupees.toFixed(0)}
+          </p>
+        </div>
+      ) : paymentStatus === "AWAITING_VERIFICATION" ? (
+        <div className="mb-3 rounded-xl px-4 py-2.5 bg-blue-50 text-blue-900 text-sm">
+          Payment pending verification — confirm with customer if asked
+        </div>
+      ) : null}
+
       <div
         className="rounded-2xl border border-zinc-200 bg-white p-5 mb-4"
         style={{ borderRadius: "var(--radius)" }}
@@ -139,9 +186,7 @@ export function RiderClient({
           Deliver to
         </h3>
         <p className="mt-1 text-sm">{dropAddress}</p>
-        {dropBuilding && (
-          <p className="text-xs text-zinc-500">{dropBuilding}</p>
-        )}
+        {dropBuilding && <p className="text-xs text-zinc-500">{dropBuilding}</p>}
         {dropLandmark && (
           <p className="text-xs text-zinc-500">Near {dropLandmark}</p>
         )}
@@ -194,14 +239,7 @@ export function RiderClient({
       )}
 
       {state === "OUT_FOR_DELIVERY" && (
-        <Btn
-          onClick={() =>
-            startTransition(async () => {
-              await riderMarkDelivered(orderId)
-              window.location.reload()
-            })
-          }
-        >
+        <Btn onClick={handleDeliveredTap}>
           I&rsquo;ve delivered the order
         </Btn>
       )}
@@ -210,6 +248,52 @@ export function RiderClient({
         <p className="text-center text-xs text-zinc-500 mt-3">
           📍 Sending your location every 5 seconds. Keep this tab open.
         </p>
+      )}
+
+      {/* COD cash-collection modal */}
+      {showCodModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 pb-safe"
+          onClick={() => setShowCodModal(false)}
+        >
+          <div
+            className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold mb-1">
+              Did the customer pay cash?
+            </h3>
+            <p className="text-sm text-zinc-600 mb-5">
+              Order {publicCode} · ₹{totalRupees.toFixed(0)}
+            </p>
+            <button
+              type="button"
+              onClick={() => confirmCash(true)}
+              className="w-full py-4 rounded-xl text-white font-semibold mb-2"
+              style={{
+                background: "var(--color-brand-500)",
+                borderRadius: "var(--radius)",
+              }}
+            >
+              ✓ Yes — ₹{totalRupees.toFixed(0)} received
+            </button>
+            <button
+              type="button"
+              onClick={() => confirmCash(false)}
+              className="w-full py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 font-medium"
+              style={{ borderRadius: "var(--radius)" }}
+            >
+              No — flag for admin follow-up
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCodModal(false)}
+              className="w-full py-2 mt-2 text-sm text-zinc-500"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </>
   )

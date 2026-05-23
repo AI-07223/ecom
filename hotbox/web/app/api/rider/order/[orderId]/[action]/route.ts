@@ -49,8 +49,24 @@ export async function POST(
     }
   }
 
+  // For 'delivered' action, accept optional { cashCollected: boolean } body
+  // so the rider's COD modal "Yes/No" can flip paymentStatus atomically.
+  let cashCollected: boolean | undefined = undefined
+  if (action === "delivered") {
+    try {
+      const body = (await _req.json()) as { cashCollected?: boolean }
+      if (typeof body?.cashCollected === "boolean") {
+        cashCollected = body.cashCollected
+      }
+    } catch {
+      // No body is fine for non-COD orders
+    }
+  }
+
   try {
-    await transitionOrderState(db, orderId, targetState)
+    await transitionOrderState(db, orderId, targetState, {
+      cashCollected,
+    })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Transition failed" },

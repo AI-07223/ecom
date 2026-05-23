@@ -3,7 +3,6 @@ import { redirect } from "next/navigation"
 import { getCartWithItems } from "@/lib/cart"
 import { getRestaurant } from "@/lib/catalog"
 import { listAddressesForCurrentUser } from "@/lib/addresses"
-import { isCashfreeConfigured } from "@/lib/cashfree"
 import { computeTotals, formatINR } from "@/lib/pricing"
 import { getCurrentUser } from "@/lib/session"
 import { CheckoutClient } from "./CheckoutClient"
@@ -37,7 +36,7 @@ export default async function CheckoutPage(): Promise<React.ReactElement> {
     gstBasisPoints: restaurant.gstBasisPoints,
   })
 
-  const paymentsConfigured = isCashfreeConfigured()
+  const upiConfigured = Boolean(restaurant.upiVpa)
 
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 pt-8 pb-32">
@@ -73,7 +72,7 @@ export default async function CheckoutPage(): Promise<React.ReactElement> {
               isDefault: a.isDefault,
             }))}
             totalPaise={totals.totalPaise}
-            paymentsConfigured={paymentsConfigured}
+            upiConfigured={upiConfigured}
           />
         )}
       </section>

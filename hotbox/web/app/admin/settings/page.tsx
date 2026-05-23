@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { SettingsForm } from "./SettingsForm"
+import { UpiSettings } from "./UpiSettings"
 
 export const dynamic = "force-dynamic"
 
@@ -19,8 +20,9 @@ export default async function AdminSettingsPage(): Promise<React.ReactElement> {
     <>
       <h1 className="text-2xl font-black tracking-tight mb-1">Settings</h1>
       <p className="text-sm text-zinc-500 mb-6">
-        Hours, pause, fees, and cancellation policy.
+        Hours, pause, fees, cancellation policy, UPI payment config.
       </p>
+
       <SettingsForm
         initial={{
           openTime: restaurant.openTime,
@@ -31,6 +33,16 @@ export default async function AdminSettingsPage(): Promise<React.ReactElement> {
           packagingFeePaise: restaurant.packagingFeePaise,
         }}
       />
+
+      <div className="mt-8">
+        <UpiSettings
+          initial={{
+            upiVpa: restaurant.upiVpa,
+            upiDisplayName: restaurant.upiDisplayName,
+            qrUploaded: Boolean(restaurant.upiQrFilename),
+          }}
+        />
+      </div>
     </>
   )
 }

@@ -72,11 +72,14 @@ export async function riderMarkOutForDelivery(
 
 export async function riderMarkDelivered(
   orderId: string,
+  opts: { cashCollected?: boolean } = {},
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const auth = await assertCallerIsAssignedRider(orderId)
   if (!auth.ok) return auth
   try {
-    await transitionOrderState(db, orderId, OrderState.DELIVERED)
+    await transitionOrderState(db, orderId, OrderState.DELIVERED, {
+      cashCollected: opts.cashCollected,
+    })
     revalidatePath("/rider")
     revalidatePath(`/track/${orderId}`)
     revalidatePath("/admin")

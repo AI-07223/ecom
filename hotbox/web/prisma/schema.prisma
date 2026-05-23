@@ -40,9 +40,17 @@ enum OrderState {
 
 enum PaymentStatus {
   PENDING
+  AWAITING_VERIFICATION
+  COD
   PAID
   FAILED
   REFUNDED
+}
+
+enum PaymentMethod {
+  UPI_MANUAL
+  COD
+  ONLINE
 }
 
 enum AddressLabel {
@@ -70,6 +78,12 @@ model Restaurant {
   gstBasisPoints              Int      @map("gst_basis_points") // 500 = 5%
   isPaused                    Boolean  @default(false) @map("is_paused")
   allowCancelAfterAccept      Boolean  @default(false) @map("allow_cancel_after_accept")
+
+  // UPI payment config (set by the admin in /admin/settings)
+  upiVpa                      String?  @map("upi_vpa")            // e.g. "hotbox@upi"
+  upiDisplayName              String?  @map("upi_display_name")   // e.g. "Hotbox Foods"
+  upiQrFilename               String?  @map("upi_qr_filename")    // optional static QR image admin uploaded
+
   createdAt                   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -161,35 +175,41 @@ model ItemAddon {
 // ─── Users (customers, riders, admin) ──────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  name      String?
-  role      UserRole @default(customer)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String    @id @default(cuid())
+  phone           String    @unique
+  email           String?   @unique
+  passwordHash    String?   @map("password_hash")
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  name            String?
+  role            UserRole  @default(customer)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  addresses Address[]
-  carts     Cart[]
-  orders    Order[]
-  rider     Rider?
+  addresses           Address[]
+  carts               Cart[]
+  orders              Order[]
+  rider               Rider?
+  passwordResetTokens PasswordResetToken[]
 
   @@index([role])
+  @@index([email])
   @@map("users")
 }
 
-// ─── OTP codes (short-lived) ───────────────────────────────────────────
+// ─── Password reset tokens (1-hour expiry, single-use) ────────────────
 
-model OtpCode {
-  id         String   @id @default(cuid())
-  phone      String
-  codeHash   String   @map("code_hash")               // bcrypt or argon2 of the 6-digit code
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
-  attempts   Int      @default(0)
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @map("token_hash") // bcrypt of the raw 32-byte hex token
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
   consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([phone, createdAt])
-  @@map("otp_codes")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("password_reset_tokens")
 }
 
 // ─── Addresses ─────────────────────────────────────────────────────────
@@ -267,6 +287,7 @@ model Order {
   addressId           String        @map("address_id")
   state               OrderState    @default(PLACED)
   paymentStatus       PaymentStatus @default(PENDING) @map("payment_status")
+  paymentMethod       PaymentMethod? @map("payment_method")
 
   // Snapshot totals at order creation
   subtotalPaise       Int           @map("subtotal_paise")
@@ -275,11 +296,13 @@ model Order {
   gstPaise            Int           @map("gst_paise")
   totalPaise          Int           @map("total_paise")
 
-  // Payment
-  cashfreeOrderId         String?   @unique @map("cashfree_order_id")
-  cashfreePaymentSessionId String?  @map("cashfree_payment_session_id")
-  paymentMethod           String?   @map("payment_method")    // upi, card, wallet, netbanking
-  paymentReference        String?   @map("payment_reference") // Cashfree's reference id
+  // Payment proof (UPI manual flow)
+  paymentProofUtr         String?   @map("payment_proof_utr")           // 12-digit UPI reference
+  paymentProofFilename    String?   @map("payment_proof_filename")      // path under /app/uploads/
+  paymentProofSubmittedAt DateTime? @map("payment_proof_submitted_at") @db.Timestamptz(6)
+  paymentVerifiedAt       DateTime? @map("payment_verified_at") @db.Timestamptz(6)
+  paymentVerifiedNote     String?   @map("payment_verified_note")
+  paymentNeedsNewProof    Boolean   @default(false) @map("payment_needs_new_proof")
   paidAt                  DateTime? @map("paid_at") @db.Timestamptz(6)
 
   // Lifecycle timestamps

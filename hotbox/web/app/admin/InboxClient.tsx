@@ -27,6 +27,9 @@ interface OrderRow {
   addressBuilding: string | null
   riderName: string | null
   totalPaise: number
+  paymentMethod: "UPI_MANUAL" | "COD" | "ONLINE" | null
+  paymentStatus: string
+  needsVerification: boolean
   items: Array<{
     id: string
     title: string
@@ -130,17 +133,37 @@ export function InboxClient({
             className="rounded-2xl border border-zinc-200 bg-white p-4"
             style={{ borderRadius: "var(--radius)" }}
           >
-            <div className="flex items-baseline justify-between mb-2">
+            <div className="flex items-baseline justify-between mb-2 gap-2">
               <span className="font-semibold">{o.publicCode}</span>
-              <span
-                className="text-xs font-medium px-2.5 py-0.5 rounded-full"
-                style={{
-                  background: "var(--color-brand-50)",
-                  color: "var(--color-brand-700)",
-                }}
-              >
-                {o.stateLabel}
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                {o.needsVerification && (
+                  <a
+                    href={`/admin/orders/${o.id}/verify-payment`}
+                    className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 hover:bg-amber-200"
+                  >
+                    💸 Verify payment
+                  </a>
+                )}
+                {o.paymentMethod === "COD" && o.paymentStatus !== "PAID" && (
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
+                    COD ₹{(o.totalPaise / 100).toFixed(0)}
+                  </span>
+                )}
+                {o.paymentStatus === "PAID" && (
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                    ✓ Paid
+                  </span>
+                )}
+                <span
+                  className="text-xs font-medium px-2.5 py-0.5 rounded-full"
+                  style={{
+                    background: "var(--color-brand-50)",
+                    color: "var(--color-brand-700)",
+                  }}
+                >
+                  {o.stateLabel}
+                </span>
+              </div>
             </div>
 
             <div className="text-xs text-zinc-500 mb-2">

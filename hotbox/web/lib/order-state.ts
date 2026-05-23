@@ -120,10 +120,9 @@ export interface TransitionOptions {
   longitude?: number
   /** Required when transitioning to CANCELLED. */
   cancelledReason?: string
-  /** When provided, sets cashfree-related fields atomically (used at PLACED). */
-  cashfreeOrderId?: string
-  paymentMethod?: string
-  paymentReference?: string
+  /** True on rider's DELIVERED tap for COD orders when cash WAS collected.
+   *  Server then marks paymentStatus=PAID atomically with DELIVERED. */
+  cashCollected?: boolean
 }
 
 // ─── The transition primitive ──────────────────────────────────────────
@@ -252,6 +251,14 @@ export async function transitionInTx(
       break
     case OrderState.DELIVERED:
       updateData.deliveredAt = now
+      // If the caller passed cashCollected=true (rider's COD "yes" path),
+      // mark payment PAID atomically with the DELIVERED transition.
+      if (options.cashCollected === true) {
+        updateData.paymentStatus = PaymentStatus.PAID
+        updateData.paidAt = now
+        updateData.paymentVerifiedAt = now
+        updateData.paymentVerifiedNote = "Cash collected on delivery"
+      }
       // Auto-flip rider to available.
       if (order.riderId) {
         await tx.rider.update({
@@ -277,14 +284,6 @@ export async function transitionInTx(
       break
   }
 
-  // Optional Cashfree side-effects (typically the webhook calls this when
-  // moving PENDING-paid → PAID; we leave order state alone in that flow).
-  if (options.cashfreeOrderId)
-    updateData.cashfreeOrderId = options.cashfreeOrderId
-  if (options.paymentMethod) updateData.paymentMethod = options.paymentMethod
-  if (options.paymentReference)
-    updateData.paymentReference = options.paymentReference
-
   await tx.order.update({ where: { id: orderId }, data: updateData })
 
   await tx.orderEvent.create({
@@ -298,21 +297,18 @@ export async function transitionInTx(
   })
 }
 
-// ─── For the Pricing module's snapshot-at-PLACED happy path ────────────
+// ─── For admin payment verification (UPI manual flow) ────────────────
 
 /**
- * After a successful Cashfree payment, the webhook calls this to mark the
- * order paid + write a `PLACED` event (the order's `state` is already
- * PLACED — it starts that way — so this just adds the timeline event).
+ * Marks an order PAID outside the state-machine flow (state stays where
+ * it was — typically PLACED). Used by admin verify-payment + force-mark
+ * actions in app/_actions/admin-payment.ts. Writes an order_events row
+ * for the timeline.
  */
 export async function markOrderPaid(
   db: PrismaClient,
   orderId: string,
-  opts: {
-    cashfreeOrderId: string
-    paymentMethod?: string
-    paymentReference?: string
-  },
+  opts: { note?: string } = {},
 ): Promise<void> {
   await db.$transaction(async (tx) => {
     await tx.order.update({
@@ -320,16 +316,15 @@ export async function markOrderPaid(
       data: {
         paymentStatus: PaymentStatus.PAID,
         paidAt: new Date(),
-        cashfreeOrderId: opts.cashfreeOrderId,
-        paymentMethod: opts.paymentMethod ?? null,
-        paymentReference: opts.paymentReference ?? null,
+        paymentVerifiedAt: new Date(),
+        paymentVerifiedNote: opts.note ?? "Payment verified",
       },
     })
     await tx.orderEvent.create({
       data: {
         orderId,
         event: OrderState.PLACED,
-        note: `Payment confirmed (${opts.paymentMethod ?? "unknown"})`,
+        note: opts.note ?? "Payment confirmed",
       },
     })
   })

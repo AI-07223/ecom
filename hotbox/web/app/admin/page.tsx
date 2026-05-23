@@ -25,7 +25,9 @@ export default async function AdminInboxPage(): Promise<React.ReactElement> {
     db.order.findMany({
       where: {
         state: { in: ACTIVE_STATES },
-        paymentStatus: "PAID", // unpaid orders don't show in the kitchen inbox
+        // Show ALL orders in active states (PAID, COD, AWAITING_VERIFICATION).
+        // The status badge tells the admin which is which; they can pick to
+        // accept-and-cook before verification (trust) or wait.
       },
       orderBy: { placedAt: "asc" },
       include: {
@@ -101,6 +103,9 @@ export default async function AdminInboxPage(): Promise<React.ReactElement> {
               addressBuilding: o.address.building,
               riderName: o.rider?.name ?? null,
               totalPaise: o.totalPaise,
+              paymentMethod: o.paymentMethod,
+              paymentStatus: o.paymentStatus,
+              needsVerification: o.paymentStatus === "AWAITING_VERIFICATION",
               items: o.items.map((i) => ({
                 id: i.id,
                 title: i.itemTitle,
