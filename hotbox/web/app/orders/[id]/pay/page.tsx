@@ -102,9 +102,25 @@ export default async function PayPage({
         </div>
       ) : (
         <>
+          {/* Primary CTA: tap-to-pay on mobile opens the registered UPI
+              app (PhonePe/GPay/Paytm/BHIM) with amount + note pre-filled. */}
+          <a
+            href={upiUri}
+            className="mt-6 flex items-center justify-center w-full py-5 rounded-2xl text-white font-bold text-lg shadow-sm active:scale-[0.98] transition-transform"
+            style={{
+              background: "var(--color-brand-500)",
+              borderRadius: "var(--radius)",
+            }}
+          >
+            Pay {formatINR(order.totalPaise)} via UPI →
+          </a>
+          <p className="text-xs text-zinc-500 text-center mt-2">
+            Opens PhonePe / GPay / Paytm / BHIM with amount pre-filled.
+          </p>
+
           <section className="mt-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
-              Scan & pay
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3 text-center">
+              Or scan with any UPI app
             </h2>
             <div className="rounded-2xl bg-white border border-zinc-200 p-6 flex flex-col items-center">
               {adminQrFilename ? (
@@ -112,26 +128,19 @@ export default async function PayPage({
                 <img
                   src={`/api/restaurant/upi-qr`}
                   alt="UPI QR code"
-                  className="w-64 h-64 object-contain"
+                  className="w-56 h-56 object-contain"
                 />
               ) : dynamicQrSvg ? (
                 <div
-                  className="w-64 h-64"
+                  className="w-56 h-56"
                   dangerouslySetInnerHTML={{ __html: dynamicQrSvg }}
                 />
               ) : null}
-              <p className="mt-4 text-sm text-zinc-600 text-center">
+              <p className="mt-4 text-xs text-zinc-500 text-center">
                 Pay <span className="font-bold text-zinc-900 tabular-nums">{formatINR(order.totalPaise)}</span> to
               </p>
               <p className="font-mono text-sm font-semibold mt-0.5">{upiVpa}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">{upiName}</p>
-              <a
-                href={upiUri}
-                className="mt-4 text-sm font-semibold underline underline-offset-4"
-                style={{ color: "var(--color-brand-500)" }}
-              >
-                Or tap to open your UPI app →
-              </a>
+              <p className="text-xs text-zinc-400 mt-0.5">{upiName}</p>
             </div>
           </section>
 
