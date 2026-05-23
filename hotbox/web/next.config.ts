@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   // endpoints (Cashfree webhook, rider ping, SSE stream, APK download).
   reactStrictMode: true,
   output: "standalone",
+  // sharp ships native bindings that Turbopack can't bundle; treat as
+  // external so Next.js leaves the require() in place at runtime.
+  serverExternalPackages: ["sharp"],
   experimental: {
     // Server Actions need to allow our production host header through.
     serverActions: {

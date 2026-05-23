@@ -33,9 +33,9 @@ RUN npm run build
 # ─── Runtime ───────────────────────────────────────────────────────────────
 FROM node:24-alpine AS runtime
 
-# curl is required by Coolify's healthcheck. libc6-compat + openssl are
-# required by Prisma's engine at runtime.
-RUN apk add --no-cache curl libc6-compat openssl
+# curl: Coolify healthcheck. libc6-compat + openssl: Prisma engine.
+# vips: sharp's native dependency for payment-proof compression.
+RUN apk add --no-cache curl libc6-compat openssl vips vips-cpp
 
 WORKDIR /app
 

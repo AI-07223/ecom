@@ -297,9 +297,10 @@ model Order {
   totalPaise          Int           @map("total_paise")
 
   // Payment proof (UPI manual flow)
-  paymentProofUtr         String?   @map("payment_proof_utr")           // 12-digit UPI reference
-  paymentProofFilename    String?   @map("payment_proof_filename")      // path under /app/uploads/
+  paymentProofUtr         String?   @map("payment_proof_utr")             // UPI ref (now OPTIONAL)
+  paymentProofFilename    String?   @map("payment_proof_filename")        // /app/uploads/*.jpg
   paymentProofSubmittedAt DateTime? @map("payment_proof_submitted_at") @db.Timestamptz(6)
+  paymentProofExpiresAt   DateTime? @map("payment_proof_expires_at") @db.Timestamptz(6) // 30d TTL; nightly purge
   paymentVerifiedAt       DateTime? @map("payment_verified_at") @db.Timestamptz(6)
   paymentVerifiedNote     String?   @map("payment_verified_note")
   paymentNeedsNewProof    Boolean   @default(false) @map("payment_needs_new_proof")

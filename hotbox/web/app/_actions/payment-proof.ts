@@ -1,26 +1,38 @@
 "use server"
 
-import { mkdir, writeFile } from "node:fs/promises"
-import path from "node:path"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import {
+  compressAndSaveScreenshot,
+  ScreenshotError,
+} from "@/lib/payment-proof"
 import { getCurrentUser } from "@/lib/session"
-
-const UPLOAD_DIR = path.join(process.cwd(), "uploads")
-const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
-const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"] as const
 
 const SubmitInput = z.object({
   orderId: z.string().min(1),
-  utr: z.string().regex(/^[A-Z0-9]{8,20}$/i, "UTR must be 8-20 letters/digits"),
+  // UTR is OPTIONAL now — screenshot is the primary evidence.
+  utr: z
+    .string()
+    .regex(/^[A-Z0-9]{4,30}$/i, "UTR must be 4-30 letters/digits")
+    .optional()
+    .or(z.literal("")),
 })
 
 /**
- * Customer submits UTR (required) + optional screenshot for a UPI_MANUAL
- * order. Returns { ok: true } or { ok: false, error }. Idempotent — if
- * the customer re-submits before admin verification, the latest UTR
- * replaces the old one and a fresh paymentNeedsNewProof flag is cleared.
+ * Customer submits an order's payment proof.
+ *
+ * The screenshot is REQUIRED (admin uses it as primary verification by
+ * opening their own UPI app + matching). UTR is OPTIONAL (helps admin
+ * find the transaction faster, but isn't required).
+ *
+ * The screenshot is compressed server-side via sharp (JPEG q=80, max
+ * 1280px) and saved with a 30-day TTL. After 30 days a cron job purges
+ * the file.
+ *
+ * Idempotent — if customer re-submits before admin verification, the
+ * latest payload replaces the previous one and the rejection flag
+ * clears.
  */
 export async function submitPaymentProof(formData: FormData): Promise<
   | { ok: true }
@@ -30,62 +42,66 @@ export async function submitPaymentProof(formData: FormData): Promise<
   if (!user) return { ok: false, error: "Sign in" }
 
   const orderId = formData.get("orderId")?.toString() ?? ""
-  const utr = formData.get("utr")?.toString().trim().toUpperCase() ?? ""
+  const utrRaw = formData.get("utr")?.toString().trim().toUpperCase() ?? ""
   const file = formData.get("screenshot")
 
-  const parsed = SubmitInput.safeParse({ orderId, utr })
+  const parsed = SubmitInput.safeParse({ orderId, utr: utrRaw })
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
   }
 
   const order = await db.order.findFirst({
     where: { id: orderId, userId: user.id },
-    select: {
-      id: true,
-      paymentMethod: true,
-      paymentStatus: true,
-    },
+    select: { id: true, paymentMethod: true, paymentStatus: true },
   })
   if (!order) return { ok: false, error: "Order not found" }
-  if (order.paymentMethod !== "UPI_MANUAL") {
+  if (order.paymentMethod !== "UPI_MANUAL")
     return { ok: false, error: "This isn't a UPI order" }
-  }
-  if (order.paymentStatus === "PAID") {
+  if (order.paymentStatus === "PAID")
     return { ok: false, error: "Already verified" }
+
+  // Screenshot is REQUIRED now.
+  if (
+    !file ||
+    typeof file !== "object" ||
+    !("arrayBuffer" in file) ||
+    (file as { size: number }).size === 0
+  ) {
+    return {
+      ok: false,
+      error: "Please attach a screenshot of your UPI payment.",
+    }
+  }
+  const blob = file as unknown as {
+    name?: string
+    size: number
+    type: string
+    arrayBuffer(): Promise<ArrayBuffer>
   }
 
-  // File handling (optional)
-  let savedFilename: string | null = null
-  if (file && typeof file === "object" && "arrayBuffer" in file) {
-    const blob = file as unknown as { name?: string; size: number; type: string; arrayBuffer(): Promise<ArrayBuffer> }
-    if (blob.size > 0) {
-      if (blob.size > MAX_SIZE_BYTES) {
-        return { ok: false, error: "Screenshot must be 2 MB or smaller" }
-      }
-      if (!ALLOWED_MIME.includes(blob.type as (typeof ALLOWED_MIME)[number])) {
-        return { ok: false, error: "Use a PNG, JPEG, or WebP screenshot" }
-      }
-      const ext =
-        blob.type === "image/png"
-          ? "png"
-          : blob.type === "image/webp"
-            ? "webp"
-            : "jpg"
-      savedFilename = `${orderId}-payment.${ext}`
-      await mkdir(UPLOAD_DIR, { recursive: true })
-      const buf = Buffer.from(await blob.arrayBuffer())
-      await writeFile(path.join(UPLOAD_DIR, savedFilename), buf)
+  let saved
+  try {
+    saved = await compressAndSaveScreenshot({
+      orderId,
+      bytes: await blob.arrayBuffer(),
+      declaredMime: blob.type || "image/jpeg",
+    })
+  } catch (err) {
+    if (err instanceof ScreenshotError) {
+      return { ok: false, error: err.message }
     }
+    console.error("[submitPaymentProof] processing failed:", err)
+    return { ok: false, error: "Couldn't save your screenshot. Try again." }
   }
 
   await db.order.update({
     where: { id: orderId },
     data: {
-      paymentProofUtr: utr,
-      ...(savedFilename ? { paymentProofFilename: savedFilename } : {}),
+      paymentProofUtr: utrRaw || null,
+      paymentProofFilename: saved.filename,
       paymentProofSubmittedAt: new Date(),
+      paymentProofExpiresAt: saved.expiresAt,
       paymentNeedsNewProof: false,
-      // If previously rejected, move back to AWAITING_VERIFICATION
       paymentStatus:
         order.paymentStatus === "FAILED"
           ? "AWAITING_VERIFICATION"
@@ -96,6 +112,5 @@ export async function submitPaymentProof(formData: FormData): Promise<
   revalidatePath(`/orders/${orderId}/pay`)
   revalidatePath(`/admin/orders/${orderId}/verify-payment`)
   revalidatePath(`/admin`)
-
   return { ok: true }
 }

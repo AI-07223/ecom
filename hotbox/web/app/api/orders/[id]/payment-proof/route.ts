@@ -26,7 +26,7 @@ const MIME_BY_EXT: Record<string, string> = {
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: RouteParams,
 ): Promise<NextResponse | Response> {
   const user = await getCurrentUser()
@@ -35,7 +35,11 @@ export async function GET(
   const { id } = await params
   const order = await db.order.findUnique({
     where: { id },
-    select: { userId: true, paymentProofFilename: true },
+    select: {
+      userId: true,
+      publicCode: true,
+      paymentProofFilename: true,
+    },
   })
   if (!order || !order.paymentProofFilename) {
     return new NextResponse("Not found", { status: 404 })
@@ -44,17 +48,25 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 })
   }
 
+  // ?download=1 forces attachment disposition (used by admin's
+  // "Download" button on the verify-payment page).
+  const url = new URL(req.url)
+  const wantsDownload = url.searchParams.get("download") === "1"
+
   try {
     const buf = await readFile(path.join(UPLOAD_DIR, order.paymentProofFilename))
     const ext = order.paymentProofFilename.split(".").pop()?.toLowerCase() ?? ""
     const mime = MIME_BY_EXT[ext] ?? "application/octet-stream"
     const arr = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
-    return new Response(arr as BodyInit, {
-      headers: {
-        "Content-Type": mime,
-        "Cache-Control": "private, no-store",
-      },
-    })
+    const headers: Record<string, string> = {
+      "Content-Type": mime,
+      "Cache-Control": "private, no-store",
+    }
+    if (wantsDownload) {
+      const filename = `hotbox-${order.publicCode}-payment.${ext}`
+      headers["Content-Disposition"] = `attachment; filename="${filename}"`
+    }
+    return new Response(arr as BodyInit, { headers })
   } catch {
     return new NextResponse("Not found", { status: 404 })
   }

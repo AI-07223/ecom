@@ -62,15 +62,30 @@ export default async function VerifyPaymentPage({
 
       {order.paymentProofFilename && (
         <section className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-            Screenshot
-          </h2>
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Screenshot
+            </h2>
+            <a
+              href={`/api/orders/${order.id}/payment-proof?download=1`}
+              className="text-xs font-semibold underline underline-offset-4"
+              style={{ color: "var(--color-brand-500)" }}
+              download
+            >
+              ↓ Download
+            </a>
+          </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/orders/${order.id}/payment-proof`}
             alt="Payment screenshot"
             className="max-w-full max-h-96 object-contain rounded-lg border border-zinc-200"
           />
+          {order.paymentProofExpiresAt && (
+            <p className="text-xs text-zinc-500 mt-2">
+              Auto-deletes on {order.paymentProofExpiresAt.toLocaleDateString("en-IN")}
+            </p>
+          )}
         </section>
       )}
 
