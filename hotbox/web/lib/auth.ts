@@ -189,10 +189,27 @@ export async function signIn(input: SignInInput): Promise<AuthResult> {
     throw new AuthError("INVALID_CREDENTIALS", "Email or password is wrong")
   }
 
+  // Self-heal: if this account's phone matches ADMIN_PHONE but the role
+  // drifted (e.g. operator accidentally added admin as a rider), restore
+  // admin on sign-in. This keeps the demo's superuser path recoverable
+  // without requiring DB surgery.
+  let effectiveRole: UserRole = user.role
+  if (
+    process.env.ADMIN_PHONE &&
+    process.env.ADMIN_PHONE === user.phone &&
+    user.role !== "admin"
+  ) {
+    await db.user.update({
+      where: { id: user.id },
+      data: { role: "admin" },
+    })
+    effectiveRole = "admin"
+  }
+
   const token = await createSession({
     uid: user.id,
     phone: user.phone,
-    role: user.role,
+    role: effectiveRole,
   })
   await setSessionCookie(token)
 
@@ -202,7 +219,7 @@ export async function signIn(input: SignInInput): Promise<AuthResult> {
       phone: user.phone,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: effectiveRole,
     },
     token,
   }

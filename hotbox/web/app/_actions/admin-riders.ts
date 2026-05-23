@@ -32,12 +32,21 @@ export async function addRider(
   }
 
   // Upsert User row + Rider row in a transaction. If a user with this
-  // phone already exists, we promote them to rider role.
+  // phone already exists, we promote them to rider role — EXCEPT we
+  // never demote an existing admin (otherwise adding a rider with the
+  // admin's own phone locks the admin out of /admin/*).
   const rider = await db.$transaction(async (tx) => {
+    const existing = await tx.user.findUnique({
+      where: { phone },
+      select: { role: true },
+    })
+    const preserveAdminRole = existing?.role === "admin"
     const user = await tx.user.upsert({
       where: { phone },
       create: { phone, name: parsed.data.name, role: "rider" },
-      update: { role: "rider", name: parsed.data.name },
+      update: preserveAdminRole
+        ? { name: parsed.data.name }
+        : { role: "rider", name: parsed.data.name },
     })
 
     const existingRider = await tx.rider.findUnique({
