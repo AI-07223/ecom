@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Package, ChevronRight, Eye, ImageIcon, Calendar, RefreshCw } from 'lucide-react'
+import { Package, ChevronRight, Eye, ImageIcon, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -57,7 +57,7 @@ export default function OrdersPage() {
         }
     }, [user, authLoading, router])
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         if (!user) return
 
         setIsLoading(true)
@@ -98,13 +98,13 @@ export default function OrdersPage() {
             }
         }
         setIsLoading(false)
-    }
+    }, [user])
 
     useEffect(() => {
         if (user) {
             fetchOrders()
         }
-    }, [user, refreshTrigger])
+    }, [user, refreshTrigger, fetchOrders])
 
     const formatPrice = (price: number) => {
         return `${settings.currency_symbol}${price.toLocaleString('en-IN')}`

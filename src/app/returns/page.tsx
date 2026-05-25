@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -257,14 +258,14 @@ export default function ReturnsPage() {
                         Our support team is here to assist you with any return-related queries.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a
+                        <Link
                             href="/profile/orders"
                             className="inline-flex items-center justify-center bg-white px-6 py-3 rounded-lg font-semibold hover:bg-white/90 transition-colors"
                             style={{ color: settings.primary_color }}
                         >
                             View My Orders
                             <ArrowRight className="h-4 w-4 ml-2" />
-                        </a>
+                        </Link>
                         <a
                             href="/contact"
                             className="inline-flex items-center justify-center border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"

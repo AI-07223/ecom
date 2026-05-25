@@ -45,7 +45,8 @@ export function useSwipeGesture(config: SwipeConfig) {
   );
 
   const onTouchEnd = useCallback(
-    (e: TouchEvent<HTMLElement>) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_e: TouchEvent<HTMLElement>) => {
       if (!touchStartRef.current || !touchEndRef.current) return;
 
       const distanceX = touchStartRef.current.x - touchEndRef.current.x;

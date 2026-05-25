@@ -69,6 +69,7 @@ const CommandItem = React.forwardRef<
     <div
         ref={ref}
         role="option"
+        aria-selected={false}
         tabIndex={0}
         onClick={onSelect}
         onKeyDown={(e) => {

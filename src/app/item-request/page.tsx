@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Package, Plus, ArrowLeft, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,7 @@ export default function ItemRequestPage() {
         }
       });
     };
-  }, []);
+  }, [imagePreviews]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -295,10 +296,13 @@ export default function ItemRequestPage() {
                       key={index}
                       className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted"
                     >
-                      <img
+                      <Image
                         src={preview}
                         alt={`Preview ${index + 1}`}
                         className="w-full h-full object-cover"
+                        width={96}
+                        height={96}
+                        unoptimized
                       />
                       <button
                         type="button"

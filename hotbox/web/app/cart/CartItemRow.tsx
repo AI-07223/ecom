@@ -44,28 +44,47 @@ export function CartItemRow({ item }: Props): React.ReactElement {
     <li className="py-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-zinc-900">{item.itemTitle}</p>
+          <p
+            className="font-semibold"
+            style={{ color: "var(--color-shell-fg)" }}
+          >
+            {item.itemTitle}
+          </p>
           {item.variantName && (
-            <p className="text-xs text-zinc-500">{item.variantName}</p>
+            <p className="text-xs" style={{ color: "var(--color-charcoal)" }}>
+              {item.variantName}
+            </p>
           )}
           {addons.length > 0 && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs" style={{ color: "var(--color-charcoal)" }}>
               + {addons.map((a) => a.name).join(", ")}
             </p>
           )}
           {item.specialInstructions && (
-            <p className="mt-1 text-xs text-zinc-500 italic">
+            <p
+              className="mt-1 text-xs italic"
+              style={{ color: "var(--color-charcoal)" }}
+            >
               &ldquo;{item.specialInstructions}&rdquo;
             </p>
           )}
         </div>
-        <p className="tabular-nums text-sm font-semibold whitespace-nowrap">
+        <p
+          className="tabular-nums text-sm font-semibold whitespace-nowrap"
+          style={{ color: "var(--color-brand-yellow-300)" }}
+        >
           {formatINR(item.lineTotalPaise)}
         </p>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center border border-zinc-200 rounded-full">
+        <div
+          className="flex items-center rounded-full"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+          }}
+        >
           <button
             type="button"
             onClick={() =>
@@ -79,6 +98,7 @@ export function CartItemRow({ item }: Props): React.ReactElement {
             }
             disabled={pending}
             className="px-3 py-1.5 text-base"
+            style={{ color: "var(--color-shell-fg)" }}
             aria-label="Decrease"
           >
             −
@@ -95,6 +115,7 @@ export function CartItemRow({ item }: Props): React.ReactElement {
             }
             disabled={pending}
             className="px-3 py-1.5 text-base"
+            style={{ color: "var(--color-shell-fg)" }}
             aria-label="Increase"
           >
             +
@@ -108,7 +129,8 @@ export function CartItemRow({ item }: Props): React.ReactElement {
             })
           }
           disabled={pending}
-          className="text-xs text-zinc-500 hover:text-red-600 underline underline-offset-4"
+          className="text-xs underline underline-offset-4"
+          style={{ color: "var(--color-brand-flame-400)" }}
         >
           Remove
         </button>

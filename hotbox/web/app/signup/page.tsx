@@ -3,6 +3,24 @@
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
+import { Logo } from "@/components/brand/Logo"
+
+const inputStyle: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+  color: "var(--color-shell-fg)",
+}
+
+const labelStyle: React.CSSProperties = {
+  color: "var(--color-charcoal)",
+}
+
+const errBoxStyle: React.CSSProperties = {
+  background: "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+  color: "var(--color-brand-flame-300)",
+  border: "1px solid var(--color-brand-flame-700)",
+}
 
 export default function SignupPage(): React.ReactElement {
   return (
@@ -61,106 +79,124 @@ function SignupInner(): React.ReactElement {
   }
 
   return (
-    <main className="mx-auto max-w-md min-h-screen flex flex-col px-6 pt-12 pb-12">
+    <main className="mx-auto max-w-md min-h-dvh flex flex-col px-6 pt-12 pb-12">
       <header className="mb-8">
-        <h1
-          className="font-display text-7xl leading-none"
-          style={{ color: "var(--color-brand-500)" }}
-        >
-          HOTBOX
-        </h1>
-        <p className="mt-3 text-zinc-700">Create your account</p>
+        <Logo variant="full" size="md" />
+        <p className="mt-5 text-base" style={{ color: "var(--color-charcoal-strong)" }}>
+          Create your account
+        </p>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={labelStyle}>
             Email
           </label>
           <input
             id="email" type="email" autoComplete="email" required
             value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full px-4 py-3 rounded-xl border border-zinc-300 outline-none focus:ring-2 focus:ring-brand-500"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-4 py-3 outline-none focus:ring-2"
+            style={inputStyle}
           />
         </div>
 
         <div>
-          <label htmlFor="phone" className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+          <label htmlFor="phone" className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={labelStyle}>
             Mobile number
           </label>
-          <div className="flex items-stretch rounded-xl border border-zinc-300 overflow-hidden focus-within:ring-2 focus-within:ring-brand-500" style={{ borderRadius: "var(--radius)" }}>
-            <span className="px-4 py-3 bg-zinc-50 text-zinc-600 border-r border-zinc-200">+91</span>
+          <div className="flex items-stretch overflow-hidden focus-within:ring-2" style={inputStyle}>
+            <span
+              className="px-4 py-3 border-r"
+              style={{
+                background: "var(--color-shell-bg)",
+                color: "var(--color-charcoal-strong)",
+                borderColor: "var(--color-shell-line)",
+              }}
+            >
+              +91
+            </span>
             <input
               id="phone" type="tel" autoComplete="tel-national" inputMode="numeric" required
               value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
               placeholder="98765 43210" maxLength={10}
-              className="flex-1 px-4 py-3 outline-none"
+              className="flex-1 px-4 py-3 outline-none bg-transparent"
+              style={{ color: "var(--color-shell-fg)" }}
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
-            Name <span className="font-normal normal-case text-zinc-400">(optional)</span>
+          <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={labelStyle}>
+            Name <span className="font-normal normal-case" style={{ color: "var(--color-charcoal)" }}>(optional)</span>
           </label>
           <input
             id="name" type="text" autoComplete="name" value={name}
             onChange={(e) => setName(e.target.value.slice(0, 80))}
-            className="w-full px-4 py-3 rounded-xl border border-zinc-300 outline-none focus:ring-2 focus:ring-brand-500"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-4 py-3 outline-none focus:ring-2"
+            style={inputStyle}
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
-            Password <span className="font-normal normal-case text-zinc-400">(min 8 chars)</span>
+          <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={labelStyle}>
+            Password <span className="font-normal normal-case" style={{ color: "var(--color-charcoal)" }}>(min 8 chars)</span>
           </label>
           <input
             id="password" type="password" autoComplete="new-password" required minLength={8}
             value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-zinc-300 outline-none focus:ring-2 focus:ring-brand-500"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-4 py-3 outline-none focus:ring-2"
+            style={inputStyle}
           />
         </div>
 
         <div>
-          <label htmlFor="confirm" className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+          <label htmlFor="confirm" className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={labelStyle}>
             Confirm password
           </label>
           <input
             id="confirm" type="password" autoComplete="new-password" required minLength={8}
             value={confirm} onChange={(e) => setConfirm(e.target.value)}
-            className={`w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-brand-500 ${confirm && !passwordsMatch ? "border-red-400" : "border-zinc-300"}`}
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-4 py-3 outline-none focus:ring-2"
+            style={{
+              ...inputStyle,
+              border: confirm && !passwordsMatch
+                ? "1px solid var(--color-brand-flame-500)"
+                : inputStyle.border,
+            }}
           />
           {confirm && !passwordsMatch && (
-            <p className="text-xs text-red-600 mt-1">Passwords don&rsquo;t match</p>
+            <p className="text-xs mt-1" style={{ color: "var(--color-brand-flame-400)" }}>
+              Passwords don&rsquo;t match
+            </p>
           )}
         </div>
 
         {error && (
-          <div className="text-sm text-red-700 bg-red-50 rounded-lg px-4 py-3">
+          <div className="text-sm rounded-lg px-4 py-3" style={errBoxStyle}>
             {error}
           </div>
         )}
 
         <button
           type="submit" disabled={submitting || !canSubmit}
-          className="w-full py-3.5 rounded-xl text-white font-semibold disabled:opacity-50"
-          style={{ background: "var(--color-brand-500)", borderRadius: "var(--radius)" }}
+          className="w-full py-3.5 font-bold disabled:opacity-50"
+          style={{
+            background: "var(--color-brand-yellow-300)",
+            color: "var(--color-shell-bg)",
+            borderRadius: "var(--radius)",
+          }}
         >
           {submitting ? "Creating account…" : "Create account"}
         </button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-zinc-600">
+      <p className="mt-8 text-center text-sm" style={{ color: "var(--color-charcoal)" }}>
         Already have an account?{" "}
         <Link
           href={`/login${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`}
           className="font-semibold underline underline-offset-4"
-          style={{ color: "var(--color-brand-500)" }}
+          style={{ color: "var(--color-brand-yellow-300)" }}
         >
           Sign in
         </Link>

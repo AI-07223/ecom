@@ -3,6 +3,17 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+const inputStyle: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+  color: "var(--color-shell-fg)",
+}
+
+const labelStyle: React.CSSProperties = {
+  color: "var(--color-charcoal)",
+}
+
 export function ResetForm({ token }: { token: string }): React.ReactElement {
   const router = useRouter()
   const [password, setPassword] = useState("")
@@ -41,9 +52,16 @@ export function ResetForm({ token }: { token: string }): React.ReactElement {
       <div>
         <label
           htmlFor="password"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={labelStyle}
         >
-          New password <span className="font-normal normal-case text-zinc-400">(min 8 chars)</span>
+          New password{" "}
+          <span
+            className="font-normal normal-case"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            (min 8 chars)
+          </span>
         </label>
         <input
           id="password"
@@ -53,8 +71,8 @@ export function ResetForm({ token }: { token: string }): React.ReactElement {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-zinc-300 outline-none focus:ring-2 focus:ring-brand-500"
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full px-4 py-3 outline-none focus:ring-2"
+          style={inputStyle}
           autoFocus
         />
       </div>
@@ -62,7 +80,8 @@ export function ResetForm({ token }: { token: string }): React.ReactElement {
       <div>
         <label
           htmlFor="confirm"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={labelStyle}
         >
           Confirm new password
         </label>
@@ -74,16 +93,35 @@ export function ResetForm({ token }: { token: string }): React.ReactElement {
           minLength={8}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className={`w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-brand-500 ${confirm && !passwordsMatch ? "border-red-400" : "border-zinc-300"}`}
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full px-4 py-3 outline-none focus:ring-2"
+          style={{
+            ...inputStyle,
+            border:
+              confirm && !passwordsMatch
+                ? "1px solid var(--color-brand-flame-500)"
+                : inputStyle.border,
+          }}
         />
         {confirm && !passwordsMatch && (
-          <p className="text-xs text-red-600 mt-1">Passwords don&rsquo;t match</p>
+          <p
+            className="text-xs mt-1"
+            style={{ color: "var(--color-brand-flame-400)" }}
+          >
+            Passwords don&rsquo;t match
+          </p>
         )}
       </div>
 
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 rounded-lg px-4 py-3">
+        <div
+          className="text-sm rounded-lg px-4 py-3"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -91,9 +129,10 @@ export function ResetForm({ token }: { token: string }): React.ReactElement {
       <button
         type="submit"
         disabled={submitting || !canSubmit}
-        className="w-full py-3.5 rounded-xl text-white font-semibold disabled:opacity-50"
+        className="w-full py-3.5 font-bold disabled:opacity-50"
         style={{
-          background: "var(--color-brand-500)",
+          background: "var(--color-brand-yellow-300)",
+          color: "var(--color-shell-bg)",
           borderRadius: "var(--radius)",
         }}
       >

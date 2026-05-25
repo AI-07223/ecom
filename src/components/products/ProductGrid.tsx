@@ -11,6 +11,7 @@ interface ProductGridProps {
   hasMore?: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ProductGrid({ products, isLoading, isLoadingMore, lastProductRef, hasMore }: ProductGridProps) {
   if (isLoading) {
     return (

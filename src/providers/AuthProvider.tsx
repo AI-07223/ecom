@@ -22,12 +22,10 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import { Profile, UserRole } from "@/types/database.types";
-
-// Admin email — auto-promoted to admin role on login/signup
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "z41d.706@gmail.com";
+import { bootstrapAdminRole } from "@/app/actions/admin";
 
 interface AuthContextType {
   user: User | null;
@@ -88,44 +86,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(
     async (
-      userId: string,
-      email: string,
-      displayName?: string | null,
-      photoURL?: string | null,
-      phoneNumber?: string | null,
+      firebaseUser: User,
     ) => {
       try {
+        const userId = firebaseUser.uid;
+        const email = firebaseUser.email || "";
+        const displayName = firebaseUser.displayName;
+        const photoURL = firebaseUser.photoURL;
+        const phoneNumber = firebaseUser.phoneNumber;
+
         const profileRef = doc(db, "profiles", userId);
         const profileSnap = await getDoc(profileRef);
-        const isDesignatedAdmin = email ? email.toLowerCase() === ADMIN_EMAIL.toLowerCase() : false;
 
         if (profileSnap.exists()) {
-          const profileData = convertToProfile(profileSnap.data() as Record<string, unknown>, userId);
+          let profileData = convertToProfile(profileSnap.data() as Record<string, unknown>, userId);
 
-          // Auto-promote designated admin email if not already admin
-          if (isDesignatedAdmin && profileData.role !== "admin") {
-            await updateDoc(profileRef, {
-              role: "admin",
-              updated_at: serverTimestamp(),
-            });
-            return { ...profileData, role: "admin" as UserRole };
+          // Check admin bootstrapping via server action (admin email checked server-side only)
+          if (profileData.role !== "admin") {
+            try {
+              const idToken = await firebaseUser.getIdToken();
+              const result = await bootstrapAdminRole(idToken);
+              if (result.success && result.isAdmin) {
+                profileData = { ...profileData, role: "admin" as UserRole };
+              }
+            } catch {
+              // Non-critical: admin bootstrap failed, continue with current role
+            }
           }
 
           return profileData;
         } else {
-          // Create profile for new user
+          // Create profile for new user (always as "customer" - Firestore rules enforce this)
           const now = new Date().toISOString();
-          const newRole: UserRole = isDesignatedAdmin ? "admin" : "customer";
           const newProfile: Profile = {
             id: userId,
-            email: email || "",
+            email: email,
             full_name: displayName || null,
             avatar_url: photoURL || null,
             phone: phoneNumber || null,
             address: null,
             saved_addresses: [],
             gst_number: null,
-            role: newRole,
+            role: "customer",
             created_at: now,
             updated_at: now,
           };
@@ -134,6 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: serverTimestamp(),
             updated_at: serverTimestamp(),
           });
+
+          // After creating as customer, check if this is the designated admin
+          try {
+            const idToken = await firebaseUser.getIdToken();
+            const result = await bootstrapAdminRole(idToken);
+            if (result.success && result.isAdmin) {
+              return { ...newProfile, role: "admin" as UserRole };
+            }
+          } catch {
+            // Non-critical: admin bootstrap failed, continue as customer
+          }
+
           return newProfile;
         }
       } catch (error) {
@@ -146,13 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      const profileData = await fetchProfile(
-        user.uid,
-        user.email || "",
-        user.displayName,
-        user.photoURL,
-        user.phoneNumber,
-      );
+      const profileData = await fetchProfile(user);
       setProfile(profileData);
     }
   }, [user, fetchProfile]);
@@ -162,16 +170,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        const profileData = await fetchProfile(
-          firebaseUser.uid,
-          firebaseUser.email || "",
-          firebaseUser.displayName,
-          firebaseUser.photoURL,
-          firebaseUser.phoneNumber,
-        );
+        const profileData = await fetchProfile(firebaseUser);
         setProfile(profileData);
+
+        // Set server-side session cookie for middleware auth checks
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          await fetch("/api/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch {
+          // Non-critical: middleware session set failed
+        }
       } else {
         setProfile(null);
+        // Clear session cookie on logout
+        try {
+          await fetch("/api/auth/session", { method: "DELETE" });
+        } catch {
+          // Non-critical
+        }
       }
 
       setIsLoading(false);
@@ -229,6 +249,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(auth);
     setUser(null);
     setProfile(null);
+    // Clear server-side session cookie
+    try {
+      await fetch("/api/auth/session", { method: "DELETE" });
+    } catch {
+      // Non-critical
+    }
   };
 
   const signInWithGoogle = async () => {

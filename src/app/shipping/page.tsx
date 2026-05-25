@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useSiteSettings } from '@/providers/SiteSettingsProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -227,13 +228,13 @@ export default function ShippingPage() {
                     <p className="text-white/90 mb-6">
                         Already placed an order? Track its status in real-time from your account.
                     </p>
-                    <a
+                    <Link
                         href="/profile/orders"
                         className="inline-block bg-white px-8 py-3 rounded-lg font-semibold hover:bg-white/90 transition-colors"
                         style={{ color: settings.primary_color }}
                     >
                         View My Orders
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>
