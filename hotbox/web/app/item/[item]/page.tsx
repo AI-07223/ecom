@@ -47,9 +47,11 @@ export default async function ItemPage({
       <main className="mx-auto max-w-md min-h-dvh flex flex-col pb-32">
         <div className="mx-5 mt-4 mb-3">
           <DishPhoto
+            itemId={menuItem.id}
             itemSlug={menuItem.slug}
             itemTitle={menuItem.title}
             imageUrl={menuItem.imageUrl}
+            photoFilename={menuItem.photoFilename}
             categorySlug={menuItem.category.slug}
             width={520}
             height={300}

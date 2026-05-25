@@ -96,12 +96,14 @@ export default async function HomePage(): Promise<React.ReactElement> {
                 {cat.items.map((item) => (
                   <ItemRow
                     key={item.id}
+                    itemId={item.id}
                     itemSlug={item.slug}
                     itemTitle={item.title}
                     itemDescription={item.description}
                     basePricePaise={item.basePricePaise}
                     isVeg={item.isVeg}
                     imageUrl={item.imageUrl}
+                    photoFilename={item.photoFilename}
                     categorySlug={cat.slug}
                     variants={item.variants.map((v) => ({
                       slug: v.slug,

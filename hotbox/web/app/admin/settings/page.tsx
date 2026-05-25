@@ -10,7 +10,10 @@ export default async function AdminSettingsPage(): Promise<React.ReactElement> {
   })
   if (!restaurant) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p
+        className="text-sm"
+        style={{ color: "var(--color-charcoal)" }}
+      >
         Restaurant not seeded yet — re-run the seed.
       </p>
     )
@@ -18,8 +21,11 @@ export default async function AdminSettingsPage(): Promise<React.ReactElement> {
 
   return (
     <>
-      <h1 className="text-2xl font-black tracking-tight mb-1">Settings</h1>
-      <p className="text-sm text-zinc-500 mb-6">
+      <h1 className="font-display text-3xl mb-1">Settings</h1>
+      <p
+        className="text-sm mb-6"
+        style={{ color: "var(--color-charcoal)" }}
+      >
         Hours, pause, fees, cancellation policy, UPI payment config.
       </p>
 

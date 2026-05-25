@@ -30,8 +30,13 @@ export function CopyLink({ url }: { url: string }): React.ReactElement {
     <button
       type="button"
       onClick={handleCopy}
-      className="px-5 py-2.5 rounded-xl border border-zinc-200 bg-white font-semibold text-sm text-zinc-700"
-      style={{ borderRadius: "var(--radius)" }}
+      className="px-5 py-2.5 font-semibold text-sm"
+      style={{
+        background: "var(--color-shell-bg)",
+        border: "1px solid var(--color-shell-line)",
+        color: "var(--color-charcoal-strong)",
+        borderRadius: "var(--radius)",
+      }}
     >
       {copied ? "Copied!" : "Copy install link"}
     </button>

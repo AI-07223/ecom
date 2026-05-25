@@ -12,6 +12,23 @@ interface Initial {
   packagingFeePaise: number
 }
 
+const cardStyle: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+}
+
+const inputStyle: React.CSSProperties = {
+  background: "var(--color-shell-bg)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+  color: "var(--color-shell-fg)",
+}
+
+const labelStyle: React.CSSProperties = {
+  color: "var(--color-charcoal)",
+}
+
 export function SettingsForm({
   initial,
 }: {
@@ -50,34 +67,36 @@ export function SettingsForm({
   }
 
   return (
-    <form
-      onSubmit={handleSave}
-      className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-5"
-      style={{ borderRadius: "var(--radius)" }}
-    >
+    <form onSubmit={handleSave} className="p-5 space-y-5" style={cardStyle}>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-1"
+            style={labelStyle}
+          >
             Open
           </label>
           <input
             type="time"
             value={open}
             onChange={(e) => setOpen(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-3 py-2.5"
+            style={inputStyle}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-1"
+            style={labelStyle}
+          >
             Close
           </label>
           <input
             type="time"
             value={close}
             onChange={(e) => setClose(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-3 py-2.5"
+            style={inputStyle}
           />
         </div>
       </div>
@@ -87,11 +106,17 @@ export function SettingsForm({
           type="checkbox"
           checked={paused}
           onChange={(e) => setPaused(e.target.checked)}
-          className="accent-brand-500 mt-1 w-5 h-5"
+          className="mt-1 w-5 h-5"
+          style={{ accentColor: "var(--color-brand-yellow-300)" }}
         />
         <span>
-          <span className="font-medium">Pause new orders</span>
-          <p className="text-xs text-zinc-500">
+          <span
+            className="font-medium"
+            style={{ color: "var(--color-shell-fg)" }}
+          >
+            Pause new orders
+          </span>
+          <p className="text-xs" style={labelStyle}>
             Menu stays browseable; checkout is blocked until you toggle off.
           </p>
         </span>
@@ -102,22 +127,29 @@ export function SettingsForm({
           type="checkbox"
           checked={allowCancel}
           onChange={(e) => setAllowCancel(e.target.checked)}
-          className="accent-brand-500 mt-1 w-5 h-5"
+          className="mt-1 w-5 h-5"
+          style={{ accentColor: "var(--color-brand-yellow-300)" }}
         />
         <span>
-          <span className="font-medium">
+          <span
+            className="font-medium"
+            style={{ color: "var(--color-shell-fg)" }}
+          >
             Allow cancellation after order accepted
           </span>
-          <p className="text-xs text-zinc-500">
-            Off (default): customer can only cancel BEFORE you accept. On:
-            also cancellable while ACCEPTED, until cooking starts.
+          <p className="text-xs" style={labelStyle}>
+            Off (default): customer can only cancel BEFORE you accept. On: also
+            cancellable while ACCEPTED, until cooking starts.
           </p>
         </span>
       </label>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-1"
+            style={labelStyle}
+          >
             Delivery fee (₹)
           </label>
           <input
@@ -126,12 +158,15 @@ export function SettingsForm({
             step={1}
             value={deliveryRupees}
             onChange={(e) => setDeliveryRupees(Number(e.target.value))}
-            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300 tabular-nums"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-3 py-2.5 tabular-nums"
+            style={inputStyle}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">
+          <label
+            className="block text-xs font-semibold uppercase tracking-wider mb-1"
+            style={labelStyle}
+          >
             Packaging fee (₹)
           </label>
           <input
@@ -140,19 +175,34 @@ export function SettingsForm({
             step={1}
             value={packagingRupees}
             onChange={(e) => setPackagingRupees(Number(e.target.value))}
-            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300 tabular-nums"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-3 py-2.5 tabular-nums"
+            style={inputStyle}
           />
         </div>
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+        <div
+          className="text-sm rounded-lg px-3 py-2"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
       {saved && !error && (
-        <div className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+        <div
+          className="text-sm rounded-lg px-3 py-2"
+          style={{
+            background: "color-mix(in oklab, var(--color-veg) 14%, transparent)",
+            color: "var(--color-veg)",
+            border: "1px solid var(--color-veg)",
+          }}
+        >
           Saved.
         </div>
       )}
@@ -160,9 +210,10 @@ export function SettingsForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full py-3 rounded-xl text-white font-semibold disabled:opacity-50"
+        className="w-full py-3 font-bold disabled:opacity-50"
         style={{
-          background: "var(--color-brand-500)",
+          background: "var(--color-brand-yellow-300)",
+          color: "var(--color-shell-bg)",
           borderRadius: "var(--radius)",
         }}
       >

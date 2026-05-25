@@ -13,9 +13,11 @@ export default async function AdminMenuPage(): Promise<React.ReactElement> {
         orderBy: { sortOrder: "asc" },
         select: {
           id: true,
+          slug: true,
           title: true,
           basePricePaise: true,
           isAvailable: true,
+          photoFilename: true,
         },
       },
     },
@@ -23,10 +25,13 @@ export default async function AdminMenuPage(): Promise<React.ReactElement> {
 
   return (
     <>
-      <h1 className="text-2xl font-black tracking-tight mb-1">Menu</h1>
-      <p className="text-sm text-zinc-500 mb-6">
-        Toggle items off when you run out. Customers see them as out of
-        stock within a few seconds.
+      <h1 className="font-display text-3xl mb-1">Menu</h1>
+      <p
+        className="text-sm mb-6"
+        style={{ color: "var(--color-charcoal)" }}
+      >
+        Toggle items off when you run out. Upload a photo to replace the
+        default for any item.
       </p>
       <MenuAvailabilityToggles
         categories={categories.map((c) => ({
@@ -34,10 +39,12 @@ export default async function AdminMenuPage(): Promise<React.ReactElement> {
           name: c.name,
           items: c.items.map((i) => ({
             id: i.id,
+            slug: i.slug,
             title: i.title,
             startingPaise: i.basePricePaise,
             isAvailable: i.isAvailable,
             startingPriceText: formatINR(i.basePricePaise),
+            photoFilename: i.photoFilename,
           })),
         }))}
       />

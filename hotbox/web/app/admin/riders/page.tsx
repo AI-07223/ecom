@@ -20,7 +20,7 @@ export default async function AdminRidersPage(): Promise<React.ReactElement> {
 
   return (
     <>
-      <h1 className="text-2xl font-black tracking-tight mb-4">Riders</h1>
+      <h1 className="font-display text-3xl mb-4">Riders</h1>
       <RidersClient
         riders={riders.map((r) => ({
           id: r.id,

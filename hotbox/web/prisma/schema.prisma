@@ -120,6 +120,10 @@ model MenuItem {
   title           String
   description     String?
   imageUrl        String?  @map("image_url")
+  // Operator-uploaded photo filename. When set, /api/menu/items/<id>/photo
+  // serves /app/uploads/dishes/<filename> with cache headers. Takes
+  // precedence over the bundled PDF crop for this slug.
+  photoFilename   String?  @map("photo_filename")
   basePricePaise  Int      @map("base_price_paise")
   isVeg           Boolean  @default(true) @map("is_veg")
   isAvailable     Boolean  @default(true) @map("is_available")

@@ -39,38 +39,52 @@ const SEED_PHOTOS = new Set<string>([
 ])
 
 export function resolvePhotoSrc({
+  itemId,
   itemSlug,
+  photoFilename,
   imageUrl,
 }: {
+  itemId?: string
   itemSlug: string
+  photoFilename?: string | null
   imageUrl?: string | null
 }): string | null {
-  // Tier 1: explicit operator-provided URL (absolute) on the menu item
+  // Tier 1: operator-uploaded photo via admin (served from /app/uploads/dishes)
+  if (photoFilename && itemId) {
+    // Append the filename as a cache-buster — when the operator replaces
+    // the photo, the URL changes and CDNs/browsers re-fetch.
+    return `/api/menu/items/${itemId}/photo?v=${encodeURIComponent(photoFilename)}`
+  }
+  // Tier 2: explicit operator-provided URL (absolute) on the menu item
   if (imageUrl && /^https?:\/\//.test(imageUrl)) return imageUrl
-  // Tier 2: bundled PDF crop
+  // Tier 3: bundled PDF crop
   if (SEED_PHOTOS.has(itemSlug)) return `/dishes/seed/${itemSlug}.jpg`
-  // Tier 3: none — caller falls back to placeholder
+  // Tier 4: none — caller falls back to placeholder
   return null
 }
 
 export function DishPhoto({
+  itemId,
   itemSlug,
   itemTitle,
   imageUrl,
+  photoFilename,
   categorySlug,
   className,
   width = 96,
   height = 96,
 }: {
+  itemId?: string
   itemSlug: string
   itemTitle: string
   imageUrl?: string | null
+  photoFilename?: string | null
   categorySlug?: string
   className?: string
   width?: number
   height?: number
 }): React.ReactElement {
-  const src = resolvePhotoSrc({ itemSlug, imageUrl })
+  const src = resolvePhotoSrc({ itemId, itemSlug, photoFilename, imageUrl })
   if (src) {
     return (
       /* eslint-disable-next-line @next/next/no-img-element */

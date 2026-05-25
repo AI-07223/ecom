@@ -22,12 +22,14 @@ interface VariantLite {
 }
 
 interface Props {
+  itemId: string
   itemSlug: string
   itemTitle: string
   itemDescription: string | null
   basePricePaise: number
   isVeg: boolean
   imageUrl: string | null
+  photoFilename: string | null
   categorySlug: string
   variants: VariantLite[]
 }
@@ -67,9 +69,11 @@ export function ItemRow(props: Props): React.ReactElement {
       style={{ borderColor: "var(--color-shell-line)" }}
     >
       <DishPhoto
+        itemId={props.itemId}
         itemSlug={props.itemSlug}
         itemTitle={props.itemTitle}
         imageUrl={props.imageUrl}
+        photoFilename={props.photoFilename}
         categorySlug={props.categorySlug}
         width={72}
         height={72}
