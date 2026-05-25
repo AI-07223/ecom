@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import QRCode from "qrcode"
+import { Logo } from "@/components/brand/Logo"
 import { getOrderForCurrentUser } from "@/lib/orders"
 import { getRestaurant } from "@/lib/catalog"
 import { formatINR } from "@/lib/pricing"
@@ -33,7 +34,7 @@ export default async function PayPage({
 
   const totalRupees = order.totalPaise / 100
   const upiVpa = restaurant?.upiVpa ?? ""
-  const upiName = restaurant?.upiDisplayName ?? "Hotbox"
+  const upiName = restaurant?.upiDisplayName ?? "Hot Box"
   const adminQrFilename = restaurant?.upiQrFilename ?? null
   const upiUri = upiVpa
     ? `upi://pay?pa=${encodeURIComponent(upiVpa)}&pn=${encodeURIComponent(upiName)}&am=${totalRupees.toFixed(2)}&tn=${encodeURIComponent(order.publicCode)}&cu=INR`
@@ -44,7 +45,7 @@ export default async function PayPage({
         type: "svg",
         margin: 0,
         width: 256,
-        color: { dark: "#1a1a1a", light: "#ffffff" },
+        color: { dark: "#0a0a0a", light: "#ffffff" },
       })
     : null
 
@@ -55,124 +56,225 @@ export default async function PayPage({
     wasRejected || needsNewProof ? order.paymentVerifiedNote : null
 
   return (
-    <main className="mx-auto max-w-md min-h-screen px-5 pt-8 pb-12">
-      <Link
-        href={`/orders/${order.id}/confirmation`}
-        className="text-sm text-zinc-500 hover:underline underline-offset-4"
+    <>
+      <header
+        className="sticky top-0 z-40 backdrop-blur"
+        style={{
+          background: "color-mix(in oklab, var(--color-shell-bg) 90%, transparent)",
+          borderBottom: "1px solid var(--color-shell-line)",
+        }}
       >
-        ← Order details
-      </Link>
-      <h1 className="mt-3 font-display text-5xl leading-none" style={{ color: "var(--color-brand-500)" }}>
-        PAY ₹{totalRupees.toFixed(0)}
-      </h1>
-      <p className="mt-2 text-sm text-zinc-600">
-        Order {order.publicCode}
-      </p>
+        <div className="max-w-md mx-auto px-5 py-3 flex items-center justify-between">
+          <Link href="/" aria-label="Hot Box home">
+            <Logo variant="full" size="sm" />
+          </Link>
+          <Link
+            href={`/orders/${order.id}/confirmation`}
+            className="text-sm font-medium"
+            style={{ color: "var(--color-brand-yellow-300)" }}
+          >
+            ← Order details
+          </Link>
+        </div>
+      </header>
 
-      <section className="mt-4 rounded-2xl bg-zinc-50 p-4 text-sm space-y-2">
-        <div className="flex justify-between">
-          <span className="text-zinc-600">Subtotal</span>
-          <span className="tabular-nums">{formatINR(order.subtotalPaise)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-zinc-600">Packaging</span>
-          <span className="tabular-nums">{formatINR(order.packagingFeePaise)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-zinc-600">Delivery</span>
-          <span className="tabular-nums">{formatINR(order.deliveryFeePaise)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-zinc-600">GST</span>
-          <span className="tabular-nums">{formatINR(order.gstPaise)}</span>
-        </div>
-        <div className="flex justify-between pt-2 border-t border-zinc-200 font-bold">
-          <span>Total</span>
-          <span className="tabular-nums">{formatINR(order.totalPaise)}</span>
-        </div>
-      </section>
+      <main className="mx-auto max-w-md px-5 pt-6 pb-12">
+        <h1
+          className="font-display text-6xl leading-none"
+          style={{ color: "var(--color-brand-yellow-300)" }}
+        >
+          PAY ₹{totalRupees.toFixed(0)}
+        </h1>
+        <p
+          className="mt-2 text-sm"
+          style={{ color: "var(--color-charcoal)" }}
+        >
+          Order {order.publicCode}
+        </p>
 
-      {!upiVpa ? (
-        <div className="mt-6 rounded-2xl bg-amber-50 text-amber-900 p-4">
-          <p className="font-semibold">Online payment not configured</p>
-          <p className="text-sm mt-1">
-            The restaurant hasn&rsquo;t set up UPI yet. Please contact the
-            restaurant or cancel and re-order with Cash on Delivery.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Primary CTA: tap-to-pay on mobile opens the registered UPI
-              app (PhonePe/GPay/Paytm/BHIM) with amount + note pre-filled. */}
-          <a
-            href={upiUri}
-            className="mt-6 flex items-center justify-center w-full py-5 rounded-2xl text-white font-bold text-lg shadow-sm active:scale-[0.98] transition-transform"
+        <section
+          className="mt-4 rounded-2xl p-4 text-sm space-y-2"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+          }}
+        >
+          {[
+            ["Subtotal", order.subtotalPaise],
+            ["Packaging", order.packagingFeePaise],
+            ["Delivery", order.deliveryFeePaise],
+            ["GST", order.gstPaise],
+          ].map(([label, paise]) => (
+            <div key={label as string} className="flex justify-between">
+              <span style={{ color: "var(--color-charcoal)" }}>{label}</span>
+              <span className="tabular-nums">{formatINR(paise as number)}</span>
+            </div>
+          ))}
+          <div
+            className="flex justify-between pt-2 border-t font-bold"
+            style={{ borderColor: "var(--color-shell-line)" }}
+          >
+            <span>Total</span>
+            <span
+              className="tabular-nums"
+              style={{ color: "var(--color-brand-yellow-300)" }}
+            >
+              {formatINR(order.totalPaise)}
+            </span>
+          </div>
+        </section>
+
+        {!upiVpa ? (
+          <div
+            className="mt-6 rounded-2xl p-4"
             style={{
-              background: "var(--color-brand-500)",
-              borderRadius: "var(--radius)",
+              background: "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+              border: "1px solid var(--color-brand-flame-700)",
+              color: "var(--color-brand-flame-300)",
             }}
           >
-            Pay {formatINR(order.totalPaise)} via UPI →
-          </a>
-          <p className="text-xs text-zinc-500 text-center mt-2">
-            Opens PhonePe / GPay / Paytm / BHIM with amount pre-filled.
-          </p>
+            <p className="font-semibold">Online payment not configured</p>
+            <p
+              className="text-sm mt-1"
+              style={{ color: "var(--color-shell-fg)" }}
+            >
+              The restaurant hasn&rsquo;t set up UPI yet. Please contact the
+              restaurant or cancel and re-order with Cash on Delivery.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Primary CTA: tap-to-pay on mobile opens the registered UPI
+                app with amount + note pre-filled. */}
+            <a
+              href={upiUri}
+              className="mt-6 flex items-center justify-center w-full py-5 font-bold text-lg active:scale-[0.98] transition-transform"
+              style={{
+                background: "var(--color-brand-yellow-300)",
+                color: "var(--color-shell-bg)",
+                borderRadius: "var(--radius-lg)",
+                boxShadow:
+                  "0 10px 30px color-mix(in oklab, var(--color-brand-yellow-300) 30%, transparent)",
+              }}
+            >
+              Pay {formatINR(order.totalPaise)} via UPI →
+            </a>
+            <p
+              className="text-xs text-center mt-2"
+              style={{ color: "var(--color-charcoal)" }}
+            >
+              Opens PhonePe / GPay / Paytm / BHIM with amount pre-filled.
+            </p>
 
-          <section className="mt-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3 text-center">
-              Or scan with any UPI app
-            </h2>
-            <div className="rounded-2xl bg-white border border-zinc-200 p-6 flex flex-col items-center">
-              {adminQrFilename ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={`/api/restaurant/upi-qr`}
-                  alt="UPI QR code"
-                  className="w-56 h-56 object-contain"
-                />
-              ) : dynamicQrSvg ? (
-                <div
-                  className="w-56 h-56"
-                  dangerouslySetInnerHTML={{ __html: dynamicQrSvg }}
-                />
-              ) : null}
-              <p className="mt-4 text-xs text-zinc-500 text-center">
-                Pay <span className="font-bold text-zinc-900 tabular-nums">{formatINR(order.totalPaise)}</span> to
-              </p>
-              <p className="font-mono text-sm font-semibold mt-0.5">{upiVpa}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">{upiName}</p>
-            </div>
-          </section>
-
-          {lastRejectReason && (
-            <div className="mt-4 rounded-2xl bg-amber-50 text-amber-900 p-4 text-sm">
-              <p className="font-semibold">
-                {wasRejected ? "Payment couldn't be verified" : "Please send better proof"}
-              </p>
-              <p className="mt-1">{lastRejectReason}</p>
-              <p className="mt-2 text-xs">Re-submit your UTR (and a clearer screenshot if you have one).</p>
-            </div>
-          )}
-
-          {submitted ? (
-            <div className="mt-6 rounded-2xl bg-emerald-50 text-emerald-900 p-5 text-sm">
-              <p className="font-semibold">UTR submitted — admin is verifying</p>
-              <p className="mt-1 font-mono">{order.paymentProofUtr}</p>
-              <p className="mt-2 text-xs">
-                Refresh this page in a minute. Status will flip to PAID once verified.
-              </p>
-              <Link
-                href={`/orders/${order.id}/confirmation`}
-                className="mt-3 inline-block underline underline-offset-4"
+            <section className="mt-6">
+              <h2
+                className="text-xs font-semibold uppercase tracking-wider mb-3 text-center"
+                style={{ color: "var(--color-charcoal)" }}
               >
-                Track your order →
-              </Link>
-            </div>
-          ) : (
-            <PayClient orderId={order.id} />
-          )}
-        </>
-      )}
-    </main>
+                Or scan with any UPI app
+              </h2>
+              <div
+                className="rounded-2xl p-6 flex flex-col items-center"
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid var(--color-shell-line)",
+                }}
+              >
+                {adminQrFilename ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={`/api/restaurant/upi-qr`}
+                    alt="UPI QR code"
+                    className="w-56 h-56 object-contain"
+                  />
+                ) : dynamicQrSvg ? (
+                  <div
+                    className="w-56 h-56"
+                    dangerouslySetInnerHTML={{ __html: dynamicQrSvg }}
+                  />
+                ) : null}
+                <p className="mt-4 text-xs text-zinc-500 text-center">
+                  Pay{" "}
+                  <span className="font-bold text-zinc-900 tabular-nums">
+                    {formatINR(order.totalPaise)}
+                  </span>{" "}
+                  to
+                </p>
+                <p className="font-mono text-sm font-semibold mt-0.5 text-zinc-900">
+                  {upiVpa}
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">{upiName}</p>
+              </div>
+            </section>
+
+            {lastRejectReason && (
+              <div
+                className="mt-4 rounded-2xl p-4 text-sm"
+                style={{
+                  background: "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+                  border: "1px solid var(--color-brand-flame-700)",
+                  color: "var(--color-brand-flame-300)",
+                }}
+              >
+                <p className="font-semibold">
+                  {wasRejected
+                    ? "Payment couldn't be verified"
+                    : "Please send better proof"}
+                </p>
+                <p
+                  className="mt-1"
+                  style={{ color: "var(--color-shell-fg)" }}
+                >
+                  {lastRejectReason}
+                </p>
+                <p
+                  className="mt-2 text-xs"
+                  style={{ color: "var(--color-charcoal)" }}
+                >
+                  Re-submit your UTR (and a clearer screenshot if you have one).
+                </p>
+              </div>
+            )}
+
+            {submitted ? (
+              <div
+                className="mt-6 rounded-2xl p-5 text-sm"
+                style={{
+                  background: "color-mix(in oklab, var(--color-veg) 14%, transparent)",
+                  border: "1px solid var(--color-veg)",
+                  color: "var(--color-veg)",
+                }}
+              >
+                <p className="font-semibold">
+                  UTR submitted — admin is verifying
+                </p>
+                <p
+                  className="mt-1 font-mono"
+                  style={{ color: "var(--color-shell-fg)" }}
+                >
+                  {order.paymentProofUtr}
+                </p>
+                <p
+                  className="mt-2 text-xs"
+                  style={{ color: "var(--color-charcoal-strong)" }}
+                >
+                  Refresh this page in a minute. Status will flip to PAID once
+                  verified.
+                </p>
+                <Link
+                  href={`/orders/${order.id}/confirmation`}
+                  className="mt-3 inline-block underline underline-offset-4"
+                  style={{ color: "var(--color-brand-yellow-300)" }}
+                >
+                  Track your order →
+                </Link>
+              </div>
+            ) : (
+              <PayClient orderId={order.id} />
+            )}
+          </>
+        )}
+      </main>
+    </>
   )
 }

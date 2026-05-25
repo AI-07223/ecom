@@ -42,9 +42,16 @@ export function PayClient({ orderId }: { orderId: string }): React.ReactElement 
       <div>
         <label
           htmlFor="screenshot"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={{ color: "var(--color-charcoal)" }}
         >
-          Payment screenshot <span className="text-red-600 normal-case font-normal">required</span>
+          Payment screenshot{" "}
+          <span
+            className="normal-case font-bold"
+            style={{ color: "var(--color-brand-flame-400)" }}
+          >
+            required
+          </span>
         </label>
         <input
           id="screenshot"
@@ -56,15 +63,26 @@ export function PayClient({ orderId }: { orderId: string }): React.ReactElement 
             setFile(f)
             if (f) setError(null)
           }}
-          className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-zinc-100 file:text-zinc-700 file:font-medium"
+          className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-medium"
+          style={{
+            color: "var(--color-shell-fg)",
+            // Style the native file button via ::-webkit-file-upload-button
+            // through Tailwind file: prefix (resolves to inline-tinted bg).
+          }}
           required
         />
-        <p className="text-xs text-zinc-500 mt-1">
+        <p
+          className="text-xs mt-1"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Take a screenshot of the success page in your UPI app and upload
           here. We auto-compress to save space; original quality not needed.
         </p>
         {file && (
-          <p className="text-xs text-emerald-700 mt-1">
+          <p
+            className="text-xs mt-1"
+            style={{ color: "var(--color-veg)" }}
+          >
             ✓ {file.name} ({(file.size / 1024).toFixed(0)} KB) — ready
           </p>
         )}
@@ -73,9 +91,16 @@ export function PayClient({ orderId }: { orderId: string }): React.ReactElement 
       <div>
         <label
           htmlFor="utr"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={{ color: "var(--color-charcoal)" }}
         >
-          UPI reference (UTR) <span className="font-normal normal-case text-zinc-400">optional</span>
+          UPI reference (UTR){" "}
+          <span
+            className="font-normal normal-case"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            optional
+          </span>
         </label>
         <input
           id="utr"
@@ -83,20 +108,41 @@ export function PayClient({ orderId }: { orderId: string }): React.ReactElement 
           autoCapitalize="characters"
           value={utr}
           onChange={(e) =>
-            setUtr(e.target.value.replace(/[^A-Z0-9]/gi, "").slice(0, 30).toUpperCase())
+            setUtr(
+              e.target.value
+                .replace(/[^A-Z0-9]/gi, "")
+                .slice(0, 30)
+                .toUpperCase(),
+            )
           }
           placeholder="e.g. 423187659012"
-          className="w-full px-4 py-3 rounded-xl border border-zinc-300 outline-none focus:ring-2 focus:ring-brand-500 tabular-nums font-mono tracking-wider"
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full px-4 py-3 outline-none focus:ring-2 tabular-nums font-mono tracking-wider"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+            borderRadius: "var(--radius)",
+            color: "var(--color-shell-fg)",
+          }}
         />
-        <p className="text-xs text-zinc-500 mt-1">
+        <p
+          className="text-xs mt-1"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Helps the admin verify faster. Find it in your UPI app under
           transaction history.
         </p>
       </div>
 
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 rounded-lg px-4 py-3">
+        <div
+          className="text-sm rounded-lg px-4 py-3"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -104,9 +150,10 @@ export function PayClient({ orderId }: { orderId: string }): React.ReactElement 
       <button
         type="submit"
         disabled={submitting || !canSubmit}
-        className="w-full py-3.5 rounded-xl text-white font-semibold disabled:opacity-50"
+        className="w-full py-3.5 font-bold disabled:opacity-50"
         style={{
-          background: "var(--color-brand-500)",
+          background: "var(--color-brand-yellow-300)",
+          color: "var(--color-shell-bg)",
           borderRadius: "var(--radius)",
         }}
       >
