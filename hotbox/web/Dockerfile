@@ -62,6 +62,8 @@ EXPOSE 3000
 #      prisma/migrations/. Tracked in _prisma_migrations table, so reruns
 #      are safe.
 #   2. `node prisma/seed.mjs` upserts menu data (idempotent via slug).
-#      `|| echo` so a seed glitch doesn't gate /api/health.
+#      Errors are surfaced via `tee` so the container logs show what
+#      went wrong, but a seed glitch doesn't prevent the server from
+#      starting (the failure log + `/api/health` 200 makes it visible).
 #   3. `exec node server.js` starts Next.js.
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && (node prisma/seed.mjs || echo '[seed] skipped/failed — continuing') && exec node server.js"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && (node prisma/seed.mjs 2>&1 | tee /tmp/seed.log || (echo '[seed] failed — see above'; tail -30 /tmp/seed.log)) && exec node server.js"]

@@ -191,8 +191,8 @@ export async function signIn(input: SignInInput): Promise<AuthResult> {
 
   // Self-heal: if this account's phone matches ADMIN_PHONE but the role
   // drifted (e.g. operator accidentally added admin as a rider), restore
-  // admin on sign-in. This keeps the demo's superuser path recoverable
-  // without requiring DB surgery.
+  // admin on sign-in. Keeps the superuser path recoverable without
+  // requiring DB surgery.
   let effectiveRole: UserRole = user.role
   if (
     process.env.ADMIN_PHONE &&
@@ -270,9 +270,9 @@ export async function requestPasswordReset(rawEmail: string): Promise<void> {
  * row, or null.
  *
  * NOTE: This loops through all unexpired tokens because bcrypt is a
- * one-way hash — we can't query by raw token. For demo scale (≤ a few
- * hundred unexpired tokens) this is fine. At higher scale, switch to
- * a fast hash (HMAC-SHA256 of the raw token with JWT_SECRET) instead of
+ * one-way hash — we can't query by raw token. For ≤ a few hundred
+ * unexpired tokens this is fine. At higher scale, switch to a fast
+ * hash (HMAC-SHA256 of the raw token with JWT_SECRET) instead of
  * bcrypt for tokens.
  */
 async function findActiveTokenByRaw(rawToken: string) {

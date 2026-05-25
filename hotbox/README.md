@@ -1,6 +1,6 @@
 # Hot Box · Cloud Kitchen
 
-A single-restaurant food-delivery demo built on Next.js 16 + Prisma + Postgres + UPI manual payment, with an Expo Android APK for riders.
+A single-restaurant food-delivery platform built on Next.js 16 + Prisma + Postgres with manual UPI payment verification and COD, plus an Expo Android APK for riders. Running in production at <https://hotbox.networkbase75.site>.
 
 Two subprojects:
 
@@ -64,7 +64,7 @@ npm run dev   # http://localhost:3000
 | `RESEND_FROM_EMAIL` | optional | A Resend-verified domain. Defaults to `noreply@hotbox.networkbase75.site` (verify in Resend first) |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | optional | We use Leaflet + CARTO DarkMatter tiles by default; Mapbox is the upgrade |
 
-> Cashfree, MSG91 OTP, and other earlier payment-provider env vars are no longer used — the demo accepts payments via either a manual UPI screenshot (verified by admin) or Cash on Delivery (rider-confirmed). See [`web/lib/payment-proof.ts`](web/lib/payment-proof.ts) for the screenshot pipeline.
+> Cashfree, MSG91 OTP, and other earlier payment-provider env vars are no longer used — payment is accepted via either a manual UPI screenshot (verified by admin) or Cash on Delivery (rider-confirmed). See [`web/lib/payment-proof.ts`](web/lib/payment-proof.ts) for the screenshot pipeline.
 
 ### Useful npm scripts
 

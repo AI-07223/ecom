@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -12,7 +13,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { CurrentOrder, getCurrentOrder, getLatestApkVersion, loadToken, postRiderAction } from "@/lib/api"
+import {
+  CurrentOrder,
+  getCurrentOrder,
+  getLatestApkVersion,
+  loadToken,
+  postRiderAction,
+} from "@/lib/api"
+import { brand } from "@/lib/brand"
 import { startTracking, stopTracking } from "@/lib/location-task"
 
 const APP_VERSION = "0.1.0"
@@ -26,6 +34,7 @@ export default function HomeScreen() {
   const [updateAvailable, setUpdateAvailable] = useState<
     null | { version: string; apkUrl: string }
   >(null)
+  const [showCodModal, setShowCodModal] = useState(false)
 
   async function refresh(): Promise<void> {
     try {
@@ -44,7 +53,7 @@ export default function HomeScreen() {
     }
   }
 
-  // On first ever launch, push to /setup
+  // On first ever launch, redirect to login if no token.
   useEffect(() => {
     void (async () => {
       const token = await loadToken()
@@ -52,18 +61,18 @@ export default function HomeScreen() {
         router.replace("/login")
         return
       }
-      // Show first-launch setup on Android once
       if (Device.osName === "Android") {
-        // We don't have AsyncStorage here; rely on a separate flag in
-        // SecureStore through expo-secure-store if needed. For v1 the
-        // setup screen is opt-in via a small "Setup tips" link below.
+        // First-launch setup is opt-in via the "Setup tips" link below.
       }
 
       // Background update check (fire-and-forget)
       try {
         const latest = await getLatestApkVersion()
         if (latest.version && latest.version !== APP_VERSION) {
-          setUpdateAvailable({ version: latest.version, apkUrl: latest.apk_url })
+          setUpdateAvailable({
+            version: latest.version,
+            apkUrl: latest.apk_url,
+          })
         }
       } catch {
         /* offline or endpoint missing — ignore */
@@ -89,12 +98,35 @@ export default function HomeScreen() {
         await postRiderAction(order.id, "out-for-delivery")
         await startTracking()
       } else if (order.state === "OUT_FOR_DELIVERY") {
-        await postRiderAction(order.id, "delivered")
+        // COD: prompt to confirm cash collection before marking delivered.
+        if (order.paymentMethod === "COD" && order.paymentStatus !== "PAID") {
+          setShowCodModal(true)
+          return
+        }
+        await postRiderAction(order.id, "delivered", { cashCollected: false })
         await stopTracking()
       }
       await refresh()
     } catch (err) {
-      Alert.alert("Action failed", err instanceof Error ? err.message : "Try again.")
+      Alert.alert(
+        "Action failed",
+        err instanceof Error ? err.message : "Try again.",
+      )
+    }
+  }
+
+  async function confirmCash(yes: boolean): Promise<void> {
+    if (!order) return
+    setShowCodModal(false)
+    try {
+      await postRiderAction(order.id, "delivered", { cashCollected: yes })
+      await stopTracking()
+      await refresh()
+    } catch (err) {
+      Alert.alert(
+        "Action failed",
+        err instanceof Error ? err.message : "Try again.",
+      )
     }
   }
 
@@ -107,10 +139,13 @@ export default function HomeScreen() {
           ? "I've delivered the order"
           : null
 
+  const isCod =
+    order?.paymentMethod === "COD" && order?.paymentStatus !== "PAID"
+
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#cf3a1f" />
+        <ActivityIndicator size="large" color={brand.yellow} />
       </View>
     )
   }
@@ -118,6 +153,7 @@ export default function HomeScreen() {
   return (
     <ScrollView
       contentContainerStyle={styles.container}
+      style={{ backgroundColor: brand.shellBg }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -125,7 +161,8 @@ export default function HomeScreen() {
             setRefreshing(true)
             void refresh()
           }}
-          tintColor="#cf3a1f"
+          tintColor={brand.yellow}
+          colors={[brand.yellow]}
         />
       }
     >
@@ -149,6 +186,15 @@ export default function HomeScreen() {
         </View>
       ) : (
         <>
+          {isCod && (
+            <View style={styles.codBanner}>
+              <Text style={styles.codBannerKicker}>⚠ COLLECT CASH</Text>
+              <Text style={styles.codBannerAmount}>
+                ₹{order.totalRupees.toFixed(0)}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.card}>
             <Text style={styles.label}>Order {order.publicCode}</Text>
             <Text style={styles.total}>₹{order.totalRupees.toFixed(0)}</Text>
@@ -185,12 +231,14 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.primaryButton}
               onPress={handlePrimaryAction}
+              activeOpacity={0.85}
             >
               <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
             </TouchableOpacity>
           )}
 
-          {(order.state === "PICKED_UP" || order.state === "OUT_FOR_DELIVERY") && (
+          {(order.state === "PICKED_UP" ||
+            order.state === "OUT_FOR_DELIVERY") && (
             <Text style={styles.tracking}>
               📍 Sending your location every 5 seconds.
             </Text>
@@ -204,76 +252,207 @@ export default function HomeScreen() {
       >
         <Text style={styles.helpText}>First-time setup tips</Text>
       </TouchableOpacity>
+
+      {/* COD cash-collection confirmation modal */}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={showCodModal}
+        onRequestClose={() => setShowCodModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Did the customer pay cash?</Text>
+            <Text style={styles.modalSubtitle}>
+              Order {order?.publicCode} · ₹{order?.totalRupees.toFixed(0)}
+            </Text>
+            <TouchableOpacity
+              style={styles.modalPrimary}
+              onPress={() => void confirmCash(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalPrimaryText}>
+                ✓ Yes — ₹{order?.totalRupees.toFixed(0)} received
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalDanger}
+              onPress={() => void confirmCash(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalDangerText}>
+                No — flag for admin follow-up
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowCodModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 40 },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: brand.shellBg,
+  },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: brand.shellElev,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: brand.shellLine,
   },
   label: {
     fontSize: 11,
     letterSpacing: 1.2,
-    color: "#71717a",
+    color: brand.charcoal,
     textTransform: "uppercase",
     fontWeight: "700",
   },
   sectionLabel: {
     fontSize: 11,
     letterSpacing: 1.2,
-    color: "#71717a",
+    color: brand.charcoal,
     textTransform: "uppercase",
     fontWeight: "700",
     marginBottom: 6,
   },
-  total: { fontSize: 24, fontWeight: "800", marginTop: 4, color: "#1a1a1a" },
-  bold: { fontSize: 16, fontWeight: "600", color: "#1a1a1a" },
-  body: { fontSize: 14, color: "#3f3f46", marginVertical: 1 },
-  muted: { fontSize: 12, color: "#71717a" },
+  total: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginTop: 4,
+    color: brand.yellow,
+  },
+  bold: { fontSize: 16, fontWeight: "700", color: brand.shellFg },
+  body: { fontSize: 14, color: brand.charcoalStrong, marginVertical: 1 },
+  muted: { fontSize: 12, color: brand.charcoal },
   primaryButton: {
-    backgroundColor: "#cf3a1f",
+    backgroundColor: brand.yellow,
     paddingVertical: 18,
     borderRadius: 14,
     marginTop: 8,
     alignItems: "center",
   },
-  primaryButtonText: { color: "white", fontWeight: "700", fontSize: 16 },
+  primaryButtonText: {
+    color: brand.shellBg,
+    fontWeight: "800",
+    fontSize: 16,
+    letterSpacing: 0.3,
+  },
   tracking: {
     textAlign: "center",
-    color: "#71717a",
+    color: brand.charcoal,
     marginTop: 12,
     fontSize: 12,
   },
   idleCard: {
-    backgroundColor: "#fff",
+    backgroundColor: brand.shellElev,
     borderRadius: 14,
     padding: 24,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: brand.shellLine,
   },
-  idleTitle: { fontSize: 18, fontWeight: "700", color: "#1a1a1a" },
+  idleTitle: { fontSize: 18, fontWeight: "700", color: brand.shellFg },
   idleBody: {
     fontSize: 14,
-    color: "#71717a",
+    color: brand.charcoal,
     marginTop: 6,
     textAlign: "center",
   },
   updateBanner: {
-    backgroundColor: "#fef3c7",
+    backgroundColor: brand.flameDark,
     padding: 12,
     borderRadius: 10,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: brand.flameDeep,
   },
-  updateText: { color: "#854d0e", fontWeight: "600", textAlign: "center" },
+  updateText: { color: brand.flameText, fontWeight: "600", textAlign: "center" },
+  codBanner: {
+    backgroundColor: brand.yellow,
+    padding: 18,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+  codBannerKicker: {
+    color: brand.shellBg,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  codBannerAmount: {
+    color: brand.shellBg,
+    fontSize: 48,
+    fontWeight: "900",
+    lineHeight: 50,
+    marginTop: 4,
+    letterSpacing: 0.5,
+  },
   helpLink: { marginTop: 24, alignSelf: "center" },
-  helpText: { color: "#71717a", textDecorationLine: "underline" },
+  helpText: { color: brand.charcoal, textDecorationLine: "underline" },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: brand.shellElev,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 36,
+    borderTopWidth: 1,
+    borderColor: brand.shellLine,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: brand.shellFg,
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: brand.charcoalStrong,
+    marginBottom: 20,
+  },
+  modalPrimary: {
+    backgroundColor: brand.yellow,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  modalPrimaryText: {
+    color: brand.shellBg,
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  modalDanger: {
+    backgroundColor: brand.flameDark,
+    borderWidth: 1,
+    borderColor: brand.flameDeep,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  modalDangerText: {
+    color: brand.flameText,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  modalCancel: { paddingVertical: 14, alignItems: "center", marginTop: 4 },
+  modalCancelText: { color: brand.charcoal, fontSize: 14 },
 })

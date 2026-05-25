@@ -1,33 +1,33 @@
 {
   "expo": {
-    "name": "Hotbox Rider",
+    "name": "Hot Box Rider",
     "slug": "hotbox-rider",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "hotboxrider",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#cf3a1f"
+      "backgroundColor": "#0a0a0a"
     },
     "android": {
       "package": "site.networkbase75.hotbox.rider",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#cf3a1f"
+        "backgroundColor": "#0a0a0a"
       },
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION",
-        "POST_NOTIFICATIONS",
-        "WAKE_LOCK"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "plugins": [
@@ -35,9 +35,9 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Hotbox Rider needs your location to share live delivery tracking with the customer.",
-          "locationAlwaysPermission": "Hotbox Rider needs background location to keep delivery tracking running while your screen is off.",
-          "locationWhenInUsePermission": "Hotbox Rider uses your location to share live delivery tracking with the customer.",
+          "locationAlwaysAndWhenInUsePermission": "Hot Box Rider needs your location to share live delivery tracking with the customer.",
+          "locationAlwaysPermission": "Hot Box Rider needs background location to keep delivery tracking running while your screen is off.",
+          "locationWhenInUsePermission": "Hot Box Rider uses your location to share live delivery tracking with the customer.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
@@ -45,14 +45,18 @@
       [
         "expo-notifications",
         {
-          "color": "#cf3a1f"
+          "color": "#fcd34d"
         }
       ]
     ],
     "extra": {
       "eas": {
-        "projectId": "REPLACE_AT_EAS_INIT"
+        "projectId": "cd7fe86c-1e37-401d-846d-47b9f8897887"
+      },
+      "router": {
+        "origin": false
       }
-    }
+    },
+    "owner": "zeddeye"
   }
 }

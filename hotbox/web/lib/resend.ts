@@ -3,9 +3,11 @@
  * Hot Box brand: dark restaurant background, yellow Hot Box wordmark in
  * cyan ribbon, flame icon. Body type stays Inter for inbox legibility.
  *
- * When RESEND_API_KEY is missing, every send method logs to the console
- * instead of throwing. This lets the demo run end-to-end without a Resend
- * account; the operator pulls reset links from container logs.
+ * Missing RESEND_API_KEY is treated as a misconfiguration in production —
+ * we surface a structured warning so the operator can see it in their
+ * logs/Sentry, then silently no-op the send so that auth flows still
+ * complete for the caller (signup/reset never fail just because email
+ * delivery did).
  */
 import { Resend } from "resend"
 
@@ -13,9 +15,19 @@ const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ?? "noreply@hotbox.networkbase75.site"
 const APP_NAME = "Hot Box"
 
+let warnedMissingKey = false
+
 function client(): Resend | null {
   const key = process.env.RESEND_API_KEY
-  if (!key) return null
+  if (!key) {
+    if (!warnedMissingKey) {
+      console.warn(
+        '[resend] RESEND_API_KEY is not set — transactional emails will be skipped. Set it in Coolify env to enable delivery.',
+      )
+      warnedMissingKey = true
+    }
+    return null
+  }
   return new Resend(key)
 }
 
@@ -72,12 +84,7 @@ export async function sendPasswordResetEmail(
 ): Promise<void> {
   const minutes = input.expiresInMinutes ?? 60
   const c = client()
-  if (!c) {
-    console.log(
-      `[reset-fallback] (no RESEND_API_KEY) link for ${input.to}: ${input.resetUrl}`,
-    )
-    return
-  }
+  if (!c) return  // already warned in client()
   try {
     await c.emails.send({
       from: `${APP_NAME} <${FROM_EMAIL}>`,
@@ -87,6 +94,9 @@ export async function sendPasswordResetEmail(
         <p style="font-size:16px;line-height:1.5;margin-top:32px;color:#f5f5f4">
           Tap the button below to set a new password. The link expires in
           ${minutes} minutes and can only be used once.
+        </p>
+        <p style="font-size:13px;line-height:1.5;color:#a1a1aa;margin-top:8px">
+          Not in your inbox? Check your spam or promotions folder.
         </p>
         <p style="text-align:center;margin:24px 0">
           <a href="${input.resetUrl}"
@@ -104,9 +114,6 @@ export async function sendPasswordResetEmail(
     })
   } catch (err) {
     console.error("[resend] sendPasswordResetEmail failed:", err)
-    console.log(
-      `[reset-fallback] (send failed) link for ${input.to}: ${input.resetUrl}`,
-    )
   }
 }
 

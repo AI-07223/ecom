@@ -1,11 +1,19 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  // Hotbox runs as a single Next.js process on Coolify. Server Actions are
-  // the default mutation surface; only a handful of routes need real API
-  // endpoints (Cashfree webhook, rider ping, SSE stream, APK download).
+  // Hot Box runs as a single Next.js process on Coolify. Server Actions
+  // are the default mutation surface; the few REST routes that exist
+  // serve: rider GPS ping, SSE track stream, APK download, menu-item
+  // photo, payment-proof image, daily purge cron.
   reactStrictMode: true,
   output: "standalone",
+  // Production builds: strip console.* (except .warn/.error) so tactical
+  // dev logging doesn't ship to customers' DevTools.
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production"
+      ? { exclude: ["warn", "error"] }
+      : false,
+  },
   // sharp ships native bindings that Turbopack can't bundle; treat as
   // external so Next.js leaves the require() in place at runtime.
   serverExternalPackages: ["sharp"],

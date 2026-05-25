@@ -6,15 +6,17 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "node": "22.11.0",
       "android": {
         "buildType": "apk",
-        "image": "ubuntu-22.04-jdk-17-ndk-r25b"
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
       }
     },
     "production": {
+      "node": "22.11.0",
       "android": {
         "buildType": "app-bundle",
-        "image": "ubuntu-22.04-jdk-17-ndk-r25b"
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
       },
       "autoIncrement": true
     }

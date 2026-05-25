@@ -54,20 +54,24 @@ export async function api<T>(
 
 // ─── Typed helpers ───────────────────────────────────────────────────
 
-export async function sendOtp(phone: string): Promise<void> {
-  await api("/api/otp/send", { method: "POST", body: { phone } })
+export interface LoginResult {
+  user: {
+    id: string
+    phone: string
+    email: string | null
+    name: string | null
+    role: "customer" | "rider" | "admin"
+  }
+  token?: string
 }
 
-export async function verifyOtp(
-  phone: string,
-  code: string,
-): Promise<{
-  user: { id: string; phone: string; role: "customer" | "rider" | "admin" }
-  token?: string
-}> {
-  return api("/api/otp/verify", {
+export async function login(
+  identifier: string,
+  password: string,
+): Promise<LoginResult> {
+  return api<LoginResult>("/api/auth/login", {
     method: "POST",
-    body: { phone, code, requestToken: true },
+    body: { identifier, password, requestToken: true },
   })
 }
 
@@ -75,6 +79,8 @@ export interface CurrentOrder {
   id: string
   publicCode: string
   state: string
+  paymentMethod: "UPI_MANUAL" | "COD" | "ONLINE" | null
+  paymentStatus: string
   pickup: { name: string; address: string; lat: number; lng: number }
   drop: {
     address: string
@@ -100,8 +106,12 @@ export async function getCurrentOrder(): Promise<CurrentOrder | null> {
 export async function postRiderAction(
   orderId: string,
   action: "picked-up" | "out-for-delivery" | "delivered",
+  body?: { cashCollected?: boolean },
 ): Promise<void> {
-  await api(`/api/rider/order/${orderId}/${action}`, { method: "POST" })
+  await api(`/api/rider/order/${orderId}/${action}`, {
+    method: "POST",
+    ...(body ? { body } : {}),
+  })
 }
 
 export async function postPing(opts: {
