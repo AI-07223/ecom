@@ -50,3 +50,26 @@ export async function getMenuItemBySlug(slug: string) {
     },
   })
 }
+
+/**
+ * Single-page-menu fetch: all active categories with their active items
+ * and variants in one round-trip. Sorted by category sortOrder, then
+ * item sortOrder. Used by app/page.tsx.
+ */
+export async function getMenuTree() {
+  const cats = await db.category.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      items: {
+        where: { isAvailable: true },
+        orderBy: { sortOrder: "asc" },
+        include: {
+          variants: { orderBy: { sortOrder: "asc" } },
+        },
+      },
+    },
+  })
+  // Drop empty categories — spec'd: storefront-menu-browse "Empty category hidden".
+  return cats.filter((c) => c.items.length > 0)
+}

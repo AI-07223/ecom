@@ -27,6 +27,23 @@ interface Props {
   addons: Addon[]
 }
 
+const sectionLabelStyle: React.CSSProperties = {
+  color: "var(--color-charcoal)",
+}
+
+const cardBase: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+  color: "var(--color-shell-fg)",
+}
+
+const cardActive: React.CSSProperties = {
+  background:
+    "color-mix(in oklab, var(--color-brand-yellow-300) 14%, var(--color-shell-elev))",
+  border: "1px solid var(--color-brand-yellow-300)",
+}
+
 export function ItemCustomizer({
   slug,
   basePricePaise,
@@ -90,47 +107,55 @@ export function ItemCustomizer({
     <section className="px-5 pt-4">
       {variants.length > 0 && (
         <div className="mt-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+          <h3
+            className="text-xs font-semibold uppercase tracking-wider mb-2"
+            style={sectionLabelStyle}
+          >
             Pick a size
           </h3>
           <div className="space-y-2">
-            {variants.map((v) => (
-              <label
-                key={v.slug}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
-                  variantSlug === v.slug
-                    ? "border-brand-500 bg-brand-50"
-                    : "border-zinc-200"
-                }`}
-                style={{ borderRadius: "var(--radius)" }}
-              >
-                <span className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="variant"
-                    value={v.slug}
-                    checked={variantSlug === v.slug}
-                    onChange={() => setVariantSlug(v.slug)}
-                    className="accent-brand-500"
-                  />
-                  <span className="font-medium">{v.name}</span>
-                </span>
-                <span className="text-sm tabular-nums text-zinc-600">
-                  {v.priceDeltaPaise > 0
-                    ? `+${formatINR(v.priceDeltaPaise)}`
-                    : v.priceDeltaPaise < 0
-                      ? formatINR(v.priceDeltaPaise)
-                      : "—"}
-                </span>
-              </label>
-            ))}
+            {variants.map((v) => {
+              const isActive = variantSlug === v.slug
+              return (
+                <label
+                  key={v.slug}
+                  className="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors"
+                  style={isActive ? { ...cardBase, ...cardActive } : cardBase}
+                >
+                  <span className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="variant"
+                      value={v.slug}
+                      checked={isActive}
+                      onChange={() => setVariantSlug(v.slug)}
+                      style={{ accentColor: "var(--color-brand-yellow-300)" }}
+                    />
+                    <span className="font-medium">{v.name}</span>
+                  </span>
+                  <span
+                    className="text-sm tabular-nums"
+                    style={{ color: "var(--color-charcoal-strong)" }}
+                  >
+                    {v.priceDeltaPaise > 0
+                      ? `+${formatINR(v.priceDeltaPaise)}`
+                      : v.priceDeltaPaise < 0
+                        ? formatINR(v.priceDeltaPaise)
+                        : "—"}
+                  </span>
+                </label>
+              )
+            })}
           </div>
         </div>
       )}
 
       {addons.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+          <h3
+            className="text-xs font-semibold uppercase tracking-wider mb-2"
+            style={sectionLabelStyle}
+          >
             Add-ons
           </h3>
           <div className="space-y-2">
@@ -139,10 +164,8 @@ export function ItemCustomizer({
               return (
                 <label
                   key={a.slug}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer ${
-                    checked ? "border-brand-500 bg-brand-50" : "border-zinc-200"
-                  }`}
-                  style={{ borderRadius: "var(--radius)" }}
+                  className="flex items-center justify-between px-4 py-3 cursor-pointer"
+                  style={checked ? { ...cardBase, ...cardActive } : cardBase}
                 >
                   <span className="flex items-center gap-3">
                     <input
@@ -150,16 +173,26 @@ export function ItemCustomizer({
                       checked={checked}
                       disabled={a.isRequired}
                       onChange={() => toggleAddon(a.slug)}
-                      className="accent-brand-500"
+                      style={{ accentColor: "var(--color-brand-yellow-300)" }}
                     />
                     <span className="font-medium">{a.name}</span>
                     {a.isRequired && (
-                      <span className="text-[10px] uppercase tracking-wider text-red-700 bg-red-50 rounded px-1.5 py-0.5">
+                      <span
+                        className="text-[10px] uppercase tracking-wider rounded px-1.5 py-0.5 font-bold"
+                        style={{
+                          background:
+                            "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+                          color: "var(--color-brand-flame-300)",
+                        }}
+                      >
                         required
                       </span>
                     )}
                   </span>
-                  <span className="text-sm tabular-nums text-zinc-600">
+                  <span
+                    className="text-sm tabular-nums"
+                    style={{ color: "var(--color-charcoal-strong)" }}
+                  >
                     +{formatINR(a.pricePaise)}
                   </span>
                 </label>
@@ -172,10 +205,11 @@ export function ItemCustomizer({
       <div className="mt-6">
         <label
           htmlFor="special"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2"
+          className="block text-xs font-semibold uppercase tracking-wider mb-2"
+          style={sectionLabelStyle}
         >
           Special instructions
-          <span className="ml-1 normal-case font-normal text-zinc-400">
+          <span className="ml-1 normal-case font-normal" style={{ color: "var(--color-charcoal)" }}>
             (optional)
           </span>
         </label>
@@ -186,18 +220,30 @@ export function ItemCustomizer({
           maxLength={200}
           rows={2}
           placeholder="e.g. less spicy, no onion"
-          className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500 text-sm"
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full px-4 py-3 outline-none text-sm"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+            borderRadius: "var(--radius)",
+            color: "var(--color-shell-fg)",
+          }}
         />
       </div>
 
       <div className="mt-6 flex items-center gap-4">
-        <div className="flex items-center border border-zinc-200 rounded-full">
+        <div
+          className="flex items-center rounded-full"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+          }}
+        >
           <button
             type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             className="px-4 py-2 text-lg"
             aria-label="Decrease quantity"
+            style={{ color: "var(--color-shell-fg)" }}
           >
             −
           </button>
@@ -209,17 +255,28 @@ export function ItemCustomizer({
             onClick={() => setQuantity((q) => Math.min(20, q + 1))}
             className="px-4 py-2 text-lg"
             aria-label="Increase quantity"
+            style={{ color: "var(--color-shell-fg)" }}
           >
             +
           </button>
         </div>
-        <span className="text-sm tabular-nums text-zinc-600 ml-auto">
+        <span
+          className="text-sm tabular-nums ml-auto"
+          style={{ color: "var(--color-brand-yellow-300)" }}
+        >
           {formatINR(linePrice)}
         </span>
       </div>
 
       {error && (
-        <div className="mt-4 text-sm text-red-700 bg-red-50 rounded-lg px-4 py-3">
+        <div
+          className="mt-4 text-sm rounded-lg px-4 py-3"
+          style={{
+            background: "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -228,9 +285,10 @@ export function ItemCustomizer({
         type="button"
         onClick={handleAdd}
         disabled={submitting || !isAvailable}
-        className="mt-6 w-full py-4 rounded-xl font-semibold text-white disabled:opacity-50"
+        className="mt-6 w-full py-4 font-bold disabled:opacity-50"
         style={{
-          background: "var(--color-brand-500)",
+          background: "var(--color-brand-yellow-300)",
+          color: "var(--color-shell-bg)",
           borderRadius: "var(--radius)",
         }}
       >

@@ -1,97 +1,140 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { CartBar } from "@/components/CartBar"
-import { CategoryArt } from "@/components/CategoryArt"
-import { VegBadge } from "@/components/VegBadge"
-import { getCategoriesWithCounts, getRestaurant } from "@/lib/catalog"
+import { Logo } from "@/components/brand/Logo"
+import { VegDot } from "@/components/brand/VegDot"
+import { ItemRow } from "@/components/brand/ItemRow"
+import { SectionHeader } from "@/components/brand/SectionHeader"
+import { StickyCategoryTabs } from "@/components/brand/StickyCategoryTabs"
+import { BottomCartBar } from "@/components/brand/BottomCartBar"
+import { getMenuTree, getRestaurant } from "@/lib/catalog"
 
 export const dynamic = "force-dynamic"
 
 export default async function HomePage(): Promise<React.ReactElement> {
-  const [restaurant, categories] = await Promise.all([
+  const [restaurant, menu] = await Promise.all([
     getRestaurant(),
-    getCategoriesWithCounts(),
+    getMenuTree(),
   ])
 
   if (!restaurant) {
     return (
-      <main className="px-6 pt-12">
-        <h1 className="text-3xl font-black" style={{ color: "var(--color-brand-500)" }}>
-          Hotbox
-        </h1>
-        <p className="mt-4 text-zinc-600">
-          Menu loading. If you&rsquo;re seeing this for more than a minute, the seed
-          hasn&rsquo;t been run yet.
+      <main className="px-6 pt-12 mx-auto max-w-md">
+        <Logo variant="full" size="md" />
+        <p className="mt-6" style={{ color: "var(--color-charcoal)" }}>
+          Menu loading. If you&rsquo;re seeing this for more than a minute, the
+          seed hasn&rsquo;t been run yet.
         </p>
       </main>
     )
   }
 
+  const tabs = menu.map((c) => ({ slug: c.slug, name: c.name }))
   const isPaused = restaurant.isPaused
 
   return (
     <>
-      <main className="mx-auto max-w-md min-h-screen flex flex-col pb-24">
-        <header className="px-5 pt-10 pb-5">
-          <div className="flex items-baseline justify-between">
-            <h1
-              className="font-display text-7xl leading-none"
-              style={{
-                color: "var(--color-brand-500)",
-              }}
-            >
-              HOTBOX
-            </h1>
-            <Link
-              href="/account/orders"
-              className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-            >
-              Orders
-            </Link>
-          </div>
-          <p className="mt-3 text-zinc-700 text-sm flex items-center gap-1.5">
-            <VegBadge size={14} /> Pure veg &middot; hot & fresh
-          </p>
-          {isPaused && (
-            <div className="mt-3 rounded-lg bg-amber-50 text-amber-900 px-3 py-2 text-sm">
-              We&rsquo;ve paused orders for the moment. Menu is still browseable.
-            </div>
-          )}
-        </header>
+      {/* Sticky header — logo + Orders link. Sits ABOVE the sticky tab
+          strip; the StickyCategoryTabs component below offsets itself by
+          this header's height (set via the topOffsetPx prop). */}
+      <header
+        className="sticky top-0 z-40 backdrop-blur"
+        style={{
+          background: "color-mix(in oklab, var(--color-shell-bg) 90%, transparent)",
+          borderBottom: "1px solid var(--color-shell-line)",
+        }}
+      >
+        <div className="max-w-md mx-auto px-5 py-3 flex items-center justify-between">
+          <Link href="/" aria-label="Hot Box home">
+            <Logo variant="full" size="sm" />
+          </Link>
+          <Link
+            href="/account/orders"
+            className="text-sm font-medium"
+            style={{ color: "var(--color-brand-yellow-300)" }}
+          >
+            Orders
+          </Link>
+        </div>
+      </header>
 
-        <section className="px-5 pb-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
-            Menu
-          </h2>
-          <ul className="grid grid-cols-2 gap-3">
-            {categories.map((c) => (
-              <li key={c.id}>
-                <Link
-                  href={`/menu/${c.slug}`}
-                  className="block rounded-2xl bg-white overflow-hidden hover:shadow-md transition-shadow border border-zinc-200"
-                  style={{ borderRadius: "var(--radius)" }}
-                >
-                  <CategoryArt
-                    categorySlug={c.slug}
-                    glyphSize={40}
-                    className="w-full h-24"
+      <StickyCategoryTabs tabs={tabs} topOffsetPx={64} />
+
+      <main className="mx-auto max-w-md pb-32">
+        {/* Pure-veg badge under header */}
+        <div className="px-5 pt-4 pb-2">
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold tracking-wider"
+            style={{
+              border: `1px solid var(--color-veg)`,
+              color: "var(--color-veg)",
+              background: "color-mix(in oklab, var(--color-veg) 8%, transparent)",
+            }}
+          >
+            <VegDot size="xs" /> 100% PURE VEG
+          </div>
+        </div>
+
+        {isPaused && (
+          <div
+            className="mx-5 mt-2 rounded-lg px-3 py-2 text-sm"
+            style={{
+              background: "color-mix(in oklab, var(--color-brand-flame-500) 14%, transparent)",
+              color: "var(--color-brand-flame-300)",
+              border: "1px solid var(--color-brand-flame-700)",
+            }}
+          >
+            We&rsquo;ve paused orders for the moment. Menu is still browseable.
+          </div>
+        )}
+
+        {/* The menu — one section per category, item rows stacked. */}
+        <div className="px-5">
+          {menu.map((cat) => (
+            <section key={cat.slug}>
+              <SectionHeader slug={cat.slug} name={cat.name} />
+              <div>
+                {cat.items.map((item) => (
+                  <ItemRow
+                    key={item.id}
+                    itemSlug={item.slug}
+                    itemTitle={item.title}
+                    itemDescription={item.description}
+                    basePricePaise={item.basePricePaise}
+                    isVeg={item.isVeg}
+                    imageUrl={item.imageUrl}
+                    categorySlug={cat.slug}
+                    variants={item.variants.map((v) => ({
+                      slug: v.slug,
+                      name: v.name,
+                      priceDeltaPaise: v.priceDeltaPaise,
+                      isDefault: v.isDefault,
+                    }))}
                   />
-                  <div className="p-3">
-                    <div className="font-semibold text-zinc-900 leading-tight">
-                      {c.name}
-                    </div>
-                    <div className="text-xs text-zinc-500 mt-0.5">
-                      {c.itemCount} items
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        <footer
+          className="mt-12 px-5 pb-6 text-center text-xs"
+          style={{ color: "var(--color-charcoal)" }}
+        >
+          <p>
+            <Logo variant="flame-only" size="sm" className="inline-block mr-2 align-middle" />
+            Hot Box · Cloud Kitchen
+          </p>
+          <p className="mt-1">
+            <a href={`tel:${restaurant.phone}`} className="underline underline-offset-2">
+              {restaurant.phone}
+            </a>{" "}
+            · {restaurant.openTime}–{restaurant.closeTime}
+          </p>
+        </footer>
       </main>
+
       <Suspense fallback={null}>
-        <CartBar />
+        <BottomCartBar />
       </Suspense>
     </>
   )

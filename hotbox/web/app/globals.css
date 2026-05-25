@@ -1,41 +1,87 @@
 @import "tailwindcss";
 
-/* ─── Hotbox brand tokens ───────────────────────────────────────────────
- * The brand is a warm, confident red-orange — the colour of the cardboard
- * pizza-box stamp, the chili tikka, the tandoori glow. The display face is
- * Bebas Neue (compressed, all-caps energy) loaded via next/font in
- * app/layout.tsx; body face is Inter for legibility on mobile.
+/* ─── Hotbox brand tokens (Cloud Kitchen — dark + yellow + cyan + flame)
+ * ─────────────────────────────────────────────────────────────────────
+ * The brand is restaurant-grade dark: deep matte-black background, yellow
+ * category pills, cyan ribbon accents (logo + small indicators), orange
+ * flame for the icon. Typography stays Bebas Neue (display) + Inter
+ * (body), loaded via next/font in app/layout.tsx.
+ *
+ * Token consumption rule: every customer-facing component MUST read
+ * colours via `var(--color-…)` (or Tailwind classes that resolve via
+ * @theme), never hard-coded hex. A CI grep enforces this.
  */
 @theme {
-  --color-brand-50:  oklch(0.971 0.022 33);
-  --color-brand-100: oklch(0.943 0.053 31);
-  --color-brand-200: oklch(0.894 0.106 28);
-  --color-brand-300: oklch(0.822 0.166 26);
-  --color-brand-400: oklch(0.741 0.222 24);
-  --color-brand-500: oklch(0.638 0.249 23);  /* primary brand red */
-  --color-brand-600: oklch(0.553 0.234 23);
-  --color-brand-700: oklch(0.456 0.196 24);
-  --color-brand-800: oklch(0.366 0.158 25);
-  --color-brand-900: oklch(0.282 0.121 26);
+  /* ─ Dark shell ─ */
+  --color-shell-bg:   #0a0a0a;          /* matte black page background */
+  --color-shell-elev: #161616;          /* one elevation up (cards, sheets) */
+  --color-shell-line: #2a2a2a;          /* low-contrast borders / dividers */
+  --color-shell-fg:   #f5f5f4;          /* off-white primary text on dark */
+  --color-charcoal:   #a1a1aa;          /* muted text / timestamps / hints */
+  --color-charcoal-strong: #d4d4d8;     /* slightly stronger muted text */
 
-  --color-charcoal:  #1a1a1a;
-  --color-veg:       oklch(0.61 0.180 144);
+  /* ─ Brand yellow (primary accent) ─ */
+  --color-brand-yellow-50:  #fffbeb;
+  --color-brand-yellow-100: #fef3c7;
+  --color-brand-yellow-200: #fde68a;
+  --color-brand-yellow-300: #fcd34d;    /* primary brand yellow (Hot Box wordmark) */
+  --color-brand-yellow-400: #facc15;
+  --color-brand-yellow-500: #eab308;
+  --color-brand-yellow-600: #ca8a04;
+  --color-brand-yellow-700: #a16207;
+  --color-brand-yellow-800: #854d0e;
+  --color-brand-yellow-900: #713f12;
 
+  /* ─ Brand cyan (secondary accent — ribbon, small indicators) ─ */
+  --color-brand-cyan-50:  #ecfeff;
+  --color-brand-cyan-100: #cffafe;
+  --color-brand-cyan-200: #a5f3fc;
+  --color-brand-cyan-300: #7fcfff;       /* primary cyan (logo ribbon) */
+  --color-brand-cyan-400: #22d3ee;
+  --color-brand-cyan-500: #06b6d4;
+  --color-brand-cyan-600: #0891b2;
+  --color-brand-cyan-700: #0e7490;
+  --color-brand-cyan-800: #155e75;
+  --color-brand-cyan-900: #164e63;
+
+  /* ─ Brand flame (orange — flame icon, danger states) ─ */
+  --color-brand-flame-50:  #fff7ed;
+  --color-brand-flame-100: #ffedd5;
+  --color-brand-flame-200: #fed7aa;
+  --color-brand-flame-300: #fdba74;
+  --color-brand-flame-400: #fb923c;
+  --color-brand-flame-500: #f97316;      /* primary flame orange */
+  --color-brand-flame-600: #ea580c;
+  --color-brand-flame-700: #c2410c;
+  --color-brand-flame-800: #9a3412;
+  --color-brand-flame-900: #7c2d12;
+
+  /* ─ Veg dot (FSSAI green) ─ */
+  --color-veg:       #22c55e;
+  --color-veg-ring:  #ffffff;            /* white square ring around the dot */
+
+  /* ─ Legacy red — preserved for migration grep; removed after Phase 2 ships ─ */
+  --color-legacy-red-500: #cf3a1f;
+
+  /* ─ Fonts (variables filled by next/font in layout.tsx) ─ */
   --font-display: var(--font-display-loaded, "Bebas Neue"), "Impact", "Oswald", system-ui, sans-serif;
   --font-sans:    var(--font-sans-loaded, "Inter"), system-ui, -apple-system, sans-serif;
 
-  --radius:       0.875rem;
+  /* ─ Radii ─ */
+  --radius-sm: 0.5rem;
+  --radius:    0.875rem;
+  --radius-lg: 1.25rem;
 }
 
-/* The display face is set on the html element via next/font's variable. */
+/* Dark colour-scheme so native controls match (date picker, scrollbar). */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html,
 body {
-  background: #fffaf6; /* warm off-white, hints at brand */
-  color: var(--color-charcoal);
+  background: var(--color-shell-bg);
+  color: var(--color-shell-fg);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -47,17 +93,25 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Prevent iOS Safari from auto-zooming inputs */
+/* Tabular nums everywhere prices live (₹92.50 must align in columns). */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Prevent iOS Safari auto-zoom on input focus. */
 input,
 textarea,
 select {
   font-size: 16px;
 }
 
-/* Safe-area insets for sticky bottom bars on iOS */
+/* Safe-area inset utility for the bottom-cart bar on iOS. */
 @supports (padding: max(0px)) {
   .pb-safe {
-    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
   }
 }
 
+/* Custom scrollbar for horizontal tab strip — keep it slim and on-brand. */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }

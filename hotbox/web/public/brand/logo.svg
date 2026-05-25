@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220" role="img" aria-label="Hot Box Cloud Kitchen">
+  <title>Hot Box Cloud Kitchen</title>
+  <!-- Cyan ribbon banner outline -->
+  <g fill="none" stroke="#7fcfff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left tail -->
+    <path d="M28 110 L60 80 L60 100 L80 100" />
+    <!-- Top arch -->
+    <path d="M80 100 Q80 60 130 60 L350 60 Q400 60 400 100" />
+    <!-- Right tail -->
+    <path d="M400 100 L420 100 L420 80 L452 110" />
+    <!-- Bottom arch -->
+    <path d="M80 100 Q80 160 130 160 L350 160 Q400 160 400 100" />
+  </g>
+
+  <!-- Flame icon (orange) between Hot and Box -->
+  <g transform="translate(218 78)">
+    <path
+      d="M22 0 C26 12 38 16 38 32 C38 47 28 56 22 56 C16 56 6 47 6 32 C6 24 12 18 14 12 C16 18 20 18 22 18 C22 10 22 6 22 0 Z"
+      fill="#f97316"
+    />
+    <path
+      d="M22 14 C24 22 30 24 30 34 C30 42 26 48 22 48 C18 48 14 42 14 34 C14 28 18 24 20 20 C20 24 22 24 22 24 C22 20 22 18 22 14 Z"
+      fill="#fcd34d"
+    />
+  </g>
+
+  <!-- "Hot" wordmark (yellow) -->
+  <g fill="#fcd34d" font-family="'Bebas Neue', 'Impact', 'Arial Black', sans-serif" font-weight="700">
+    <text x="100" y="135" font-size="68" letter-spacing="2">Hot</text>
+    <text x="290" y="135" font-size="68" letter-spacing="2">Box</text>
+  </g>
+
+  <!-- "Cloud Kitchen" subtitle (white) -->
+  <text
+    x="240"
+    y="195"
+    fill="#ffffff"
+    font-family="'Inter', system-ui, sans-serif"
+    font-size="18"
+    font-weight="500"
+    letter-spacing="4"
+    text-anchor="middle"
+  >CLOUD KITCHEN</text>
+</svg>

@@ -1,9 +1,10 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { CartBar } from "@/components/CartBar"
-import { CategoryArt } from "@/components/CategoryArt"
-import { VegBadge } from "@/components/VegBadge"
+import { BottomCartBar } from "@/components/brand/BottomCartBar"
+import { DishPhoto } from "@/components/brand/DishPhoto"
+import { Logo } from "@/components/brand/Logo"
+import { VegDot } from "@/components/brand/VegDot"
 import { getMenuItemBySlug } from "@/lib/catalog"
 import { ItemCustomizer } from "./ItemCustomizer"
 
@@ -22,41 +23,79 @@ export default async function ItemPage({
 
   return (
     <>
-      <main className="mx-auto max-w-md min-h-screen flex flex-col pb-32">
-        <header className="px-5 pt-8 pb-3">
+      <header
+        className="sticky top-0 z-40 backdrop-blur"
+        style={{
+          background: "color-mix(in oklab, var(--color-shell-bg) 90%, transparent)",
+          borderBottom: "1px solid var(--color-shell-line)",
+        }}
+      >
+        <div className="max-w-md mx-auto px-5 py-3 flex items-center justify-between">
+          <Link href="/" aria-label="Hot Box home">
+            <Logo variant="full" size="sm" />
+          </Link>
           <Link
-            href={`/menu/${menuItem.category.slug}`}
-            className="text-sm text-zinc-500 hover:underline underline-offset-4"
+            href={`/#${menuItem.category.slug}`}
+            className="text-sm font-medium"
+            style={{ color: "var(--color-brand-yellow-300)" }}
           >
             ← {menuItem.category.name}
           </Link>
-        </header>
+        </div>
+      </header>
 
-        <CategoryArt
-          categorySlug={menuItem.category.slug}
-          glyphSize={72}
-          className="mx-5 my-3 h-56 rounded-2xl"
-        />
+      <main className="mx-auto max-w-md min-h-dvh flex flex-col pb-32">
+        <div className="mx-5 mt-4 mb-3">
+          <DishPhoto
+            itemSlug={menuItem.slug}
+            itemTitle={menuItem.title}
+            imageUrl={menuItem.imageUrl}
+            categorySlug={menuItem.category.slug}
+            width={520}
+            height={300}
+            className="w-full"
+          />
+        </div>
 
         <section className="px-5 pt-2">
           <div className="flex items-center gap-2 mb-1">
-            <VegBadge size={14} />
-            <span className="text-xs text-zinc-500">Pure veg</span>
+            {menuItem.isVeg && <VegDot size="md" />}
+            <span
+              className="text-xs font-semibold tracking-wider uppercase"
+              style={{ color: "var(--color-veg)" }}
+            >
+              Pure veg
+            </span>
             {!menuItem.isAvailable && (
-              <span className="ml-auto text-xs rounded-full bg-red-50 text-red-700 px-2 py-0.5">
+              <span
+                className="ml-auto text-xs rounded-full px-2 py-0.5 font-semibold"
+                style={{
+                  background: "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+                  color: "var(--color-brand-flame-300)",
+                }}
+              >
                 Out of stock
               </span>
             )}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1
+            className="font-display text-4xl leading-tight"
+            style={{ color: "var(--color-shell-fg)" }}
+          >
             {menuItem.title}
           </h1>
           {menuItem.description && (
-            <p className="mt-2 text-zinc-600 text-sm leading-relaxed">
+            <p
+              className="mt-2 text-sm leading-relaxed"
+              style={{ color: "var(--color-charcoal-strong)" }}
+            >
               {menuItem.description}
             </p>
           )}
-          <p className="mt-2 text-xs text-zinc-500">
+          <p
+            className="mt-2 text-xs"
+            style={{ color: "var(--color-charcoal)" }}
+          >
             Prep time: about {menuItem.prepTimeMinutes} min
           </p>
         </section>
@@ -80,7 +119,7 @@ export default async function ItemPage({
         />
       </main>
       <Suspense fallback={null}>
-        <CartBar />
+        <BottomCartBar />
       </Suspense>
     </>
   )

@@ -16,20 +16,20 @@ const bebas = Bebas_Neue({
 })
 
 export const metadata: Metadata = {
-  title: "Hotbox — Vegetarian fast food, hot to your door",
+  title: "Hot Box · Cloud Kitchen — Pure veg, hot to your door",
   description:
-    "Hotbox: cafe-style fast food (sandwiches, burgers, pizza, pasta, momos, biryani, paneer specials) delivered hot in 30 minutes.",
-  applicationName: "Hotbox",
+    "Hot Box Cloud Kitchen: sandwiches, burgers, pizza, momos, pasta, paneer specials. 100% vegetarian, delivered hot in 30 minutes.",
+  applicationName: "Hot Box",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Hotbox",
+    statusBarStyle: "black-translucent",
+    title: "Hot Box",
   },
 }
 
 export const viewport: Viewport = {
-  themeColor: "#cf3a1f",
+  themeColor: "#0a0a0a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -40,10 +40,10 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
-}) {
+}): React.ReactElement {
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable}`}>
-      <body>{children}</body>
+      <body className="min-h-dvh">{children}</body>
     </html>
   )
 }
