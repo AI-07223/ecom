@@ -7,7 +7,14 @@ import { STATE_LABELS } from "@/lib/order-state"
 const TrackMap = dynamic(() => import("./TrackMap").then((m) => m.TrackMap), {
   ssr: false,
   loading: () => (
-    <div className="rounded-2xl bg-zinc-100 animate-pulse" style={{ height: 280 }} />
+    <div
+      className="rounded-2xl animate-pulse"
+      style={{
+        height: 280,
+        background: "var(--color-shell-elev)",
+        border: "1px solid var(--color-shell-line)",
+      }}
+    />
   ),
 })
 
@@ -131,7 +138,10 @@ export function TrackClient({
   return (
     <>
       <section className="mt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+        <h2
+          className="text-xs font-semibold uppercase tracking-wider mb-3"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Timeline
         </h2>
         <ol className="space-y-3">
@@ -139,13 +149,19 @@ export function TrackClient({
             <li key={`${e.event}-${e.createdAt}-${idx}`} className="flex gap-3">
               <span
                 className="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ background: "var(--color-brand-500)" }}
+                style={{ background: "var(--color-brand-yellow-300)" }}
               />
               <div className="flex-1">
-                <p className="text-sm font-medium">
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: "var(--color-shell-fg)" }}
+                >
                   {STATE_LABELS[e.event as keyof typeof STATE_LABELS] ?? e.event}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p
+                  className="text-xs"
+                  style={{ color: "var(--color-charcoal)" }}
+                >
                   {new Date(e.createdAt).toLocaleTimeString("en-IN", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -160,8 +176,19 @@ export function TrackClient({
 
       {showMap ? (
         <section className="mt-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+          <h2
+            className="text-xs font-semibold uppercase tracking-wider mb-3"
+            style={{ color: "var(--color-charcoal)" }}
+          >
             Live location
+            {riderName && (
+              <span
+                className="ml-2 font-normal normal-case"
+                style={{ color: "var(--color-charcoal-strong)" }}
+              >
+                · {riderName} on the way
+              </span>
+            )}
           </h2>
           <TrackMap
             riderLat={riderPos.lat}
@@ -171,11 +198,17 @@ export function TrackClient({
             riderName={riderName ?? "Rider"}
           />
           {eta && (
-            <p className="mt-2 text-sm text-zinc-700">
-              <span className="font-semibold">
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--color-shell-fg)" }}
+            >
+              <span
+                className="font-bold"
+                style={{ color: "var(--color-brand-yellow-300)" }}
+              >
                 ~{eta.minutes} min{" "}
               </span>
-              <span className="text-zinc-500">
+              <span style={{ color: "var(--color-charcoal)" }}>
                 ({eta.km.toFixed(1)} km away · approximate ETA)
               </span>
             </p>
@@ -184,7 +217,10 @@ export function TrackClient({
       ) : (
         state !== "DELIVERED" &&
         state !== "CANCELLED" && (
-          <p className="mt-6 text-sm text-zinc-500 text-center">
+          <p
+            className="mt-6 text-sm text-center"
+            style={{ color: "var(--color-charcoal)" }}
+          >
             We&rsquo;ll show the map once the rider is on the way.
           </p>
         )

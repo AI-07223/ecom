@@ -57,35 +57,66 @@ export default async function AdminInboxPage(): Promise<React.ReactElement> {
     select: { allowCancelAfterAccept: true },
   })
 
+  const cardStyle: React.CSSProperties = {
+    background: "var(--color-shell-elev)",
+    border: "1px solid var(--color-shell-line)",
+    borderRadius: "var(--radius)",
+  }
+  const labelStyle: React.CSSProperties = {
+    color: "var(--color-charcoal)",
+  }
+
   return (
     <>
       <section className="grid grid-cols-2 gap-3 mb-6">
-        <div className="rounded-2xl bg-white border border-zinc-200 p-4">
-          <div className="text-xs uppercase tracking-wider text-zinc-500">
+        <div className="p-4" style={cardStyle}>
+          <div
+            className="text-xs uppercase tracking-wider"
+            style={labelStyle}
+          >
             Today
           </div>
-          <div className="mt-1 text-2xl font-black">
+          <div
+            className="mt-1 text-2xl font-bold"
+            style={{ color: "var(--color-brand-yellow-300)" }}
+          >
             {todayStats._count.id}
           </div>
-          <div className="text-xs text-zinc-500">orders delivered</div>
+          <div className="text-xs" style={labelStyle}>
+            orders delivered
+          </div>
         </div>
-        <div className="rounded-2xl bg-white border border-zinc-200 p-4">
-          <div className="text-xs uppercase tracking-wider text-zinc-500">
+        <div className="p-4" style={cardStyle}>
+          <div
+            className="text-xs uppercase tracking-wider"
+            style={labelStyle}
+          >
             Revenue
           </div>
-          <div className="mt-1 text-2xl font-black tabular-nums">
+          <div
+            className="mt-1 text-2xl font-bold tabular-nums"
+            style={{ color: "var(--color-brand-yellow-300)" }}
+          >
             {formatINR(todayStats._sum.totalPaise ?? 0)}
           </div>
-          <div className="text-xs text-zinc-500">today</div>
+          <div className="text-xs" style={labelStyle}>
+            today
+          </div>
         </div>
       </section>
 
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+        <h2
+          className="text-xs font-semibold uppercase tracking-wider mb-3"
+          style={labelStyle}
+        >
           Live orders ({orders.length})
         </h2>
         {orders.length === 0 ? (
-          <p className="text-sm text-zinc-500 mt-6 text-center">
+          <p
+            className="text-sm mt-6 text-center"
+            style={labelStyle}
+          >
             No live orders.
           </p>
         ) : (

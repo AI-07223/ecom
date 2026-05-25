@@ -119,8 +119,13 @@ export function InboxClient({
             setAudioEnabled(true)
             chime()
           }}
-          className="w-full mb-4 rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-medium hover:bg-white"
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full mb-4 px-4 py-2.5 text-sm font-medium"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+            color: "var(--color-shell-fg)",
+            borderRadius: "var(--radius)",
+          }}
         >
           🔔 Click to enable order sounds
         </button>
@@ -130,35 +135,65 @@ export function InboxClient({
         {orders.map((o) => (
           <li
             key={o.id}
-            className="rounded-2xl border border-zinc-200 bg-white p-4"
-            style={{ borderRadius: "var(--radius)" }}
+            className="p-4"
+            style={{
+              background: "var(--color-shell-elev)",
+              border: "1px solid var(--color-shell-line)",
+              borderRadius: "var(--radius)",
+            }}
           >
             <div className="flex items-baseline justify-between mb-2 gap-2">
-              <span className="font-semibold">{o.publicCode}</span>
+              <span
+                className="font-bold font-mono"
+                style={{ color: "var(--color-shell-fg)" }}
+              >
+                {o.publicCode}
+              </span>
               <div className="flex items-center gap-1.5 flex-wrap justify-end">
                 {o.needsVerification && (
                   <a
                     href={`/admin/orders/${o.id}/verify-payment`}
-                    className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 hover:bg-amber-200"
+                    className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                    style={{
+                      background:
+                        "color-mix(in oklab, var(--color-brand-yellow-300) 22%, transparent)",
+                      color: "var(--color-brand-yellow-300)",
+                      border: "1px solid var(--color-brand-yellow-300)",
+                    }}
                   >
                     💸 Verify payment
                   </a>
                 )}
                 {o.paymentMethod === "COD" && o.paymentStatus !== "PAID" && (
-                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
+                  <span
+                    className="text-xs font-medium px-2.5 py-0.5 rounded-full"
+                    style={{
+                      background: "var(--color-shell-bg)",
+                      color: "var(--color-charcoal-strong)",
+                      border: "1px solid var(--color-shell-line)",
+                    }}
+                  >
                     COD ₹{(o.totalPaise / 100).toFixed(0)}
                   </span>
                 )}
                 {o.paymentStatus === "PAID" && (
-                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                  <span
+                    className="text-xs font-medium px-2.5 py-0.5 rounded-full"
+                    style={{
+                      background:
+                        "color-mix(in oklab, var(--color-veg) 14%, transparent)",
+                      color: "var(--color-veg)",
+                    }}
+                  >
                     ✓ Paid
                   </span>
                 )}
                 <span
                   className="text-xs font-medium px-2.5 py-0.5 rounded-full"
                   style={{
-                    background: "var(--color-brand-50)",
-                    color: "var(--color-brand-700)",
+                    background:
+                      "color-mix(in oklab, var(--color-brand-cyan-300) 14%, transparent)",
+                    color: "var(--color-brand-cyan-300)",
                   }}
                 >
                   {o.stateLabel}
@@ -166,20 +201,32 @@ export function InboxClient({
               </div>
             </div>
 
-            <div className="text-xs text-zinc-500 mb-2">
+            <div
+              className="text-xs mb-2"
+              style={{ color: "var(--color-charcoal)" }}
+            >
               {new Date(o.placedAt).toLocaleString("en-IN")} ·{" "}
               {o.customerName || "Customer"} · {o.customerPhone}
             </div>
 
             <ul className="text-sm space-y-0.5 mb-2">
               {o.items.map((i) => (
-                <li key={i.id} className="text-zinc-700">
+                <li
+                  key={i.id}
+                  style={{ color: "var(--color-shell-fg)" }}
+                >
                   {i.quantity} × {i.title}
                   {i.variantName && (
-                    <span className="text-zinc-500"> ({i.variantName})</span>
+                    <span style={{ color: "var(--color-charcoal)" }}>
+                      {" "}
+                      ({i.variantName})
+                    </span>
                   )}
                   {i.specialInstructions && (
-                    <div className="text-xs text-zinc-500 italic ml-3">
+                    <div
+                      className="text-xs italic ml-3"
+                      style={{ color: "var(--color-charcoal)" }}
+                    >
                       “{i.specialInstructions}”
                     </div>
                   )}
@@ -188,24 +235,46 @@ export function InboxClient({
             </ul>
 
             <details className="text-xs mb-3">
-              <summary className="text-zinc-500 cursor-pointer">
+              <summary
+                className="cursor-pointer"
+                style={{ color: "var(--color-charcoal)" }}
+              >
                 Delivery address
               </summary>
-              <p className="mt-1 text-zinc-700">{o.addressFullText}</p>
+              <p
+                className="mt-1"
+                style={{ color: "var(--color-shell-fg)" }}
+              >
+                {o.addressFullText}
+              </p>
               {o.addressBuilding && (
-                <p className="text-zinc-500">{o.addressBuilding}</p>
+                <p style={{ color: "var(--color-charcoal)" }}>
+                  {o.addressBuilding}
+                </p>
               )}
               {o.addressLandmark && (
-                <p className="text-zinc-500">Near {o.addressLandmark}</p>
+                <p style={{ color: "var(--color-charcoal)" }}>
+                  Near {o.addressLandmark}
+                </p>
               )}
             </details>
 
             <div className="flex items-center justify-between gap-3 mb-2">
-              <span className="text-sm font-semibold tabular-nums">
+              <span
+                className="text-sm font-bold tabular-nums"
+                style={{ color: "var(--color-brand-yellow-300)" }}
+              >
                 {formatINR(o.totalPaise)}
               </span>
               {o.needsRefund && (
-                <span className="text-xs text-red-700 bg-red-50 rounded-full px-2 py-0.5">
+                <span
+                  className="text-xs rounded-full px-2 py-0.5"
+                  style={{
+                    background:
+                      "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+                    color: "var(--color-brand-flame-300)",
+                  }}
+                >
                   Needs refund
                 </span>
               )}
@@ -247,26 +316,39 @@ function OrderActions({
     children: React.ReactNode
     onClick: () => void
     variant?: "primary" | "secondary" | "danger"
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-4 py-2 rounded-lg text-sm font-medium ${
-        variant === "primary"
-          ? "text-white"
-          : variant === "danger"
-            ? "text-red-700 border border-red-200 bg-red-50"
-            : "text-zinc-700 border border-zinc-200"
-      }`}
-      style={
-        variant === "primary"
-          ? { background: "var(--color-brand-500)", borderRadius: "var(--radius)" }
-          : { borderRadius: "var(--radius)" }
-      }
-    >
-      {children}
-    </button>
-  )
+  }) => {
+    const style: React.CSSProperties =
+      variant === "primary"
+        ? {
+            background: "var(--color-brand-yellow-300)",
+            color: "var(--color-shell-bg)",
+            borderRadius: "var(--radius)",
+          }
+        : variant === "danger"
+          ? {
+              background:
+                "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+              border: "1px solid var(--color-brand-flame-700)",
+              color: "var(--color-brand-flame-300)",
+              borderRadius: "var(--radius)",
+            }
+          : {
+              background: "var(--color-shell-bg)",
+              border: "1px solid var(--color-shell-line)",
+              color: "var(--color-charcoal-strong)",
+              borderRadius: "var(--radius)",
+            }
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="px-4 py-2 text-sm font-bold"
+        style={style}
+      >
+        {children}
+      </button>
+    )
+  }
 
   if (order.state === "PLACED") {
     return (
@@ -303,14 +385,24 @@ function OrderActions({
     return (
       <div className="flex items-center gap-2 flex-wrap">
         {riders.length === 0 ? (
-          <span className="text-xs text-zinc-500">No riders available</span>
+          <span
+            className="text-xs"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            No riders available
+          </span>
         ) : (
           <>
             <select
               value={pickedRiderId}
               onChange={(e) => setPickedRiderId(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-zinc-200 text-sm"
-              style={{ borderRadius: "var(--radius)" }}
+              className="px-3 py-2 text-sm"
+              style={{
+                background: "var(--color-shell-bg)",
+                border: "1px solid var(--color-shell-line)",
+                color: "var(--color-shell-fg)",
+                borderRadius: "var(--radius)",
+              }}
             >
               {riders.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -334,7 +426,10 @@ function OrderActions({
   if (order.state === "ASSIGNED") {
     return (
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-zinc-500">
+        <span
+          className="text-xs"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           With {order.riderName ?? "rider"}
         </span>
         <Btn variant="secondary" onClick={() => onAction(() => unassignRider(order.id))}>
@@ -358,7 +453,10 @@ function OrderActions({
   if (order.state === "OUT_FOR_DELIVERY") {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500">
+        <span
+          className="text-xs"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           {order.riderName ?? "Rider"} is on the way
         </span>
         <Btn

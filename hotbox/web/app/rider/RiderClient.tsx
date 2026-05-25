@@ -129,9 +129,10 @@ export function RiderClient({
     <button
       type="button"
       onClick={onClick}
-      className="w-full py-4 rounded-xl font-semibold text-white"
+      className="w-full py-4 font-bold"
       style={{
-        background: "var(--color-brand-500)",
+        background: "var(--color-brand-yellow-300)",
+        color: "var(--color-shell-bg)",
         borderRadius: "var(--radius)",
       }}
     >
@@ -143,14 +144,23 @@ export function RiderClient({
     <>
       {/* Payment badge — most prominent for COD */}
       {paymentStatus === "PAID" ? (
-        <div className="mb-3 rounded-xl px-4 py-2.5 bg-emerald-50 text-emerald-900 text-sm font-semibold">
+        <div
+          className="mb-3 rounded-xl px-4 py-2.5 text-sm font-semibold"
+          style={{
+            background: "color-mix(in oklab, var(--color-veg) 14%, transparent)",
+            border: "1px solid var(--color-veg)",
+            color: "var(--color-veg)",
+          }}
+        >
           ✓ Already paid (online)
         </div>
       ) : isCOD ? (
         <div
-          className="mb-3 rounded-2xl px-5 py-4 text-amber-900"
+          className="mb-3 rounded-2xl px-5 py-4"
           style={{
-            background: "linear-gradient(135deg, #fef3c7, #fde68a)",
+            background:
+              "linear-gradient(135deg, var(--color-brand-yellow-300), var(--color-brand-yellow-400))",
+            color: "var(--color-shell-bg)",
             borderRadius: "var(--radius)",
           }}
         >
@@ -162,36 +172,81 @@ export function RiderClient({
           </p>
         </div>
       ) : paymentStatus === "AWAITING_VERIFICATION" ? (
-        <div className="mb-3 rounded-xl px-4 py-2.5 bg-blue-50 text-blue-900 text-sm">
+        <div
+          className="mb-3 rounded-xl px-4 py-2.5 text-sm"
+          style={{
+            background: "color-mix(in oklab, var(--color-brand-cyan-300) 12%, transparent)",
+            border: "1px solid var(--color-brand-cyan-300)",
+            color: "var(--color-brand-cyan-300)",
+          }}
+        >
           Payment pending verification — confirm with customer if asked
         </div>
       ) : null}
 
       <div
-        className="rounded-2xl border border-zinc-200 bg-white p-5 mb-4"
-        style={{ borderRadius: "var(--radius)" }}
+        className="rounded-2xl p-5 mb-4"
+        style={{
+          background: "var(--color-shell-elev)",
+          border: "1px solid var(--color-shell-line)",
+          borderRadius: "var(--radius)",
+        }}
       >
-        <p className="text-xs uppercase tracking-wider text-zinc-500">
+        <p
+          className="text-xs uppercase tracking-wider"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Order {publicCode}
         </p>
-        <p className="mt-1 font-semibold">{totalText}</p>
+        <p
+          className="mt-1 font-bold"
+          style={{ color: "var(--color-brand-yellow-300)" }}
+        >
+          {totalText}
+        </p>
 
-        <h3 className="text-xs uppercase tracking-wider text-zinc-500 mt-5">
+        <h3
+          className="text-xs uppercase tracking-wider mt-5"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Pickup
         </h3>
         <p className="mt-1 font-medium">{pickupName}</p>
-        <p className="text-sm text-zinc-600">{pickupAddress}</p>
+        <p
+          className="text-sm"
+          style={{ color: "var(--color-charcoal-strong)" }}
+        >
+          {pickupAddress}
+        </p>
 
-        <h3 className="text-xs uppercase tracking-wider text-zinc-500 mt-5">
+        <h3
+          className="text-xs uppercase tracking-wider mt-5"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Deliver to
         </h3>
         <p className="mt-1 text-sm">{dropAddress}</p>
-        {dropBuilding && <p className="text-xs text-zinc-500">{dropBuilding}</p>}
+        {dropBuilding && (
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            {dropBuilding}
+          </p>
+        )}
         {dropLandmark && (
-          <p className="text-xs text-zinc-500">Near {dropLandmark}</p>
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            Near {dropLandmark}
+          </p>
         )}
 
-        <h3 className="text-xs uppercase tracking-wider text-zinc-500 mt-5">
+        <h3
+          className="text-xs uppercase tracking-wider mt-5"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Items
         </h3>
         <ul className="text-sm mt-1 space-y-0.5">
@@ -199,7 +254,10 @@ export function RiderClient({
             <li key={i.id}>
               {i.quantity} × {i.title}
               {i.variantName && (
-                <span className="text-zinc-500"> ({i.variantName})</span>
+                <span style={{ color: "var(--color-charcoal)" }}>
+                  {" "}
+                  ({i.variantName})
+                </span>
               )}
             </li>
           ))}
@@ -207,7 +265,15 @@ export function RiderClient({
       </div>
 
       {error && (
-        <div className="text-sm text-amber-900 bg-amber-50 rounded-lg px-3 py-2 mb-3">
+        <div
+          className="text-sm rounded-lg px-3 py-2 mb-3"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -245,7 +311,10 @@ export function RiderClient({
       )}
 
       {shouldTrack && (
-        <p className="text-center text-xs text-zinc-500 mt-3">
+        <p
+          className="text-center text-xs mt-3"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           📍 Sending your location every 5 seconds. Keep this tab open.
         </p>
       )}
@@ -253,25 +322,35 @@ export function RiderClient({
       {/* COD cash-collection modal */}
       {showCodModal && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 pb-safe"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pb-safe"
+          style={{ background: "color-mix(in oklab, var(--color-shell-bg) 70%, transparent)" }}
           onClick={() => setShowCodModal(false)}
         >
           <div
-            className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6"
+            className="rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6"
+            style={{
+              background: "var(--color-shell-elev)",
+              border: "1px solid var(--color-shell-line)",
+              color: "var(--color-shell-fg)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold mb-1">
               Did the customer pay cash?
             </h3>
-            <p className="text-sm text-zinc-600 mb-5">
+            <p
+              className="text-sm mb-5"
+              style={{ color: "var(--color-charcoal-strong)" }}
+            >
               Order {publicCode} · ₹{totalRupees.toFixed(0)}
             </p>
             <button
               type="button"
               onClick={() => confirmCash(true)}
-              className="w-full py-4 rounded-xl text-white font-semibold mb-2"
+              className="w-full py-4 font-bold mb-2"
               style={{
-                background: "var(--color-brand-500)",
+                background: "var(--color-brand-yellow-300)",
+                color: "var(--color-shell-bg)",
                 borderRadius: "var(--radius)",
               }}
             >
@@ -280,15 +359,22 @@ export function RiderClient({
             <button
               type="button"
               onClick={() => confirmCash(false)}
-              className="w-full py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 font-medium"
-              style={{ borderRadius: "var(--radius)" }}
+              className="w-full py-3 font-medium"
+              style={{
+                background:
+                  "color-mix(in oklab, var(--color-brand-flame-500) 14%, transparent)",
+                border: "1px solid var(--color-brand-flame-700)",
+                color: "var(--color-brand-flame-300)",
+                borderRadius: "var(--radius)",
+              }}
             >
               No — flag for admin follow-up
             </button>
             <button
               type="button"
               onClick={() => setShowCodModal(false)}
-              className="w-full py-2 mt-2 text-sm text-zinc-500"
+              className="w-full py-2 mt-2 text-sm"
+              style={{ color: "var(--color-charcoal)" }}
             >
               Cancel
             </button>

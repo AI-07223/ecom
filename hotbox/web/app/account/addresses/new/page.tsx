@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { Logo } from "@/components/brand/Logo"
 import { getRestaurant } from "@/lib/catalog"
 import { getCurrentUser } from "@/lib/session"
 import { NewAddressForm } from "./NewAddressForm"
@@ -17,22 +18,40 @@ export default async function NewAddressPage(): Promise<React.ReactElement> {
     : { latitude: 12.9716, longitude: 77.6411 }
 
   return (
-    <main className="mx-auto max-w-md min-h-screen px-5 pt-8 pb-12">
-      <Link
-        href="/account/addresses"
-        className="text-sm text-zinc-500 hover:underline underline-offset-4"
+    <>
+      <header
+        className="sticky top-0 z-40 backdrop-blur"
+        style={{
+          background: "color-mix(in oklab, var(--color-shell-bg) 90%, transparent)",
+          borderBottom: "1px solid var(--color-shell-line)",
+        }}
       >
-        ← My addresses
-      </Link>
-      <h1 className="mt-3 text-3xl font-black tracking-tight">
-        Add an address
-      </h1>
-      <p className="mt-1 text-sm text-zinc-500">
-        Drop the pin where the rider should arrive.
-      </p>
-      <div className="mt-6">
-        <NewAddressForm defaultCenter={defaultCenter} />
-      </div>
-    </main>
+        <div className="max-w-md mx-auto px-5 py-3 flex items-center justify-between">
+          <Link href="/" aria-label="Hot Box home">
+            <Logo variant="full" size="sm" />
+          </Link>
+          <Link
+            href="/account/addresses"
+            className="text-sm font-medium"
+            style={{ color: "var(--color-brand-yellow-300)" }}
+          >
+            ← My addresses
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-md px-5 pt-6 pb-12">
+        <h1 className="font-display text-5xl">Add an address</h1>
+        <p
+          className="mt-1 text-sm"
+          style={{ color: "var(--color-charcoal-strong)" }}
+        >
+          Drop the pin where the rider should arrive.
+        </p>
+        <div className="mt-6">
+          <NewAddressForm defaultCenter={defaultCenter} />
+        </div>
+      </main>
+    </>
   )
 }

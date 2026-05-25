@@ -5,16 +5,18 @@ import L from "leaflet"
 import { useEffect, useMemo, useRef } from "react"
 import { MapContainer, Marker, Polyline, TileLayer, useMap } from "react-leaflet"
 
+// Brand-yellow rider pin with motorbike glyph on dark.
 const RIDER_SVG = encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='40' height='40'>
-     <circle cx='16' cy='16' r='13' fill='%23d24a2a'/>
-     <text x='16' y='21' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='15' fill='white'>🏍</text>
+     <circle cx='16' cy='16' r='14' fill='%23fcd34d' stroke='%230a0a0a' stroke-width='2'/>
+     <text x='16' y='22' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='17' fill='%230a0a0a'>🏍</text>
    </svg>`,
 )
+// Customer pin with flame-orange drop.
 const CUSTOMER_SVG = encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' width='32' height='48'>
-     <path d='M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z' fill='%2318181b'/>
-     <circle cx='12' cy='12' r='5' fill='white'/>
+     <path d='M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z' fill='%23f97316'/>
+     <circle cx='12' cy='12' r='5' fill='%23fcd34d'/>
    </svg>`,
 )
 const riderIcon = L.icon({
@@ -74,19 +76,29 @@ export function TrackMap({
 
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-zinc-200"
-      style={{ borderRadius: "var(--radius)", height: 280 }}
+      className="overflow-hidden rounded-2xl"
+      style={{
+        border: "1px solid var(--color-shell-line)",
+        borderRadius: "var(--radius)",
+        height: 280,
+      }}
     >
       <MapContainer
         center={[riderLat, riderLng]}
         zoom={14}
         scrollWheelZoom={false}
-        style={{ width: "100%", height: "100%" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          background: "var(--color-shell-elev)",
+        }}
       >
+        {/* CARTO DarkMatter — free dark map tiles, matches the dark shell. */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={20}
         />
         {!initialized.current && <FitToMarkers pts={points} />}
         <Marker position={[riderLat, riderLng]} icon={riderIcon} />
@@ -102,9 +114,9 @@ export function TrackMap({
                 [customerLat, customerLng],
               ]}
               pathOptions={{
-                color: "#d24a2a",
+                color: "#fcd34d",
                 weight: 3,
-                opacity: 0.6,
+                opacity: 0.75,
                 dashArray: "8 6",
               }}
             />

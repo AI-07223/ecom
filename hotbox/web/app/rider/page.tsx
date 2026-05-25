@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { Logo } from "@/components/brand/Logo"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { formatINR } from "@/lib/pricing"
@@ -13,12 +14,20 @@ export default async function RiderHomePage(): Promise<React.ReactElement> {
 
   if (user.role !== "rider" && user.role !== "admin") {
     return (
-      <main className="mx-auto max-w-md min-h-screen px-5 pt-10">
-        <h1 className="text-2xl font-black">Not a rider</h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          This page is for delivery riders. If you&rsquo;re trying to order,
-          go to{" "}
-          <Link href="/" className="underline" style={{ color: "var(--color-brand-500)" }}>
+      <main className="mx-auto max-w-md min-h-dvh px-5 pt-10">
+        <Logo variant="full" size="sm" />
+        <h1 className="mt-6 font-display text-4xl">Not a rider</h1>
+        <p
+          className="mt-2 text-sm"
+          style={{ color: "var(--color-charcoal-strong)" }}
+        >
+          This page is for delivery riders. If you&rsquo;re trying to order, go
+          to{" "}
+          <Link
+            href="/"
+            className="underline"
+            style={{ color: "var(--color-brand-yellow-300)" }}
+          >
             the menu
           </Link>
           .
@@ -32,9 +41,13 @@ export default async function RiderHomePage(): Promise<React.ReactElement> {
   })
   if (!rider) {
     return (
-      <main className="mx-auto max-w-md min-h-screen px-5 pt-10">
-        <h1 className="text-2xl font-black">Not registered as a rider</h1>
-        <p className="mt-2 text-sm text-zinc-500">
+      <main className="mx-auto max-w-md min-h-dvh px-5 pt-10">
+        <Logo variant="full" size="sm" />
+        <h1 className="mt-6 font-display text-4xl">Not registered as a rider</h1>
+        <p
+          className="mt-2 text-sm"
+          style={{ color: "var(--color-charcoal-strong)" }}
+        >
           Ask the admin to add you to the rider roster.
         </p>
       </main>
@@ -53,10 +66,23 @@ export default async function RiderHomePage(): Promise<React.ReactElement> {
     : null
 
   return (
-    <main className="mx-auto max-w-md min-h-screen px-5 pt-8 pb-12">
-      <header className="mb-6">
-        <p className="text-xs text-zinc-500">Logged in as</p>
-        <h1 className="text-2xl font-black tracking-tight">{rider.name}</h1>
+    <main className="mx-auto max-w-md min-h-dvh px-5 pt-6 pb-12">
+      <header className="mb-6 flex items-center justify-between">
+        <Logo variant="full" size="sm" />
+        <div className="text-right">
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            Logged in as
+          </p>
+          <h1
+            className="text-base font-bold"
+            style={{ color: "var(--color-shell-fg)" }}
+          >
+            {rider.name}
+          </h1>
+        </div>
       </header>
 
       {order ? (
@@ -85,9 +111,23 @@ export default async function RiderHomePage(): Promise<React.ReactElement> {
           }))}
         />
       ) : (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
-          <p className="text-sm text-zinc-500">No active delivery.</p>
-          <p className="text-xs text-zinc-400 mt-1">
+        <div
+          className="rounded-2xl p-6 text-center"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+          }}
+        >
+          <p
+            className="text-sm"
+            style={{ color: "var(--color-shell-fg)" }}
+          >
+            No active delivery.
+          </p>
+          <p
+            className="text-xs mt-1"
+            style={{ color: "var(--color-charcoal)" }}
+          >
             Waiting for the next assignment.
           </p>
         </div>

@@ -15,6 +15,21 @@ interface Props {
   canReject: boolean
 }
 
+const ghostBtn: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  color: "var(--color-charcoal-strong)",
+  borderRadius: "var(--radius)",
+}
+
+const dangerBtn: React.CSSProperties = {
+  background:
+    "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+  border: "1px solid var(--color-brand-flame-700)",
+  color: "var(--color-brand-flame-300)",
+  borderRadius: "var(--radius)",
+}
+
 export function VerifyActions({
   orderId,
   canVerify,
@@ -41,9 +56,10 @@ export function VerifyActions({
                 else router.refresh()
               })
             }
-            className="w-full py-4 rounded-xl text-white font-semibold disabled:opacity-50"
+            className="w-full py-4 font-bold disabled:opacity-50"
             style={{
-              background: "var(--color-brand-500)",
+              background: "var(--color-brand-yellow-300)",
+              color: "var(--color-shell-bg)",
               borderRadius: "var(--radius)",
             }}
           >
@@ -55,7 +71,9 @@ export function VerifyActions({
                 type="button"
                 disabled={pending}
                 onClick={() => {
-                  const reason = prompt("Reject reason (will show to customer):")
+                  const reason = prompt(
+                    "Reject reason (will show to customer):",
+                  )
                   if (!reason || reason.trim().length < 3) return
                   startTransition(async () => {
                     setError(null)
@@ -64,8 +82,8 @@ export function VerifyActions({
                     else router.refresh()
                   })
                 }}
-                className="w-full py-3 rounded-xl border border-red-200 text-red-700 bg-red-50 font-medium disabled:opacity-50"
-                style={{ borderRadius: "var(--radius)" }}
+                className="w-full py-3 font-medium disabled:opacity-50"
+                style={dangerBtn}
               >
                 Reject — wrong amount / fake
               </button>
@@ -80,8 +98,8 @@ export function VerifyActions({
                     else router.refresh()
                   })
                 }
-                className="w-full py-3 rounded-xl border border-zinc-200 font-medium disabled:opacity-50"
-                style={{ borderRadius: "var(--radius)" }}
+                className="w-full py-3 font-medium disabled:opacity-50"
+                style={ghostBtn}
               >
                 Ask for new proof
               </button>
@@ -94,15 +112,26 @@ export function VerifyActions({
         <button
           type="button"
           onClick={() => setShowForce(true)}
-          className="w-full text-xs text-zinc-500 underline underline-offset-4 pt-2"
+          className="w-full text-xs underline underline-offset-4 pt-2"
+          style={{ color: "var(--color-charcoal)" }}
         >
           + Force-mark PAID (paid via other channel)
         </button>
       )}
 
       {showForce && (
-        <div className="rounded-2xl bg-zinc-50 p-4 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        <div
+          className="p-4 space-y-3"
+          style={{
+            background: "var(--color-shell-elev)",
+            border: "1px solid var(--color-shell-line)",
+            borderRadius: "var(--radius)",
+          }}
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: "var(--color-charcoal)" }}
+          >
             Force mark PAID (admin override)
           </p>
           <textarea
@@ -110,8 +139,13 @@ export function VerifyActions({
             onChange={(e) => setForceNote(e.target.value.slice(0, 500))}
             placeholder="Why? (e.g. paid cash to owner)"
             rows={2}
-            className="w-full px-3 py-2 rounded-lg border border-zinc-300 outline-none focus:ring-2 focus:ring-brand-500 text-sm"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-3 py-2 outline-none focus:ring-2 text-sm"
+            style={{
+              background: "var(--color-shell-bg)",
+              border: "1px solid var(--color-shell-line)",
+              color: "var(--color-shell-fg)",
+              borderRadius: "var(--radius)",
+            }}
           />
           <div className="flex gap-2">
             <button
@@ -128,9 +162,10 @@ export function VerifyActions({
                   else router.refresh()
                 })
               }
-              className="flex-1 py-2.5 rounded-lg text-white font-semibold disabled:opacity-50 text-sm"
+              className="flex-1 py-2.5 font-bold disabled:opacity-50 text-sm"
               style={{
-                background: "var(--color-brand-700)",
+                background: "var(--color-brand-yellow-400)",
+                color: "var(--color-shell-bg)",
                 borderRadius: "var(--radius)",
               }}
             >
@@ -142,8 +177,8 @@ export function VerifyActions({
                 setShowForce(false)
                 setForceNote("")
               }}
-              className="px-4 py-2.5 rounded-lg border border-zinc-200 text-sm"
-              style={{ borderRadius: "var(--radius)" }}
+              className="px-4 py-2.5 text-sm"
+              style={ghostBtn}
             >
               Cancel
             </button>
@@ -152,7 +187,15 @@ export function VerifyActions({
       )}
 
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 rounded-lg px-4 py-3">
+        <div
+          className="text-sm rounded-lg px-4 py-3"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}

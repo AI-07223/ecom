@@ -22,7 +22,8 @@ export function AddressActions({
               await setDefaultAddress(id)
             })
           }
-          className="underline underline-offset-4 text-zinc-700 hover:text-zinc-900"
+          className="underline underline-offset-4"
+          style={{ color: "var(--color-brand-yellow-300)" }}
         >
           Set as default
         </button>
@@ -36,7 +37,8 @@ export function AddressActions({
             await removeAddress(id)
           })
         }}
-        className="ml-auto underline underline-offset-4 text-red-600 hover:text-red-700"
+        className="ml-auto underline underline-offset-4"
+        style={{ color: "var(--color-brand-flame-400)" }}
       >
         Remove
       </button>

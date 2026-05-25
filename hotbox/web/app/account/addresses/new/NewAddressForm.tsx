@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { addAddress } from "@/app/_actions/addresses"
 
-// Leaflet only loads in the browser — avoid SSR.
 const MapPinPicker = dynamic(
   () => import("@/components/MapPinPicker").then((m) => m.MapPinPicker),
   { ssr: false, loading: () => <MapSkeleton /> },
@@ -14,10 +13,26 @@ const MapPinPicker = dynamic(
 function MapSkeleton(): React.ReactElement {
   return (
     <div
-      className="rounded-2xl border border-zinc-200 bg-zinc-100 animate-pulse"
-      style={{ height: 320, borderRadius: "var(--radius)" }}
+      className="rounded-2xl animate-pulse"
+      style={{
+        height: 320,
+        background: "var(--color-shell-elev)",
+        border: "1px solid var(--color-shell-line)",
+        borderRadius: "var(--radius)",
+      }}
     />
   )
+}
+
+const inputStyle: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+  color: "var(--color-shell-fg)",
+}
+
+const labelStyle: React.CSSProperties = {
+  color: "var(--color-charcoal)",
 }
 
 interface Props {
@@ -70,27 +85,36 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
       />
 
       <div className="grid grid-cols-3 gap-2">
-        {(["HOME", "WORK", "OTHER"] as const).map((l) => (
-          <button
-            type="button"
-            key={l}
-            onClick={() => setLabel(l)}
-            className={`py-2 rounded-lg border text-sm font-medium ${
-              label === l
-                ? "border-brand-500 bg-brand-50 text-zinc-900"
-                : "border-zinc-200 text-zinc-600"
-            }`}
-            style={{ borderRadius: "var(--radius)" }}
-          >
-            {l.charAt(0) + l.slice(1).toLowerCase()}
-          </button>
-        ))}
+        {(["HOME", "WORK", "OTHER"] as const).map((l) => {
+          const isActive = label === l
+          return (
+            <button
+              type="button"
+              key={l}
+              onClick={() => setLabel(l)}
+              className="py-2 text-sm font-medium"
+              style={{
+                background: isActive
+                  ? "color-mix(in oklab, var(--color-brand-yellow-300) 14%, var(--color-shell-elev))"
+                  : "var(--color-shell-elev)",
+                border: `1px solid ${isActive ? "var(--color-brand-yellow-300)" : "var(--color-shell-line)"}`,
+                borderRadius: "var(--radius)",
+                color: isActive
+                  ? "var(--color-brand-yellow-300)"
+                  : "var(--color-charcoal-strong)",
+              }}
+            >
+              {l.charAt(0) + l.slice(1).toLowerCase()}
+            </button>
+          )
+        })}
       </div>
 
       <div>
         <label
           htmlFor="full"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={labelStyle}
         >
           Address
         </label>
@@ -101,8 +125,8 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
           value={fullAddress}
           onChange={(e) => setFullAddress(e.target.value.slice(0, 500))}
           placeholder="House / flat no, street, neighborhood"
-          className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500"
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full px-4 py-3 outline-none focus:ring-2"
+          style={inputStyle}
         />
       </div>
 
@@ -110,7 +134,8 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
         <div>
           <label
             htmlFor="building"
-            className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+            className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+            style={labelStyle}
           >
             Building
           </label>
@@ -119,14 +144,15 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
             value={building}
             onChange={(e) => setBuilding(e.target.value.slice(0, 120))}
             placeholder="Tower B"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-4 py-3 outline-none focus:ring-2"
+            style={inputStyle}
           />
         </div>
         <div>
           <label
             htmlFor="floor"
-            className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+            className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+            style={labelStyle}
           >
             Floor
           </label>
@@ -135,8 +161,8 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
             value={floor}
             onChange={(e) => setFloor(e.target.value.slice(0, 40))}
             placeholder="3rd"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500"
-            style={{ borderRadius: "var(--radius)" }}
+            className="w-full px-4 py-3 outline-none focus:ring-2"
+            style={inputStyle}
           />
         </div>
       </div>
@@ -144,32 +170,50 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
       <div>
         <label
           htmlFor="landmark"
-          className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5"
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={labelStyle}
         >
-          Landmark <span className="font-normal normal-case text-zinc-400">(optional)</span>
+          Landmark{" "}
+          <span
+            className="font-normal normal-case"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            (optional)
+          </span>
         </label>
         <input
           id="landmark"
           value={landmark}
           onChange={(e) => setLandmark(e.target.value.slice(0, 120))}
           placeholder="Opposite Forum Mall"
-          className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500"
-          style={{ borderRadius: "var(--radius)" }}
+          className="w-full px-4 py-3 outline-none focus:ring-2"
+          style={inputStyle}
         />
       </div>
 
-      <label className="flex items-center gap-3 text-sm text-zinc-700">
+      <label
+        className="flex items-center gap-3 text-sm"
+        style={{ color: "var(--color-shell-fg)" }}
+      >
         <input
           type="checkbox"
           checked={makeDefault}
           onChange={(e) => setMakeDefault(e.target.checked)}
-          className="accent-brand-500"
+          style={{ accentColor: "var(--color-brand-yellow-300)" }}
         />
         Set as default address
       </label>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">
+        <div
+          className="text-sm rounded-lg px-4 py-3"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -177,9 +221,10 @@ export function NewAddressForm({ defaultCenter }: Props): React.ReactElement {
       <button
         type="submit"
         disabled={submitting || fullAddress.trim().length < 8}
-        className="w-full py-3.5 rounded-xl font-semibold text-white disabled:opacity-50"
+        className="w-full py-3.5 font-bold disabled:opacity-50"
         style={{
-          background: "var(--color-brand-500)",
+          background: "var(--color-brand-yellow-300)",
+          color: "var(--color-shell-bg)",
           borderRadius: "var(--radius)",
         }}
       >
