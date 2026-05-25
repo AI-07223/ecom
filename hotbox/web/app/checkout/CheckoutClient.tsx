@@ -21,6 +21,18 @@ interface Props {
   upiConfigured: boolean
 }
 
+const cardBase: React.CSSProperties = {
+  background: "var(--color-shell-elev)",
+  border: "1px solid var(--color-shell-line)",
+  borderRadius: "var(--radius)",
+}
+
+const cardActive: React.CSSProperties = {
+  background:
+    "color-mix(in oklab, var(--color-brand-yellow-300) 14%, var(--color-shell-elev))",
+  border: "1px solid var(--color-brand-yellow-300)",
+}
+
 export function CheckoutClient({
   addresses,
   totalPaise,
@@ -63,75 +75,93 @@ export function CheckoutClient({
   return (
     <>
       <ul className="space-y-2.5">
-        {addresses.map((a) => (
-          <li key={a.id}>
-            <label
-              className={`flex items-start gap-3 rounded-2xl border p-4 cursor-pointer ${
-                selectedAddressId === a.id
-                  ? "border-brand-500 bg-brand-50"
-                  : "border-zinc-200"
-              }`}
-              style={{ borderRadius: "var(--radius)" }}
-            >
-              <input
-                type="radio"
-                name="address"
-                value={a.id}
-                checked={selectedAddressId === a.id}
-                onChange={() => setSelectedAddressId(a.id)}
-                className="mt-1 accent-brand-500"
-              />
-              <span className="flex-1 min-w-0">
-                <span
-                  className="text-xs font-semibold tracking-wider uppercase"
-                  style={{ color: "var(--color-brand-500)" }}
-                >
-                  {a.label}
-                  {a.isDefault && (
-                    <span className="ml-2 text-[10px] text-zinc-500">· default</span>
+        {addresses.map((a) => {
+          const isActive = selectedAddressId === a.id
+          return (
+            <li key={a.id}>
+              <label
+                className="flex items-start gap-3 p-4 cursor-pointer"
+                style={isActive ? { ...cardBase, ...cardActive } : cardBase}
+              >
+                <input
+                  type="radio"
+                  name="address"
+                  value={a.id}
+                  checked={isActive}
+                  onChange={() => setSelectedAddressId(a.id)}
+                  className="mt-1"
+                  style={{ accentColor: "var(--color-brand-yellow-300)" }}
+                />
+                <span className="flex-1 min-w-0">
+                  <span
+                    className="text-xs font-semibold tracking-wider uppercase"
+                    style={{ color: "var(--color-brand-yellow-300)" }}
+                  >
+                    {a.label}
+                    {a.isDefault && (
+                      <span
+                        className="ml-2 text-[10px]"
+                        style={{ color: "var(--color-charcoal)" }}
+                      >
+                        · default
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    className="block text-sm mt-1"
+                    style={{ color: "var(--color-shell-fg)" }}
+                  >
+                    {a.fullAddress}
+                  </span>
+                  {(a.building || a.floor) && (
+                    <span
+                      className="block text-xs mt-0.5"
+                      style={{ color: "var(--color-charcoal-strong)" }}
+                    >
+                      {[a.building, a.floor].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                  {a.landmark && (
+                    <span
+                      className="block text-xs mt-0.5"
+                      style={{ color: "var(--color-charcoal)" }}
+                    >
+                      Landmark: {a.landmark}
+                    </span>
                   )}
                 </span>
-                <span className="block text-sm text-zinc-900 mt-1">
-                  {a.fullAddress}
-                </span>
-                {(a.building || a.floor) && (
-                  <span className="block text-xs text-zinc-600 mt-0.5">
-                    {[a.building, a.floor].filter(Boolean).join(" · ")}
-                  </span>
-                )}
-                {a.landmark && (
-                  <span className="block text-xs text-zinc-500 mt-0.5">
-                    Landmark: {a.landmark}
-                  </span>
-                )}
-              </span>
-            </label>
-          </li>
-        ))}
+              </label>
+            </li>
+          )
+        })}
       </ul>
 
       <a
         href="/account/addresses/new?next=/checkout"
-        className="mt-3 inline-block text-sm underline underline-offset-4 text-zinc-600"
+        className="mt-3 inline-block text-sm underline underline-offset-4"
+        style={{ color: "var(--color-brand-yellow-300)" }}
       >
         + Add another address
       </a>
 
       <section className="mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+        <h2
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           Payment method
         </h2>
         <ul className="space-y-2.5">
           <li>
             <label
-              className={`flex items-start gap-3 rounded-2xl border p-4 cursor-pointer ${
+              className="flex items-start gap-3 p-4"
+              style={
                 method === "UPI_MANUAL" && upiConfigured
-                  ? "border-brand-500 bg-brand-50"
+                  ? { ...cardBase, ...cardActive, cursor: "pointer" }
                   : !upiConfigured
-                    ? "border-zinc-100 bg-zinc-50 opacity-60 cursor-not-allowed"
-                    : "border-zinc-200"
-              }`}
-              style={{ borderRadius: "var(--radius)" }}
+                    ? { ...cardBase, opacity: 0.5, cursor: "not-allowed" }
+                    : { ...cardBase, cursor: "pointer" }
+              }
             >
               <input
                 type="radio"
@@ -140,13 +170,20 @@ export function CheckoutClient({
                 checked={method === "UPI_MANUAL"}
                 disabled={!upiConfigured}
                 onChange={() => upiConfigured && setMethod("UPI_MANUAL")}
-                className="mt-1 accent-brand-500"
+                className="mt-1"
+                style={{ accentColor: "var(--color-brand-yellow-300)" }}
               />
               <span className="flex-1">
-                <span className="block font-semibold text-zinc-900">
+                <span
+                  className="block font-semibold"
+                  style={{ color: "var(--color-shell-fg)" }}
+                >
                   Pay now via UPI
                 </span>
-                <span className="block text-xs text-zinc-600 mt-0.5">
+                <span
+                  className="block text-xs mt-0.5"
+                  style={{ color: "var(--color-charcoal-strong)" }}
+                >
                   {upiConfigured
                     ? "Scan QR, pay, share the UPI reference. Order ships sooner."
                     : "Not configured by the restaurant yet."}
@@ -156,12 +193,8 @@ export function CheckoutClient({
           </li>
           <li>
             <label
-              className={`flex items-start gap-3 rounded-2xl border p-4 cursor-pointer ${
-                method === "COD"
-                  ? "border-brand-500 bg-brand-50"
-                  : "border-zinc-200"
-              }`}
-              style={{ borderRadius: "var(--radius)" }}
+              className="flex items-start gap-3 p-4 cursor-pointer"
+              style={method === "COD" ? { ...cardBase, ...cardActive } : cardBase}
             >
               <input
                 type="radio"
@@ -169,13 +202,20 @@ export function CheckoutClient({
                 value="COD"
                 checked={method === "COD"}
                 onChange={() => setMethod("COD")}
-                className="mt-1 accent-brand-500"
+                className="mt-1"
+                style={{ accentColor: "var(--color-brand-yellow-300)" }}
               />
               <span className="flex-1">
-                <span className="block font-semibold text-zinc-900">
+                <span
+                  className="block font-semibold"
+                  style={{ color: "var(--color-shell-fg)" }}
+                >
                   Pay on delivery (cash)
                 </span>
-                <span className="block text-xs text-zinc-600 mt-0.5">
+                <span
+                  className="block text-xs mt-0.5"
+                  style={{ color: "var(--color-charcoal-strong)" }}
+                >
                   Rider collects cash at your door.
                 </span>
               </span>
@@ -185,19 +225,34 @@ export function CheckoutClient({
       </section>
 
       {error && (
-        <div className="mt-4 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">
+        <div
+          className="mt-4 text-sm rounded-lg px-4 py-3"
+          style={{
+            background:
+              "color-mix(in oklab, var(--color-brand-flame-500) 18%, transparent)",
+            color: "var(--color-brand-flame-300)",
+            border: "1px solid var(--color-brand-flame-700)",
+          }}
+        >
           {error}
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 pb-safe bg-white border-t border-zinc-200">
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 pb-safe"
+        style={{
+          background: "var(--color-shell-bg)",
+          borderTop: "1px solid var(--color-shell-line)",
+        }}
+      >
         <button
           type="button"
           disabled={submitting}
           onClick={handleSubmit}
-          className="flex items-center justify-center w-full max-w-md mx-auto m-3 py-4 rounded-xl text-white font-semibold disabled:opacity-50"
+          className="flex items-center justify-center w-full max-w-md mx-auto m-3 py-4 font-bold disabled:opacity-50"
           style={{
-            background: "var(--color-brand-500)",
+            background: "var(--color-brand-yellow-300)",
+            color: "var(--color-shell-bg)",
             borderRadius: "var(--radius)",
           }}
         >
