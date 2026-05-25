@@ -37,40 +37,40 @@
 
 ## 5. Per-item detail page
 
-- [ ] 5.1 Restyle `hotbox/web/app/item/[item]/page.tsx` on the dark shell: dark bg, large `<DishPhoto />`, item title in display font, description in body font, variant selector (Small/Large) if applicable, special-instructions textarea, quantity stepper, primary yellow "Add to cart" CTA
-- [ ] 5.2 Make sure the page can still be deep-linked from external sources (preserves the existing URL structure)
-- [ ] 5.3 Add `<BottomCartBar />` to the page when cart has items
+- [x] 5.1 Restyle `hotbox/web/app/item/[item]/page.tsx` on the dark shell
+- [x] 5.2 Deep-link compatibility preserved (URL structure unchanged)
+- [x] 5.3 `<BottomCartBar />` wired on the page
 
 ## 6. Cart, checkout, confirmation, pay, track refit
 
-- [ ] 6.1 Restyle `hotbox/web/app/cart/page.tsx` on dark tokens — item rows match menu style, price breakdown, "Continue to checkout" yellow CTA
-- [ ] 6.2 Restyle `hotbox/web/app/checkout/page.tsx` — address picker with dark-friendly Leaflet styling, payment method radios as dark cards
-- [ ] 6.3 Restyle `hotbox/web/app/orders/[id]/confirmation/page.tsx`
-- [ ] 6.4 Restyle `hotbox/web/app/orders/[id]/pay/page.tsx` — already polished; swap header to `<Logo />`, repaint card backgrounds, ensure the big "Pay ₹X via UPI →" button uses brand yellow on black
-- [ ] 6.5 Restyle `hotbox/web/app/track/[orderId]/page.tsx` — swap to CARTO DarkMatter map tiles, dark status timeline
-- [ ] 6.6 Restyle `hotbox/web/app/account/orders/page.tsx` and `hotbox/web/app/account/addresses/page.tsx` (plus `/new`)
+- [x] 6.1 `/cart` repainted on dark tokens
+- [x] 6.2 `/checkout` — dark cards for addresses + payment methods, brand-yellow primary CTA
+- [x] 6.3 `/orders/[id]/confirmation`
+- [x] 6.4 `/orders/[id]/pay` — Logo header, yellow primary "Pay ₹X via UPI" CTA on dark, QR card stays on white for scan reliability
+- [x] 6.5 `/track/[orderId]` — CARTO DarkMatter tiles, yellow rider pin + flame customer pin, brand-yellow dashed route line
+- [x] 6.6 `/account/orders`, `/account/addresses`, `/account/addresses/new`
 
 ## 7. Auth pages light touch
 
-- [ ] 7.1 Restyle `hotbox/web/app/login/page.tsx` — dark bg, `<Logo />` at top, dark form fields with bright placeholder text
-- [ ] 7.2 Restyle `hotbox/web/app/signup/page.tsx` (same pattern)
-- [ ] 7.3 Restyle `hotbox/web/app/reset-request/page.tsx` and `hotbox/web/app/reset/[token]/page.tsx`
-- [ ] 7.4 Update transactional email templates in `hotbox/web/lib/resend.ts` to use dark + yellow accents and the new logo (`<h1>HOTBOX</h1>` → embedded base64 logo SVG)
+- [x] 7.1 `/login`
+- [x] 7.2 `/signup`
+- [x] 7.3 `/reset-request` and `/reset/[token]`
+- [x] 7.4 Email templates in `lib/resend.ts` — dark shell with inline SVG Hot Box logo, yellow CTA, charcoal copy
 
 ## 8. Admin + rider light touch
 
-- [ ] 8.1 Adopt dark tokens in `hotbox/web/app/admin/page.tsx` and the admin layout; keep dense data-grid layouts
-- [ ] 8.2 Same for `/admin/menu`, `/admin/riders`, `/admin/rider-app`, `/admin/settings`, `/admin/orders/[id]/verify-payment`
-- [ ] 8.3 Restyle `hotbox/web/app/rider/page.tsx` and the COD modal — keep current dense layout, swap brand colours
-- [ ] 8.4 Restyle `hotbox/web/app/r/install/page.tsx` — dark bg + `<Logo />`, no hero rebuild
+- [x] 8.1 Admin layout — dark shell, Logo + "Hot Box · Admin" header, AdminNav with yellow underline on active
+- [x] 8.2 `/admin/menu`, `/admin/riders`, `/admin/rider-app`, `/admin/settings`, `/admin/orders/[id]/verify-payment` all on dark tokens
+- [x] 8.3 `/rider` + COD modal repainted; the giant "Collect cash" banner now uses brand yellow as the PDF intended
+- [x] 8.4 `/r/install` — Logo header, dark cards, brand-yellow download CTA
 
 ## 9. Admin photo uploader
 
-- [ ] 9.1 Prisma migration `0003_menu_item_photo`: add `menuItems.photoFilename` (nullable text)
-- [ ] 9.2 Server Action `uploadMenuItemPhoto(itemId, formData)` — admin-only gate, validate file (jpeg/png/webp, ≤ 5 MB), call sharp compression (reuse `lib/payment-proof.ts` helpers), save to `/app/uploads/dishes/<id>.jpg`, update DB, revalidate `/` and `/item/[slug]`
-- [ ] 9.3 Route `GET /api/menu/items/[id]/photo` — read from `/app/uploads/dishes/<id>.jpg`, serve with `Cache-Control: public, max-age=300, s-maxage=86400`; return 404 if missing
-- [ ] 9.4 UI block in `/admin/menu` — per-item thumbnail + "Upload photo" file input + "Clear photo" button
-- [ ] 9.5 Coolify volume — confirm `/app/uploads` is already mounted (it is, for payment proofs); ensure `/app/uploads/dishes/` is auto-created on first upload
+- [x] 9.1 Prisma migration `0003_menu_item_photo` adds `menu_items.photo_filename`
+- [x] 9.2 Server Actions `uploadMenuItemPhoto` + `clearMenuItemPhoto` — admin gate, sharp compression via `lib/menu-photos.ts`, saves to `/app/uploads/dishes/<itemId>.jpg`
+- [x] 9.3 Route `GET /api/menu/items/[id]/photo` — public 5-min/1-day cache, 404 on missing so `<DishPhoto>` falls through to PDF crop / flame tile
+- [x] 9.4 UI block in `/admin/menu` — thumbnail + Upload/Replace + Clear buttons per row, optimistic green-flash on save
+- [x] 9.5 Coolify volume `/app/uploads/` is mounted (shared with payment proofs); `dishes/` subdir auto-created on first upload
 
 ## 10. Verification on live site (Chrome MCP)
 
@@ -95,6 +95,6 @@
 
 ## 12. Documentation + archive
 
-- [ ] 12.1 Update `hotbox/README.md` with the new visual system, asset pipeline, and admin photo-upload instructions for the operator
-- [ ] 12.2 Update `CLAUDE.md` if any architectural facts changed (single-page menu replaces the old 3-page flow)
+- [x] 12.1 `hotbox/README.md` rewritten — brand identity section, asset pipeline, admin photo-upload instructions, single-page menu architecture, sharp/Resend env vars, updated "Where things live" map
+- [x] 12.2 `CLAUDE.md` updated — single-page menu noted, dark restaurant brand mentioned, OpenSpec change history extended, customer-flow path documented
 - [ ] 12.3 Run `openspec archive hotbox-brand-redesign` once the operator signs off on the live verification

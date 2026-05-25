@@ -12,9 +12,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 >   designed to host multiple branded client storefronts. Backend stays
 >   alive at `medusa.networkbase75.site` for potential future use; the
 >   storefront work was paused mid-deploy when the operator pivoted.
-> - **Hotbox food-delivery demo** (active): a single-restaurant
->   food-delivery demo built on Next.js 16 + Prisma + Postgres + Cashfree
->   under [hotbox/](hotbox/), plus an Expo Android APK for riders under
+> - **Hot Box Cloud Kitchen demo** (active): a single-restaurant
+>   food-delivery demo built on Next.js 16 + Prisma + Postgres with
+>   email-password auth, manual UPI payment + COD, and a brand-grade
+>   dark restaurant theme matching the operator's printed menu. Under
+>   [hotbox/](hotbox/), plus an Expo Android APK for riders under
 >   [hotbox/rider-app/](hotbox/rider-app/). Live at
 >   `hotbox.networkbase75.site`. See [hotbox/README.md](hotbox/README.md).
 >
@@ -28,24 +30,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    hotbox/
    ├── web/         Next.js 16 — customer storefront, restaurant admin,
    │                rider web fallback. Deploys to Coolify (uuid
-   │                hdxy12d07otzrv7yzgqz50hl). Schema in Prisma; payments
-   │                via Cashfree.js v3; live tracking via Postgres
-   │                LISTEN/NOTIFY + SSE; map via Leaflet+OSM.
+   │                hdxy12d07otzrv7yzgqz50hl). Schema in Prisma; auth via
+   │                bcrypt + jose JWT cookies; payments via manual UPI
+   │                screenshot (admin-verified) or COD (rider-collected);
+   │                live tracking via Postgres LISTEN/NOTIFY + SSE; map
+   │                via Leaflet + CARTO DarkMatter tiles; emails via
+   │                Resend; sharp + libvips for screenshot/photo
+   │                compression. Single-page menu at `/` with sticky
+   │                IntersectionObserver-driven category tabs.
    └── rider-app/   Expo SDK 53 — Android-only APK for delivery riders.
                     Foreground location service via expo-task-manager.
                     Built via EAS Build (cloud, free tier).
 ```
 
-OpenSpec history (both archived after the finish-line lands):
+OpenSpec history (archived after each lands):
 
 - `hotbox-food-delivery` — proposed the architecture + landed the customer
   loop + admin + rider-web + live-tracking foundations.
-- `hotbox-demo-finish-line` — sequenced finishing sprint:
-  credentials/smoke test (Phase 1, awaiting operator), brand polish
-  (Phase 2), Expo APK (Phase 3), distribution UI (Phase 4), real-device
-  smoke test (Phase 5, operator-only), docs + archive (Phase 6).
+- `hotbox-demo-finish-line` — finishing sprint: credentials/smoke test,
+  brand polish, Expo APK, distribution UI, docs.
+- `hotbox-auth-and-payment-pivot` — dropped Cashfree/OTP, added
+  email-password auth + manual UPI screenshot verification + COD with
+  rider cash-collection modal.
+- `hotbox-brand-redesign` — repainted every customer-facing surface in
+  the operator's actual restaurant brand (dark matte + yellow + cyan +
+  flame) extracted from `Hot Box Menu.pdf`; collapsed the home + category
+  pages into a single scrollable menu with sticky tabs; added an admin
+  photo-uploader UI for menu items. See
+  [openspec/changes/hotbox-brand-redesign/](openspec/changes/hotbox-brand-redesign/)
+  for the proposal/design/specs/tasks.
 
-See [openspec/changes/hotbox-demo-finish-line/tasks.md](openspec/changes/hotbox-demo-finish-line/tasks.md) for the current finish-line status.
+The customer flow `/` (single-page menu) → `/item/[slug]` (detail) →
+`/cart` → `/checkout` → `/orders/[id]/{pay,confirmation}` → `/track/[id]`
+is fully dark-themed and brand-on. Admin (`/admin/*`) and rider
+(`/rider`, `/r/install`) keep dense utilitarian layouts on dark tokens.
 
 ---
 
